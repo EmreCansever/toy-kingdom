@@ -22,9 +22,12 @@ namespace ToyKingdom
         public float TimeLeft { get; private set; }
         public BattleState State { get; private set; } = BattleState.Playing;
         public UnitData SelectedUnit { get; private set; }
+        /// <summary>Meydan büyüdü: yürüme ve kanat manevraları için süreye pay eklenir.</summary>
+        public float TimeLimit => Castle != null ? Castle.timeLimit + 45f : 180f;
         public List<Squad> PlayerSquads { get; } = new List<Squad>();
         public List<Squad> EnemySquads { get; } = new List<Squad>();
         public Camera Cam { get; private set; }
+        public CameraRig Rig { get; private set; }
 
         public event Action<UnitData> SelectedUnitChanged;
         public event Action ArmyChanged;
@@ -67,7 +70,15 @@ namespace ToyKingdom
 
             Field = gameObject.AddComponent<BattleField>();
             Field.Build(Castle);
-            if (Cam != null) Field.FitCamera(Cam, 0.18f);
+            if (Cam != null)
+            {
+                Field.FitCamera(Cam, 0.18f);
+                Rig = Cam.GetComponent<CameraRig>();
+                if (Rig == null) Rig = Cam.gameObject.AddComponent<CameraRig>();
+                Rig.bounds = Field.CameraBounds;
+                Rig.minSize = 3.2f;
+                Rig.maxSize = 8.6f;
+            }
             foreach (var g in Field.Gates)
             {
                 g.Destroyed += OnGateDestroyed;
@@ -77,7 +88,7 @@ namespace ToyKingdom
             foreach (var t in Field.Towers) t.Destroyed += OnTowerDestroyed;
 
             Command = new CommandPoints(Castle.startingCommandPoints, Castle.maxCommandPoints, Castle.commandRegenPerSecond);
-            TimeLeft = Castle.timeLimit;
+            TimeLeft = TimeLimit;
             reinforcementTimer = Castle.reinforcementInterval;
             reinforcementsLeft = Castle.reinforcementCount;
 
@@ -458,7 +469,7 @@ namespace ToyKingdom
 
             if (victory)
             {
-                float timeRatio = Castle.timeLimit > 0f ? TimeLeft / Castle.timeLimit : 1f;
+                float timeRatio = TimeLimit > 0f ? TimeLeft / TimeLimit : 1f;
                 result.stars = 1 + (timeRatio > 0.35f ? 1 : 0) + (lostSquads == 0 ? 1 : 0);
                 result.goldEarned = Mathf.RoundToInt(Castle.goldReward * (0.5f + 0.25f * (result.stars - 1)));
                 SaveSystem.Data.gold += result.goldEarned;

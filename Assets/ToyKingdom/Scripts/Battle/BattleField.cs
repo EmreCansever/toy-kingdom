@@ -10,10 +10,14 @@ namespace ToyKingdom
     /// </summary>
     public class BattleField : MonoBehaviour
     {
-        /// <summary>Oynanabilir alan (ekran/dünya koordinatı, zemin yüzeyi).</summary>
-        public static readonly Rect Playable = new Rect(-6.8f, 1.6f, 15.0f, 6.1f);
-        /// <summary>Bu x değerinin solu konuşlanma bölgesidir.</summary>
-        public const float DeployMaxX = -3.0f;
+        /// <summary>Oynanabilir alan (dünya koordinatı, zemin yüzeyi). Kalenin çevresinde geniş bir meydan.</summary>
+        public Rect Playable { get; private set; }
+        /// <summary>Konuşlanma şeridinin alan kenarından genişliği.</summary>
+        public const float DeployBand = 2.4f;
+        /// <summary>Kale merkezi (dünya).</summary>
+        public Vector3 CastleCenter { get; private set; }
+
+        const float FieldHalfW = 13f, FieldHalfH = 6.6f;
 
         public CastleData Castle { get; private set; }
         public List<CastleGate> Gates { get; } = new List<CastleGate>();
@@ -46,6 +50,10 @@ namespace ToyKingdom
             int gv = cv0 + d / 2;   // ana kapı: sol-ön (SW) duvarın ortası, saldıranlara bakar
             int gu = cu0 + w / 2;   // ikinci kapı: sağ-ön (SE) duvarın ortası
 
+            // meydan kaleyi ortalar; kale biraz sağda kalır ki önünde (batıda) daha çok yer olsun
+            CastleCenter = Iso.Surface((cu0 + cu1) * 0.5f, (cv0 + cv1) * 0.5f);
+            Playable = new Rect(CastleCenter.x - FieldHalfW - 2.5f, CastleCenter.y - FieldHalfH, FieldHalfW * 2f, FieldHalfH * 2f);
+
             var cam = Camera.main;
             if (cam != null)
                 cam.backgroundColor = castle.biome == Biome.Desert ? new Color(0.86f, 0.74f, 0.5f)
@@ -62,17 +70,18 @@ namespace ToyKingdom
         void BuildGround(int gu, int gv, bool second)
         {
             var road = new HashSet<Vector2Int>();
-            for (int u = -16; u < cu0; u++) road.Add(new Vector2Int(u, gv));
-            if (second) for (int v = -12; v < cv0; v++) road.Add(new Vector2Int(gu, v));
+            for (int u = -30; u < cu0; u++) road.Add(new Vector2Int(u, gv));
+            if (second) for (int v = -26; v < cv0; v++) road.Add(new Vector2Int(gu, v));
 
             var rnd = new System.Random(Castle.cityId.GetHashCode());
             var bio = art.Biome(Castle.biome);
-            for (int u = -16; u <= 30; u++)
+            Rect area = new Rect(Playable.xMin - 6f, Playable.yMin - 4f, Playable.width + 12f, Playable.height + 7f);
+            for (int u = -30; u <= 45; u++)
             {
-                for (int v = -14; v <= 20; v++)
+                for (int v = -30; v <= 35; v++)
                 {
                     Vector3 basePos = Iso.CellBase(u, v);
-                    if (basePos.x < -13f || basePos.x > 13f || basePos.y < -3.5f || basePos.y > 10.5f) continue;
+                    if (!area.Contains(new Vector2(basePos.x, basePos.y))) continue;
 
                     var cell = new Vector2Int(u, v);
                     bool isRoad = road.Contains(cell);
@@ -81,8 +90,8 @@ namespace ToyKingdom
                     {
                         int m = 0;
                         if (road.Contains(new Vector2Int(u + 1, v)) || (v == gv && u + 1 == cu0)) m |= 1;           // NE
-                        if (road.Contains(new Vector2Int(u, v - 1)) || (second && u == gu && v - 1 < -12)) m |= 2;    // SE
-                        if (road.Contains(new Vector2Int(u - 1, v)) || (v == gv && u - 1 < -16)) m |= 4;            // SW
+                        if (road.Contains(new Vector2Int(u, v - 1)) || (second && u == gu && v - 1 < -26)) m |= 2;    // SE
+                        if (road.Contains(new Vector2Int(u - 1, v)) || (v == gv && u - 1 < -30)) m |= 4;            // SW
                         if (road.Contains(new Vector2Int(u, v + 1)) || (second && u == gu && v + 1 == cv0)) m |= 8;   // NW
                         if (m == 0) m = 5;
                         s = bio.Road(m);
@@ -95,13 +104,15 @@ namespace ToyKingdom
 
                     Vector3 surf = Iso.Surface(u, v);
                     bool inside = Playable.Contains(new Vector2(surf.x, surf.y));
+                    // meydanın içinde de seyrek ağaç kümeleri: siper ve yön bulmaya yardımcı (yürünebilir, sadece görsel)
+                    bool grove = inside && !InDeployZone(surf) && (surf - CastleCenter).magnitude > 4.5f && Mathf.PerlinNoise(u * 0.23f + 3.1f, v * 0.23f + 7.7f) > 0.68f;
                     if (bio.details != null && bio.details.Length > 0 && rnd.NextDouble() < 0.12)
                     {
                         float ox = (float)rnd.NextDouble() * 0.5f - 0.25f, oy = (float)rnd.NextDouble() * 0.4f - 0.2f;
                         var p = Iso.Surface(u + ox, v + oy);
                         PlaceSprite(bio.Pick(bio.details, rnd.Next(64)), p, Iso.Order(p, -2), "D");
                     }
-                    if (bio.trees != null && bio.trees.Length > 0 && rnd.NextDouble() < (inside ? 0.0 : Castle.biome == Biome.Desert ? 0.15 : 0.4))
+                    if (bio.trees != null && bio.trees.Length > 0 && rnd.NextDouble() < (grove ? 0.35 : inside ? 0.0 : Castle.biome == Biome.Desert ? 0.15 : 0.4))
                     {
                         var p = Iso.Surface(u + (float)rnd.NextDouble() * 0.3f - 0.15f, v + (float)rnd.NextDouble() * 0.3f - 0.15f);
                         PlaceSprite(bio.Pick(bio.trees, rnd.Next(64)), p + Vector3.down * 0.04f, Iso.Order(p, 3), "T");
@@ -118,13 +129,13 @@ namespace ToyKingdom
         void BuildDeployZone()
         {
             if (art.tileHighlight == null) return;
-            for (int u = -16; u <= 30; u++)
-                for (int v = -14; v <= 20; v++)
+            for (int u = -30; u <= 45; u++)
+                for (int v = -30; v <= 35; v++)
                 {
                     Vector3 p = Iso.Surface(u, v);
                     if (!InDeployZone(p)) continue;
                     var sr = PlaceSprite(art.tileHighlight, p, -15000, "Z");
-                    sr.color = new Color(1f, 1f, 1f, 0.17f);
+                    sr.color = new Color(1f, 0.96f, 0.75f, 0.28f);
                 }
         }
 
@@ -251,7 +262,7 @@ namespace ToyKingdom
             return world;
         }
 
-        static Vector3 ClampToPlayable(Vector3 p)
+        Vector3 ClampToPlayable(Vector3 p)
         {
             p.x = Mathf.Clamp(p.x, Playable.xMin, Playable.xMax);
             p.y = Mathf.Clamp(p.y, Playable.yMin, Playable.yMax);
@@ -259,8 +270,32 @@ namespace ToyKingdom
             return p;
         }
 
-        public bool InDeployZone(Vector3 world) =>
-            world.x <= DeployMaxX && Playable.Contains(new Vector2(world.x, world.y)) && !IsBlocked(world);
+        /// <summary>
+        /// Konuşlanma bölgesi: meydanın batı, kuzey ve güney kenarlarındaki şerit. Doğu (kalenin arkası) kapalıdır;
+        /// ama kuzey ve güney şeritleri kalenin yanlarına kadar uzanır, böylece kanattan saldırı yapılabilir.
+        /// </summary>
+        public bool InDeployZone(Vector3 world)
+        {
+            if (!Playable.Contains(new Vector2(world.x, world.y)) || IsBlocked(world)) return false;
+            float maxX = CastleCenter.x + 1.5f;
+            if (world.x > maxX) return false;
+            bool west = world.x < Playable.xMin + DeployBand * 1.25f;
+            bool north = world.y > Playable.yMax - DeployBand;
+            bool south = world.y < Playable.yMin + DeployBand;
+            return west || north || south;
+        }
+
+        /// <summary>Bir noktaya en yakın konuşlanma bölgesi noktası (bozguna uğrayanlar buraya çekilir).</summary>
+        public Vector3 NearestDeployPoint(Vector3 from)
+        {
+            Vector3 w = new Vector3(Playable.xMin + DeployBand * 0.6f, Mathf.Clamp(from.y, Playable.yMin + 0.6f, Playable.yMax - 0.6f), 0f);
+            Vector3 n = new Vector3(Mathf.Clamp(from.x, Playable.xMin + 0.6f, CastleCenter.x), Playable.yMax - DeployBand * 0.5f, 0f);
+            Vector3 so = new Vector3(Mathf.Clamp(from.x, Playable.xMin + 0.6f, CastleCenter.x), Playable.yMin + DeployBand * 0.5f, 0f);
+            Vector3 best = w;
+            if ((n - from).sqrMagnitude < (best - from).sqrMagnitude) best = n;
+            if ((so - from).sqrMagnitude < (best - from).sqrMagnitude) best = so;
+            return Constrain(best);
+        }
 
         public CastleGate NearestGate(Vector3 from)
         {
@@ -407,15 +442,17 @@ namespace ToyKingdom
             return best;
         }
 
-        /// <summary>Kamerayı oynanabilir alanı gösterecek şekilde yerleştirir. bottomUI: alt arayüzün ekran oranı.</summary>
+        /// <summary>Başlangıç görünümü: batı şeridi ile kale birlikte görünür. Oyuncu sonra kaydırıp yakınlaştırabilir.</summary>
         public void FitCamera(Camera cam, float bottomUI = 0.22f)
         {
-            float xMin = Playable.xMin - 0.3f, xMax = Playable.xMax + 0.3f;
-            float yMin = Playable.yMin - 0.4f, yMax = Playable.yMax + 0.5f;
-            float height = (yMax - yMin) / (1f - bottomUI);
-            float size = Mathf.Max(height * 0.5f, (xMax - xMin) * 0.5f / cam.aspect);
+            float size = 4.8f;
             cam.orthographicSize = size;
-            cam.transform.position = new Vector3((xMin + xMax) * 0.5f, yMax - size, -10f);
+            float x = Mathf.Lerp(Playable.xMin, CastleCenter.x, 0.55f);
+            float y = CastleCenter.y - size * bottomUI * 0.8f;
+            cam.transform.position = new Vector3(x, y, -10f);
         }
+
+        /// <summary>Kameranın gezebileceği alan (alt arayüz için biraz pay bırakılır).</summary>
+        public Rect CameraBounds => new Rect(Playable.xMin - 1.2f, Playable.yMin - 2.6f, Playable.width + 2.4f, Playable.height + 4.0f);
     }
 }

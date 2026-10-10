@@ -322,9 +322,9 @@ namespace ToyKingdom
             Vector3 c = Center();
             if (Team == Team.Player)
             {
-                // sol taraftaki toplanma alanına geri çekil
-                Anchor = field.Constrain(new Vector3(BattleField.DeployMaxX - 1.2f, Mathf.Clamp(c.y, BattleField.Playable.yMin + 0.6f, BattleField.Playable.yMax - 0.6f), 0f));
-                Heading = new Vector2(-1f, 0f);
+                // en yakın toplanma alanına geri çekil
+                Anchor = field.NearestDeployPoint(c);
+                Heading = ((Vector2)(Anchor - c)).normalized;
             }
             else
             {

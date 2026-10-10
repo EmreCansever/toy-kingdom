@@ -10,7 +10,7 @@ namespace ToyKingdom
     public class PathDrawer : MonoBehaviour
     {
         const float PointSpacing = 0.22f;
-        const int MaxPoints = 80;
+        const int MaxPoints = 220;
 
         BattleManager bm;
         LineRenderer line;
@@ -31,6 +31,11 @@ namespace ToyKingdom
             line.startColor = new Color(1f, 0.95f, 0.75f, 0.95f);
             line.endColor = new Color(1f, 0.8f, 0.3f, 0.95f);
             line.positionCount = 0;
+
+            // bölge içinde başlayan basış rota çizer, dışarıda başlayan kamerayı kaydırır
+            if (bm.Rig != null)
+                bm.Rig.blockPress = screen =>
+                    bm.State == BattleState.Playing && bm.Field.InDeployZone(PointerInput.ToWorld(bm.Cam, screen)) && bm.CanDeploy(out _);
         }
 
         void Update()
@@ -44,13 +49,13 @@ namespace ToyKingdom
             PointerInput.Refresh();
             Vector3 world = PointerInput.ToWorld(bm.Cam, PointerInput.Position);
 
+            // bölge dışına dokunmak: ipucu (sürüklemek kamerayı kaydırır)
+            if (bm.Rig != null && bm.Rig.TryConsumeTap(out Vector3 tapWorld) && !bm.Field.InDeployZone(tapWorld))
+                Say("Bölükleri kenarlardaki işaretli bölgelerden gönderebilirsin. Sürükleyerek haritayı kaydır");
+
             if (PointerInput.Down && !PointerInput.PressStartedOverUI)
             {
-                if (!bm.Field.InDeployZone(world))
-                {
-                    Say("Bölükleri yalnızca alttaki işaretli bölgeden gönderebilirsin");
-                    return;
-                }
+                if (!bm.Field.InDeployZone(world)) return;
                 if (!bm.CanDeploy(out string reason))
                 {
                     if (!string.IsNullOrEmpty(reason)) Say(reason);
@@ -65,6 +70,7 @@ namespace ToyKingdom
 
             if (drawing && PointerInput.Held)
             {
+                EdgeScroll();
                 if (!hitCastle && points.Count < MaxPoints)
                 {
                     Vector3 last = points[points.Count - 1];
@@ -100,6 +106,18 @@ namespace ToyKingdom
                 points.Clear();
                 Redraw();
             }
+        }
+
+        /// <summary>Rota çizerken parmak ekran kenarına gelirse kamera o yöne kayar.</summary>
+        void EdgeScroll()
+        {
+            if (bm.Rig == null) return;
+            Vector2 p = PointerInput.Position;
+            float mx = Screen.width * 0.07f, my = Screen.height * 0.09f;
+            Vector3 dir = Vector3.zero;
+            if (p.x < mx) dir.x = -1f; else if (p.x > Screen.width - mx) dir.x = 1f;
+            if (p.y < my + Screen.height * 0.16f) dir.y = -1f; else if (p.y > Screen.height - my) dir.y = 1f;
+            if (dir != Vector3.zero) bm.Rig.Pan(dir * Time.deltaTime * bm.Cam.orthographicSize * 0.9f);
         }
 
         float TotalLength()

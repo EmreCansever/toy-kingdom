@@ -15,6 +15,8 @@ namespace ToyKingdom
         [Tooltip("Bu kadar pikselden az kayan dokunuş 'tap' sayılır")]
         public float tapThreshold = 18f;
         public bool inputEnabled = true;
+        /// <summary>true dönerse bu basış kamerayı kaydırmaz (ör. savaşta rota çizimi başlıyor).</summary>
+        public System.Func<Vector2, bool> blockPress;
 
         public Camera Cam { get; private set; }
 
@@ -70,7 +72,7 @@ namespace ToyKingdom
 
             if (PointerInput.Down)
             {
-                pressValid = !PointerInput.PressStartedOverUI;
+                pressValid = !PointerInput.PressStartedOverUI && (blockPress == null || !blockPress(PointerInput.Position));
                 pressPos = lastPos = PointerInput.Position;
                 dragging = false;
                 velocity = Vector3.zero;
@@ -115,6 +117,14 @@ namespace ToyKingdom
                 if ((transform.position - t).sqrMagnitude < 0.0004f) focusTarget = null;
             }
 
+            Clamp();
+        }
+
+        /// <summary>Kamerayı dünya biriminde kaydırır (sınırlar içinde).</summary>
+        public void Pan(Vector3 delta)
+        {
+            transform.position += new Vector3(delta.x, delta.y, 0f);
+            focusTarget = null;
             Clamp();
         }
 
