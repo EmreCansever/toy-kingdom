@@ -11,6 +11,7 @@ namespace ToyKingdom
         GameObject root;
         MapUI ui;
         readonly List<ShopRowUI> rows = new List<ShopRowUI>();
+        TMP_Text capacity;
 
         public bool IsOpen => root != null && root.activeSelf;
 
@@ -27,8 +28,11 @@ namespace ToyKingdom
             var header = box.transform.Find("Border/Header");
             var sub = UIFactory.Text(header, "Sub", "Rota çizerek savaşa gönder. Yarısı yaşayan bölük geri döner.", 26f,
                 new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Left);
-            UIFactory.Place(sub.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(170f, 0f), new Vector2(760f, 60f));
+            UIFactory.Place(sub.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(170f, 0f), new Vector2(560f, 60f));
             sub.enableAutoSizing = true; sub.fontSizeMin = 16f; sub.fontSizeMax = 26f;
+
+            shop.capacity = UIFactory.Text(header, "Capacity", "", 30f, Color.white, TextAlignmentOptions.Right, true);
+            UIFactory.Place(shop.capacity.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-210f, 0f), new Vector2(240f, 60f));
 
             var close = UIFactory.Button(header, "Close", "Kapat", UIFactory.Hex("F4EBDD"), 30f);
             UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 2f), new Vector2(170f, 68f));
@@ -54,10 +58,17 @@ namespace ToyKingdom
         public void Open()
         {
             root.SetActive(true);
-            foreach (var r in rows) r.Refresh();
+            RefreshAll();
         }
 
         public void Close() => root.SetActive(false);
+
+        void RefreshAll()
+        {
+            var d = SaveSystem.Data;
+            if (capacity != null) capacity.text = "Ordu  " + d.TotalArmy() + " / " + d.ArmyCapacity();
+            foreach (var r in rows) r.Refresh();
+        }
 
         void Buy(UnitData data, int amount)
         {
@@ -68,10 +79,15 @@ namespace ToyKingdom
                 ui.Toast("Yeterli altının yok");
                 return;
             }
+            if (save.TotalArmy() + amount > save.ArmyCapacity())
+            {
+                ui.Toast("Ordu kapasitesi dolu. Şehir fethet ya da Kışla kur");
+                return;
+            }
             save.gold -= price;
             save.AddArmy(data.unitId, amount);
             SaveSystem.Save();
-            foreach (var r in rows) r.Refresh();
+            RefreshAll();
             ui.RefreshTop();
         }
     }

@@ -14,7 +14,11 @@ namespace ToyKingdom
         /// <summary>Savunucu: dağınık nöbet noktalarında bekliyor, yakına geleni karşılıyor.</summary>
         Guard,
         /// <summary>Savunucu: sur üstünde sabit duruyor (okçular).</summary>
-        Post
+        Post,
+        /// <summary>Morali çöktü: geri kaçıyor, savaşmıyor.</summary>
+        Rout,
+        /// <summary>Kaçan oyuncu bölüğü toplanma alanına vardı, savaş dışında bekliyor.</summary>
+        Rallied
     }
 
     /// <summary>Bir bölük: askerlerine yer verir, rotayı ve hedefi yönetir.</summary>
@@ -37,6 +41,14 @@ namespace ToyKingdom
         public bool Engaged => Time.time - lastCombat < 1.5f;
         /// <summary>Askerlerin can ve hasar çarpanı (savunucuları kale zorluğuna göre ayarlamak için).</summary>
         public float Strength { get; set; } = 1f;
+        /// <summary>0-100. Düşerse hasar azalır, 18'in altında bölük bozguna uğrar.</summary>
+        public float Morale { get; private set; } = 100f;
+        public bool Routed => Mode == SquadMode.Rout || Mode == SquadMode.Rallied;
+        /// <summary>Morale göre hasar çarpanı.</summary>
+        public float MoraleDamage => Morale >= 70f ? 1.1f : Morale < 35f ? 0.8f : 1f;
+        bool wipeReported;
+        Transform flag;
+        SpriteRenderer flagFill;
 
         readonly List<Vector3> path = new List<Vector3>();
         readonly Dictionary<Soldier, int> slotIndex = new Dictionary<Soldier, int>();
@@ -139,9 +151,16 @@ namespace ToyKingdom
         {
             if (Members.Count == 0)
             {
+                if (!wipeReported)
+                {
+                    wipeReported = true;
+                    if (BattleManager.Instance != null) BattleManager.Instance.OnSquadWiped(this);
+                }
                 Cleanup();
                 return;
             }
+
+            UpdateMorale(dt);
 
             switch (Mode)
             {
@@ -151,8 +170,25 @@ namespace ToyKingdom
                 case SquadMode.Assault:
                     if (Gate == null || Gate.IsDestroyed)
                     {
-                        Gate = field.NearestGate(Center());
-                        if (Gate != null) Anchor = Gate.FrontPoint;
+                        var bm = BattleManager.Instance;
+                        if (bm != null && bm.Capturing)
+                        {
+                            // avlu savaşı: herkes kırılan kapının önünü tutar
+                            Gate = null;
+                            Anchor = bm.CapturePoint;
+                        }
+                        else
+                        {
+                            Gate = field.NearestGate(Center());
+                            if (Gate != null) Anchor = Gate.FrontPoint;
+                        }
+                    }
+                    break;
+                case SquadMode.Rout:
+                    if ((Center() - Anchor).magnitude < 0.7f)
+                    {
+                        if (Team == Team.Player) Mode = SquadMode.Rallied;
+                        else foreach (var m in Members.ToArray()) m.Vanish();
                     }
                     break;
                 case SquadMode.Climb:
@@ -257,6 +293,81 @@ namespace ToyKingdom
             float sum = 0f;
             foreach (var m in Members) sum += (SlotPosition(m) - m.Ground).magnitude;
             return sum / Members.Count;
+        }
+
+        // ------------------------------------------------------------------ moral
+
+        public void ChangeMorale(float amount)
+        {
+            if (Members.Count == 0 || Mode == SquadMode.Post) return;
+            Morale = Mathf.Clamp(Morale + amount, 0f, 100f);
+            if (Morale < 18f && !Routed) BeginRout();
+        }
+
+        void UpdateMorale(float dt)
+        {
+            if (Mode == SquadMode.Post) { UpdateFlag(); return; }
+            // savaş dışında moral yavaşça toparlanır; kaçanlar en fazla 60'a kadar
+            if (!Engaged) Morale = Mathf.Min(Routed ? 60f : 100f, Morale + dt * (Team == Team.Player ? 2f : 1f));
+            UpdateFlag();
+        }
+
+        void BeginRout()
+        {
+            DestroyLine();
+            RemoveLadder();
+            ClimbTarget = null;
+            Gate = null;
+            Mode = SquadMode.Rout;
+            Vector3 c = Center();
+            if (Team == Team.Player)
+            {
+                // sol taraftaki toplanma alanına geri çekil
+                Anchor = field.Constrain(new Vector3(BattleField.DeployMaxX - 1.2f, Mathf.Clamp(c.y, BattleField.Playable.yMin + 0.6f, BattleField.Playable.yMax - 0.6f), 0f));
+                Heading = new Vector2(-1f, 0f);
+            }
+            else
+            {
+                var g = field.NearestGate(c);
+                Anchor = g != null ? g.FrontPoint : field.DefenderHome(0);
+            }
+            if (BattleManager.Instance != null) BattleManager.Instance.OnSquadRouted(this);
+        }
+
+        /// <summary>Bölüğün üstünde moral rengini gösteren küçük bayrak.</summary>
+        void UpdateFlag()
+        {
+            bool show = Team == Team.Player || Morale < 99f;
+            if (!show || Members.Count == 0)
+            {
+                if (flag != null) flag.gameObject.SetActive(false);
+                return;
+            }
+            if (flag == null)
+            {
+                var art = GameArt.Instance;
+                if (art == null || art.circle == null) return;
+                flag = new GameObject("MoraleFlag").transform;
+                var rim = flag.gameObject.AddComponent<SpriteRenderer>();
+                rim.sprite = art.circle;
+                rim.color = Team == Team.Player ? new Color(1f, 1f, 1f, 0.95f) : new Color(0.15f, 0.05f, 0.05f, 0.9f);
+                rim.sortingOrder = 30400;
+                flag.localScale = Vector3.one * 0.2f;
+                var fill = new GameObject("Fill").AddComponent<SpriteRenderer>();
+                fill.transform.SetParent(flag, false);
+                fill.transform.localScale = Vector3.one * 0.72f;
+                fill.sprite = art.circle;
+                fill.sortingOrder = 30401;
+                flagFill = fill;
+            }
+            flag.gameObject.SetActive(true);
+            Vector3 top = Center();
+            float maxElev = 0f;
+            foreach (var m in Members) maxElev = Mathf.Max(maxElev, m.Elevation);
+            flag.position = top + Vector3.up * (1.3f + maxElev);
+            Color c = Morale >= 60f ? new Color(0.42f, 0.83f, 0.36f) : Morale >= 35f ? new Color(0.98f, 0.78f, 0.25f) : new Color(0.95f, 0.3f, 0.25f);
+            if (Routed) c = Color.Lerp(c, Color.white, Mathf.PingPong(Time.time * 3f, 1f));
+            flagFill.color = c;
         }
 
         public Vector3 Center()
@@ -374,6 +485,7 @@ namespace ToyKingdom
         public float SpeedFactor(Soldier s)
         {
             if (Mode == SquadMode.Guard) return 0.55f; // devriye yavaş yürür
+            if (Mode == SquadMode.Rout) return 1.15f;
             if (Mode != SquadMode.March) return 1f;
             float err = (SlotPosition(s) - s.Ground).magnitude;
             return err > 0.5f ? 1.35f : 1f;
@@ -390,10 +502,13 @@ namespace ToyKingdom
 
         public void NotifyCombat() => lastCombat = Time.time;
 
-        public void OnMemberDied(Soldier s)
+        public void OnMemberDied(Soldier s, bool killed = true)
         {
             Members.Remove(s);
+            if (!killed) return;
             lastCombat = Time.time;
+            // her kayıp morali düşürür: bölüğün yarısını kaybetmek yaklaşık -30
+            ChangeMorale(-60f / Mathf.Max(1, StartSize));
         }
 
         void UpdateLine()
@@ -420,6 +535,8 @@ namespace ToyKingdom
         {
             DestroyLine();
             RemoveLadder();
+            if (flag != null) Object.Destroy(flag.gameObject);
+            flag = null;
         }
     }
 }

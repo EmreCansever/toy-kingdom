@@ -202,8 +202,8 @@ namespace ToyKingdom
         void BuildingsColumn(CityState s, bool home)
         {
             Vector2 pos = home ? new Vector2(14f, -6f) : new Vector2(750f, -240f);
-            var list = home ? new[] { Building.Market, Building.Walls } : new[] { Building.Market, Building.Barracks, Building.Walls, Building.Temple };
-            var col = Column("Buildings", pos, new Vector2(home ? 1470f : 734f, home ? 300f : 576f));
+            var list = home ? new[] { Building.Market, Building.Barracks, Building.Walls } : new[] { Building.Market, Building.Barracks, Building.Walls, Building.Temple };
+            var col = Column("Buildings", pos, new Vector2(home ? 1470f : 734f, home ? 440f : 576f));
             Label(col, "Yatırımlar", 34f, UIFactory.BrownDark, new Vector2(16f, -8f), new Vector2(400f, 46f), TextAlignmentOptions.Left);
             for (int i = 0; i < list.Length; i++)
             {

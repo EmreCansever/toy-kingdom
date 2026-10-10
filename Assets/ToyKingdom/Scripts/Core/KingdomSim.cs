@@ -55,7 +55,7 @@ namespace ToyKingdom
             switch (b)
             {
                 case Building.Market: return "Gelir +%25 / seviye";
-                case Building.Barracks: return "Huzursuzluk azalır, halk isyanı zayıflar";
+                case Building.Barracks: return "+2 ordu kapasitesi, halkı yatıştırır";
                 case Building.Walls: return "Kapı +%25 sağlam, şehir daha güvenli";
                 default: return "Halkı en çok yatıştıran yapı";
             }

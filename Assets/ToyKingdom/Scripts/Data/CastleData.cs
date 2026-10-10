@@ -64,5 +64,20 @@ namespace ToyKingdom
         public int goldReward = 300;
         [Tooltip("Fethedildikten sonra dakikada ürettiği altın")]
         public int passiveIncomePerMinute = 5;
+
+        // ------------------------------------------------------------------ kuşatma derinliği (zorluktan türetilir)
+
+        /// <summary>Kapıya vurulunca yakındaki nöbetçiler kapıyı savunmaya koşar.</summary>
+        public bool RallyDefense => difficulty >= 2;
+        /// <summary>Kapı önünde kümelenenlerin üstüne kızgın yağ dökülür.</summary>
+        public bool BoilingOil => difficulty >= 3;
+        /// <summary>Kapı kırılınca avlu savaşı başlar: kapı önü tutulmalı.</summary>
+        public bool Courtyard => difficulty >= 3;
+        /// <summary>Takviyeler oyuncunun okçularına akın eder.</summary>
+        public bool Sortie => difficulty >= 4 && reinforcement != null;
+        /// <summary>Avlu savaşında son direniş için çıkan bölük sayısı.</summary>
+        public int FinalStandSquads => Mathf.Clamp(difficulty - 2, 0, 3);
+        /// <summary>Kapı önünün kaç saniye tutulması gerektiği.</summary>
+        public float CaptureTime => 5f + difficulty;
     }
 }

@@ -144,10 +144,19 @@ namespace ToyKingdom
             timerText.text = (s / 60) + ":" + (s % 60).ToString("00");
             timerText.color = s <= 20 ? UIFactory.Hex("FF6B5E") : Color.white;
 
-            float hp = 1f;
-            foreach (var g in bm.Field.Gates) if (g != null) hp = Mathf.Min(hp, g.Normalized);
-            UIFactory.SetBar(gateFill, hp);
-            gateText.text = bm.Field.Gates.Count > 1 ? "Kapılar" : "Kapı";
+            if (bm.Capturing)
+            {
+                UIFactory.SetBar(gateFill, bm.CaptureProgress);
+                gateFill.color = UIFactory.Blue;
+                gateText.text = "Kapıyı tut  %" + Mathf.RoundToInt(bm.CaptureProgress * 100f);
+            }
+            else
+            {
+                float hp = 1f;
+                foreach (var g in bm.Field.Gates) if (g != null) hp = Mathf.Min(hp, g.Normalized);
+                UIFactory.SetBar(gateFill, hp);
+                gateText.text = bm.Field.Gates.Count > 1 ? "Kapılar" : "Kapı";
+            }
 
             if (hintTimer > 0f)
             {

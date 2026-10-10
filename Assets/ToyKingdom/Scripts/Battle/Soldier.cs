@@ -188,6 +188,14 @@ namespace ToyKingdom
 
             attackCooldown -= Time.deltaTime;
 
+            // Bozguna uğrayan bölük savaşmaz, geri kaçar
+            if (Squad != null && Squad.Routed)
+            {
+                UpdateRouted();
+                SyncTransform();
+                return;
+            }
+
             // Saldırı animasyonu bitene kadar yerinde kal
             if (anim.Current == AnimType.Attack && !anim.Finished) return;
 
@@ -393,6 +401,34 @@ namespace ToyKingdom
             MoveTowards(Squad.SlotPosition(this), 0.06f);
         }
 
+        // ------------------------------------------------------------------ bozgun
+
+        void UpdateRouted()
+        {
+            if (elevation > 0f)
+            {
+                // kuleden/surdan aşağı in
+                climbing = false;
+                elevation = Mathf.MoveTowards(elevation, 0f, Time.deltaTime * 1.6f);
+                if (elevation <= 0f) ground = Field.Constrain(ground);
+                anim.Play(AnimType.Walk);
+                return;
+            }
+            MoveTowards(Squad.SlotPosition(this), 0.08f);
+        }
+
+        /// <summary>Savaş alanından sessizce çekilir (kaçan savunucular kaleye girer).</summary>
+        public void Vanish()
+        {
+            if (!IsAlive) return;
+            Health = 0f;
+            All.Remove(this);
+            if (Squad != null) Squad.OnMemberDied(this, false);
+            Destroy(gameObject);
+        }
+
+        float Dmg => damageScale * (Squad != null ? Squad.MoraleDamage : 1f);
+
         // ------------------------------------------------------------------ saldırı
 
         void StartAttack(Soldier enemy, CastleGate gate, Tower tower, bool ranged)
@@ -413,19 +449,19 @@ namespace ToyKingdom
             if (pendingSoldier != null && pendingSoldier.IsAlive)
             {
                 if (pendingRanged)
-                    Projectile.AtSoldier(from, pendingSoldier, Data.damage * damageScale, ArrowSpeed, 0.6f);
+                    Projectile.AtSoldier(from, pendingSoldier, Data.damage * Dmg, ArrowSpeed, 0.6f);
                 else if ((pendingSoldier.ground - ground).magnitude <= Data.attackRange + Radius + 0.25f)
-                    pendingSoldier.TakeDamage(Data.damage * damageScale, DamageType.Melee);
+                    pendingSoldier.TakeDamage(Data.damage * Dmg, DamageType.Melee);
             }
             else if (pendingTower != null && !pendingTower.IsDestroyed)
             {
-                if (pendingRanged) Projectile.AtTower(from, pendingTower, Data.towerDamage * damageScale, ArrowSpeed, 0.7f);
-                else pendingTower.TakeDamage(Data.towerDamage * damageScale);
+                if (pendingRanged) Projectile.AtTower(from, pendingTower, Data.towerDamage * Dmg, ArrowSpeed, 0.7f);
+                else pendingTower.TakeDamage(Data.towerDamage * Dmg);
             }
             else if (pendingGate != null && !pendingGate.IsDestroyed)
             {
-                if (pendingRanged) Projectile.AtGate(from, pendingGate, Data.gateDamage * damageScale, ArrowSpeed, 0.7f);
-                else pendingGate.TakeDamage(Data.gateDamage * damageScale);
+                if (pendingRanged) Projectile.AtGate(from, pendingGate, Data.gateDamage * Dmg, ArrowSpeed, 0.7f);
+                else pendingGate.TakeDamage(Data.gateDamage * Dmg);
             }
             pendingSoldier = null;
             pendingGate = null;

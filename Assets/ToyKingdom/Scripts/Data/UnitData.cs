@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ToyKingdom
 {
-    public enum DamageType { Melee, Arrow }
+    public enum DamageType { Melee, Arrow, Fire }
 
     public enum UnitRole
     {
@@ -53,6 +53,7 @@ namespace ToyKingdom
         [Range(0f, 0.9f)] public float arrowArmor = 0f;
 
         public bool IsRanged => role == UnitRole.Ranged;
-        public float Armor(DamageType type) => type == DamageType.Arrow ? arrowArmor : meleeArmor;
+        public float Armor(DamageType type) =>
+            type == DamageType.Arrow ? arrowArmor : type == DamageType.Fire ? arrowArmor * 0.7f : meleeArmor;
     }
 }

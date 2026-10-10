@@ -347,6 +347,20 @@ namespace ToyKingdom
 
         readonly List<Vector3> usedPosts = new List<Vector3>();
 
+        /// <summary>Bir noktanın çevresinde dağınık nöbet noktaları (toplanma, akın).</summary>
+        public List<Vector3> PostsNear(Vector3 center, int count, float radius)
+        {
+            var list = new List<Vector3>();
+            Vector2 g = Iso.ToGrid(center);
+            for (int i = 0; i < count; i++)
+            {
+                float a = i * 2.39996f + (float)postRandom.NextDouble() * 0.6f;
+                float r = radius * Mathf.Sqrt((i + 0.5f) / count);
+                list.Add(Constrain(Iso.Surface(g.x + Mathf.Cos(a) * r, g.y + Mathf.Sin(a) * r)));
+            }
+            return list;
+        }
+
         void ZoneShape(int zone, bool nearWalls, out Vector2 center, out Vector2 extent)
         {
             float gvMid = (cv0 + cv1) * 0.5f, guMid = (cu0 + cu1) * 0.5f;

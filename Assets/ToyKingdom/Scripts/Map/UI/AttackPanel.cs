@@ -121,6 +121,15 @@ namespace ToyKingdom
             var flat = header.transform.Find("Flat");
             if (flat != null) flat.GetComponent<Image>().color = UIFactory.Darken(header.color, 0.88f);
             description.text = c != null ? c.description : "";
+            if (c != null)
+            {
+                var tags = new List<string>();
+                if (c.RallyDefense) tags.Add("Hızlı savunma");
+                if (c.BoilingOil) tags.Add("Kızgın yağ");
+                if (c.Courtyard) tags.Add("Son direniş: " + c.FinalStandSquads + " bölük");
+                if (c.Sortie) tags.Add("Okçulara akın");
+                if (tags.Count > 0) description.text += "\n<color=#B8382F><b>" + string.Join("  ·  ", tags) + "</b></color>";
+            }
 
             if (c != null)
             {

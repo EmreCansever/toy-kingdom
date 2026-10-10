@@ -17,6 +17,8 @@ namespace ToyKingdom
 
         public event Action<CastleGate> Destroyed;
         public event Action HealthChanged;
+        /// <summary>Kapı hasar aldı (kapı, hasar).</summary>
+        public event Action<CastleGate, float> Damaged;
 
         SpriteRenderer sr;
         Transform barFill;
@@ -69,6 +71,7 @@ namespace ToyKingdom
                 barFill.localPosition = new Vector3(-0.4f + 0.4f * Normalized, 0f, 0f);
             }
             HealthChanged?.Invoke();
+            Damaged?.Invoke(this, amount);
             if (IsDestroyed)
             {
                 if (sr != null) sr.color = new Color(0.45f, 0.4f, 0.4f);
