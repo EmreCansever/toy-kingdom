@@ -18,37 +18,44 @@ namespace ToyKingdom
 
         public static UnitCardUI Create(Transform parent, UnitData data)
         {
-            var outer = UIFactory.Panel(parent, "Card_" + data.unitId, UIFactory.BrownDark);
-            outer.rectTransform.sizeDelta = new Vector2(160f, 178f);
+            var outer = UIFactory.Rounded(parent, "Card_" + data.unitId, UIFactory.Darken(UIFactory.Border, 0.8f), 22f);
+            outer.rectTransform.sizeDelta = new Vector2(160f, 182f);
             var card = outer.gameObject.AddComponent<UnitCardUI>();
             card.Data = data;
             card.frame = outer;
             card.group = outer.gameObject.AddComponent<CanvasGroup>();
 
-            var sel = UIFactory.Panel(outer.transform, "Selected", UIFactory.Gold);
-            UIFactory.Stretch(sel.rectTransform, -6f);
-            sel.transform.SetAsFirstSibling();
+            var sel = UIFactory.Rounded(outer.transform, "Selected", UIFactory.Gold, 26f);
+            sel.sprite = UIFactory.RingSprite;
+            UIFactory.Stretch(sel.rectTransform, -7f);
+            sel.raycastTarget = false;
             card.selected = sel.gameObject;
 
-            var inner = UIFactory.Panel(outer.transform, "Inner", UIFactory.Parchment);
-            UIFactory.Stretch(inner.rectTransform, 5f);
+            var inner = UIFactory.Rounded(outer.transform, "Inner", UIFactory.Parchment, 19f, true);
+            UIFactory.Stretch(inner.rectTransform, 3f, 6f, 3f, 3f);
 
             card.icon = UIFactory.Panel(inner.transform, "Icon", data.tint, data.icon);
             card.icon.preserveAspect = true;
-            UIFactory.Place(card.icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 18f), new Vector2(140f, 112f));
+            card.icon.raycastTarget = false;
+            UIFactory.Place(card.icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 20f), new Vector2(140f, 112f));
 
-            var name = UIFactory.Text(inner.transform, "Name", data.displayName, 23f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
-            UIFactory.Place(name.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 22f), new Vector2(150f, 30f));
-            var size = UIFactory.Text(inner.transform, "Size", data.squadSize + " asker", 18f, UIFactory.Brown, TextAlignmentOptions.Center);
-            UIFactory.Place(size.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 3f), new Vector2(150f, 22f));
+            var name = UIFactory.Text(inner.transform, "Name", data.displayName, 22f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
+            UIFactory.Place(name.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(148f, 30f));
+            name.enableAutoSizing = true; name.fontSizeMin = 15f; name.fontSizeMax = 22f;
+            var size = UIFactory.Text(inner.transform, "Size", data.squadSize + " asker", 17f, UIFactory.Muted, TextAlignmentOptions.Center);
+            UIFactory.Place(size.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 5f), new Vector2(148f, 22f));
 
-            var badge = UIFactory.Panel(inner.transform, "Cost", UIFactory.Hex("534AB7"));
-            UIFactory.Place(badge.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(4f, -4f), new Vector2(44f, 44f));
-            var cost = UIFactory.Text(badge.transform, "Value", data.cost.ToString(), 26f, Color.white, TextAlignmentOptions.Center, true);
+            var badge = UIFactory.Rounded(inner.transform, "Cost", UIFactory.Purple, 20f, true);
+            UIFactory.Place(badge.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(6f, -6f), new Vector2(40f, 40f));
+            badge.raycastTarget = false;
+            var cost = UIFactory.Text(badge.transform, "Value", data.cost.ToString(), 24f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(cost.rectTransform);
 
-            card.countText = UIFactory.Text(inner.transform, "Count", "x0", 26f, UIFactory.BrownDark, TextAlignmentOptions.Right, true);
-            UIFactory.Place(card.countText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-8f, -4f), new Vector2(90f, 40f));
+            var countBg = UIFactory.Rounded(inner.transform, "CountBg", UIFactory.Slate, 16f);
+            UIFactory.Place(countBg.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-6f, -8f), new Vector2(54f, 34f));
+            countBg.raycastTarget = false;
+            card.countText = UIFactory.Text(countBg.transform, "Count", "x0", 21f, Color.white, TextAlignmentOptions.Center, true);
+            UIFactory.Stretch(card.countText.rectTransform);
 
             card.button = outer.gameObject.AddComponent<Button>();
             card.button.targetGraphic = inner;
@@ -62,7 +69,9 @@ namespace ToyKingdom
 
         public void SetSelected(bool on)
         {
-            if (selected != null) selected.SetActive(on);
+            if (selected == null) return;
+            if (on && !selected.activeSelf) FX.Punch(transform, 0.08f, 0.22f);
+            selected.SetActive(on);
         }
 
         void Update()

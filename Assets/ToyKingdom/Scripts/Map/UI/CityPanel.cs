@@ -10,6 +10,8 @@ namespace ToyKingdom
     {
         GameObject root;
         RectTransform content;
+        TMP_Text title;
+        TMP_Text headerInfo;
         MapCity city;
         Action changed;
         Action<string> toast;
@@ -28,13 +30,16 @@ namespace ToyKingdom
             p.changed = onChanged;
             p.toast = toast;
 
-            var box = UIFactory.Frame(dim.transform, "Box", new Vector2(1560f, 920f));
-            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(1560f, 920f));
+            var box = UIFactory.Window(dim.transform, "Box", new Vector2(1560f, 960f), "", UIFactory.Blue, out p.title);
+            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1560f, 960f));
+            var header = box.transform.Find("Border/Header");
+            p.headerInfo = UIFactory.Text(header, "Info", "", 26f, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Right);
+            UIFactory.Place(p.headerInfo.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-220f, 0f), new Vector2(700f, 60f));
             p.content = UIFactory.Rect("Content", box.transform);
-            UIFactory.Stretch(p.content, 16f);
+            UIFactory.Stretch(p.content, 16f, 16f, 16f, 112f);
 
-            var close = UIFactory.Button(box.transform, "Close", "Kapat", UIFactory.Brown, 36f);
-            UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-26f, -26f), new Vector2(200f, 80f));
+            var close = UIFactory.Button(header, "Close", "Kapat", UIFactory.Hex("F4EBDD"), 30f);
+            UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 2f), new Vector2(170f, 68f));
             close.onClick.AddListener(p.Hide);
 
             p.Hide();
@@ -73,17 +78,18 @@ namespace ToyKingdom
             bool home = city.isHomeCity;
             int income = city.Income;
 
-            Label(content, city.DisplayName, 56f, UIFactory.BrownDark, new Vector2(30f, -20f), new Vector2(1100f, 70f), TextAlignmentOptions.Left);
-            Label(content, "Gelir: dakikada " + income + " altın" + (home ? " · Krallığın kalbi" : ""), 32f, UIFactory.Brown,
-                new Vector2(30f, -92f), new Vector2(1100f, 44f), TextAlignmentOptions.Left);
+            title.text = city.DisplayName;
+            headerInfo.text = (home ? "Başkent  ·  " : "") + "+" + income + " altın / dakika";
 
             if (!home)
             {
                 float rate = KingdomSim.UnrestRate(s);
-                Label(content, "Huzursuzluk", 30f, UIFactory.BrownDark, new Vector2(30f, -150f), new Vector2(250f, 40f), TextAlignmentOptions.Left);
-                Bar(content, s.unrest / 100f, s.unrest >= 70f ? Bad : s.unrest >= 40f ? UIFactory.Gold : Good, new Vector2(280f, -156f), new Vector2(520f, 30f));
-                Label(content, Mathf.RoundToInt(s.unrest) + " " + Trend(rate, true), 30f, s.unrest >= 70f ? Bad : UIFactory.BrownDark,
-                    new Vector2(820f, -150f), new Vector2(400f, 40f), TextAlignmentOptions.Left);
+                var row = UIFactory.Rounded(content, "Unrest", UIFactory.ParchmentDark, 18f);
+                UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(14f, -6f), new Vector2(1470f, 74f));
+                Label(row.transform, "Halkın huzursuzluğu", 28f, UIFactory.BrownDark, new Vector2(24f, -16f), new Vector2(330f, 44f), TextAlignmentOptions.Left);
+                Bar(row.transform, s.unrest / 100f, s.unrest >= 70f ? Bad : s.unrest >= 40f ? UIFactory.Gold : Good, new Vector2(370f, -22f), new Vector2(760f, 30f));
+                Label(row.transform, Mathf.RoundToInt(s.unrest) + "  " + Trend(rate, true), 28f, s.unrest >= 70f ? Bad : UIFactory.BrownDark,
+                    new Vector2(1150f, -16f), new Vector2(300f, 44f), TextAlignmentOptions.Left);
                 GovernorColumn(s);
                 TaxRow(s);
             }
@@ -92,7 +98,7 @@ namespace ToyKingdom
 
         void GovernorColumn(CityState s)
         {
-            var col = Column("Governor", new Vector2(30f, -215f), new Vector2(700f, 640f));
+            var col = Column("Governor", new Vector2(14f, -96f), new Vector2(720f, 720f));
             Label(col, "Vali", 40f, UIFactory.BrownDark, new Vector2(16f, -10f), new Vector2(660f, 50f), TextAlignmentOptions.Left);
 
             if (!s.hasGovernor)
@@ -103,9 +109,9 @@ namespace ToyKingdom
                 for (int i = 0; i < cands.Count; i++)
                 {
                     var g = cands[i];
-                    float y = -145f - i * 160f;
-                    var row = UIFactory.Panel(col, "Cand" + i, UIFactory.ParchmentDark);
-                    UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(660f, 145f));
+                    float y = -150f - i * 182f;
+                    var row = UIFactory.Rounded(col, "Cand" + i, UIFactory.Parchment, 16f);
+                    UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(688f, 168f));
                     Label(row.transform, g.name + "  " + Stars(g.power), 32f, UIFactory.BrownDark, new Vector2(16f, -8f), new Vector2(420f, 44f), TextAlignmentOptions.Left);
                     Label(row.transform, KingdomSim.TraitName(g.trait) + ": " + KingdomSim.TraitInfo(g.trait), 25f, UIFactory.Ink,
                         new Vector2(16f, -54f), new Vector2(430f, 40f), TextAlignmentOptions.Left);
@@ -173,7 +179,7 @@ namespace ToyKingdom
 
         void TaxRow(CityState s)
         {
-            var col = Column("Tax", new Vector2(760f, -215f), new Vector2(740f, 130f));
+            var col = Column("Tax", new Vector2(750f, -96f), new Vector2(734f, 130f));
             Label(col, "Vergi", 34f, UIFactory.BrownDark, new Vector2(16f, -10f), new Vector2(200f, 46f), TextAlignmentOptions.Left);
             Label(col, s.tax == TaxLevel.Low ? "Gelir %70 · halk sakinleşir" : s.tax == TaxLevel.High ? "Gelir %140 · halk öfkelenir" : "Gelir %100",
                 22f, UIFactory.Ink, new Vector2(16f, -62f), new Vector2(220f, 60f), TextAlignmentOptions.TopLeft);
@@ -182,7 +188,7 @@ namespace ToyKingdom
             {
                 var lv = levels[i];
                 bool on = s.tax == lv;
-                var b = Btn(col, KingdomSim.TaxName(lv), on ? UIFactory.Brown : new Color(0.62f, 0.52f, 0.38f),
+                var b = Btn(col, KingdomSim.TaxName(lv), on ? UIFactory.Blue : UIFactory.Hex("F4EBDD"),
                     new Vector2(250f + i * 160f, -22f), new Vector2(150f, 86f), 28f);
                 b.onClick.AddListener(() =>
                 {
@@ -195,17 +201,17 @@ namespace ToyKingdom
 
         void BuildingsColumn(CityState s, bool home)
         {
-            Vector2 pos = home ? new Vector2(30f, -160f) : new Vector2(760f, -360f);
+            Vector2 pos = home ? new Vector2(14f, -6f) : new Vector2(750f, -240f);
             var list = home ? new[] { Building.Market, Building.Walls } : new[] { Building.Market, Building.Barracks, Building.Walls, Building.Temple };
-            var col = Column("Buildings", pos, new Vector2(home ? 1440f : 740f, home ? 400f : 495f));
+            var col = Column("Buildings", pos, new Vector2(home ? 1470f : 734f, home ? 300f : 576f));
             Label(col, "Yatırımlar", 34f, UIFactory.BrownDark, new Vector2(16f, -8f), new Vector2(400f, 46f), TextAlignmentOptions.Left);
             for (int i = 0; i < list.Length; i++)
             {
                 var b = list[i];
                 int lvl = s.Level(b);
-                float y = -62f - i * 106f;
-                var row = UIFactory.Panel(col, b.ToString(), UIFactory.ParchmentDark);
-                UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(home ? 1408f : 708f, 96f));
+                float y = -64f - i * 124f;
+                var row = UIFactory.Rounded(col, b.ToString(), UIFactory.Parchment, 16f);
+                UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(home ? 1438f : 702f, 112f));
                 Label(row.transform, KingdomSim.BuildingName(b) + "  " + Pips(lvl), 30f, UIFactory.BrownDark, new Vector2(14f, -6f), new Vector2(420f, 44f), TextAlignmentOptions.Left);
                 Label(row.transform, KingdomSim.BuildingInfo(b), 25f, UIFactory.Ink, new Vector2(14f, -52f), new Vector2(470f, 36f), TextAlignmentOptions.Left);
                 if (lvl >= KingdomSim.MaxLevel)
@@ -214,7 +220,7 @@ namespace ToyKingdom
                     continue;
                 }
                 int cost = KingdomSim.BuildingCost(b, lvl);
-                var btn = Btn(row.transform, "Yükselt\n" + cost, UIFactory.Gold, new Vector2(-10f, 0f), new Vector2(180f, 80f), 26f, true);
+                var btn = Btn(row.transform, "Yükselt\n" + cost, UIFactory.Gold, new Vector2(-14f, 0f), new Vector2(180f, 84f), 26f, true);
                 btn.interactable = SaveSystem.Data.gold >= cost;
                 var building = b;
                 btn.onClick.AddListener(() =>
@@ -255,7 +261,7 @@ namespace ToyKingdom
 
         RectTransform Column(string name, Vector2 pos, Vector2 size)
         {
-            var bg = UIFactory.Panel(content, name, new Color(1f, 1f, 1f, 0.25f));
+            var bg = UIFactory.Rounded(content, name, UIFactory.ParchmentDark, 20f);
             UIFactory.Place(bg.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
             return bg.rectTransform;
         }
@@ -263,7 +269,7 @@ namespace ToyKingdom
         static TMP_Text Label(Transform parent, string text, float size, Color color, Vector2 pos, Vector2 box,
             TextAlignmentOptions align, bool rightAnchor = false)
         {
-            var t = UIFactory.Text(parent, "Text", text, size, color, align, true);
+            var t = UIFactory.Text(parent, "Text", text, size, color, align, size >= 27f);
             var a = rightAnchor ? new Vector2(1f, 1f) : new Vector2(0f, 1f);
             UIFactory.Place(t.rectTransform, a, a, pos, box);
             return t;
@@ -279,14 +285,9 @@ namespace ToyKingdom
 
         static void Bar(Transform parent, float value, Color color, Vector2 pos, Vector2 size)
         {
-            var bg = UIFactory.Panel(parent, "Bar", new Color(0.25f, 0.16f, 0.08f, 0.6f));
-            UIFactory.Place(bg.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
-            var fill = UIFactory.Panel(bg.transform, "Fill", color);
-            var rt = fill.rectTransform;
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = new Vector2(Mathf.Clamp01(value), 1f);
-            rt.offsetMin = new Vector2(3f, 3f);
-            rt.offsetMax = new Vector2(-3f, -3f);
+            var fill = UIFactory.Bar(parent, "Bar", color, pos, size, new Vector2(0f, 1f));
+            ((RectTransform)fill.transform.parent).pivot = new Vector2(0f, 1f);
+            UIFactory.SetBar(fill, value);
         }
     }
 }

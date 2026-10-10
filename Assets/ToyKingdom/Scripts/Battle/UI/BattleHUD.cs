@@ -19,6 +19,7 @@ namespace ToyKingdom
         GameObject resultPanel;
         TMP_Text resultTitle;
         TMP_Text resultDetail;
+        Image resultHeader;
         readonly List<UnitCardUI> cards = new List<UnitCardUI>();
 
         void Start()
@@ -51,29 +52,24 @@ namespace ToyKingdom
             var t = canvas.transform;
 
             // üst orta: kale adı ve kapı canı
-            var top = UIFactory.Frame(t, "Top", new Vector2(640f, 110f));
-            UIFactory.Place(top.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), new Vector2(640f, 110f));
-            var name = UIFactory.Text(top.transform, "Name", bm.Castle.displayName, 40f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
-            UIFactory.Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(600f, 50f));
-            var barBg = UIFactory.Panel(top.transform, "GateBar", UIFactory.Ink);
-            UIFactory.Place(barBg.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(560f, 30f));
-            var white = GameArt.Instance != null ? GameArt.Instance.white : null;
-            gateFill = UIFactory.Panel(barBg.transform, "Fill", UIFactory.Red, white);
-            UIFactory.Stretch(gateFill.rectTransform, 3f);
-            gateFill.type = Image.Type.Filled;
-            gateFill.fillMethod = Image.FillMethod.Horizontal;
-            gateText = UIFactory.Text(barBg.transform, "Label", "Kapı", 22f, Color.white, TextAlignmentOptions.Center, true);
+            var top = UIFactory.Chip(t, "Top", new Vector2(620f, 108f), 26f);
+            UIFactory.Place(top.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(620f, 108f));
+            var name = UIFactory.Text(top.transform, "Name", bm.Castle.displayName, 32f, Color.white, TextAlignmentOptions.Center, true);
+            UIFactory.Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(580f, 46f));
+            gateFill = UIFactory.Bar(top.transform, "GateBar", UIFactory.Red, new Vector2(0f, 16f), new Vector2(560f, 34f), new Vector2(0.5f, 0f));
+            gateText = UIFactory.Text(gateFill.transform.parent, "Label", "Kapı", 20f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(gateText.rectTransform);
+            if (UIFactory.LabelShadow != null) gateText.fontSharedMaterial = UIFactory.LabelShadow;
 
             // sağ üst: süre
-            var timerBox = UIFactory.Frame(t, "Timer", new Vector2(180f, 90f));
-            UIFactory.Place(timerBox.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-20f, -12f), new Vector2(180f, 90f));
-            timerText = UIFactory.Text(timerBox.transform, "Value", "2:30", 50f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
+            var timerBox = UIFactory.Chip(t, "Timer", new Vector2(170f, 84f));
+            UIFactory.Place(timerBox.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -16f), new Vector2(170f, 84f));
+            timerText = UIFactory.Text(timerBox.transform, "Value", "2:30", 44f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(timerText.rectTransform);
 
             // sol üst: geri çekil
-            var retreat = UIFactory.Button(t, "Retreat", "Geri çekil", UIFactory.Brown, 30f);
-            UIFactory.Place((RectTransform)retreat.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(20f, -12f), new Vector2(230f, 80f));
+            var retreat = UIFactory.Button(t, "Retreat", "Geri çekil", UIFactory.Hex("8C8577"), 28f);
+            UIFactory.Place((RectTransform)retreat.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -16f), new Vector2(220f, 80f));
             retreat.onClick.AddListener(bm.Retreat);
 
             // alt: kartlar
@@ -90,18 +86,14 @@ namespace ToyKingdom
                     if (u != null) cards.Add(UnitCardUI.Create(row, u));
 
             // sağ alt: komuta puanı
-            var cmdBox = UIFactory.Frame(t, "Command", new Vector2(340f, 120f));
-            UIFactory.Place(cmdBox.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-20f, 10f), new Vector2(340f, 120f));
-            var cmdLabel = UIFactory.Text(cmdBox.transform, "Label", "Komuta puanı", 26f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
+            var cmdBox = UIFactory.Chip(t, "Command", new Vector2(340f, 116f), 26f);
+            UIFactory.Place(cmdBox.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 16f), new Vector2(340f, 116f));
+            var cmdLabel = UIFactory.Text(cmdBox.transform, "Label", "Komuta puanı", 24f, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center, true);
             UIFactory.Place(cmdLabel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(320f, 36f));
-            var cmdBg = UIFactory.Panel(cmdBox.transform, "Bar", UIFactory.Ink);
-            UIFactory.Place(cmdBg.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(300f, 50f));
-            commandFill = UIFactory.Panel(cmdBg.transform, "Fill", UIFactory.Hex("7F77DD"), white);
-            UIFactory.Stretch(commandFill.rectTransform, 4f);
-            commandFill.type = Image.Type.Filled;
-            commandFill.fillMethod = Image.FillMethod.Horizontal;
-            commandText = UIFactory.Text(cmdBg.transform, "Value", "0/10", 32f, Color.white, TextAlignmentOptions.Center, true);
+            commandFill = UIFactory.Bar(cmdBox.transform, "Bar", UIFactory.Purple, new Vector2(0f, 16f), new Vector2(296f, 46f), new Vector2(0.5f, 0f));
+            commandText = UIFactory.Text(commandFill.transform.parent, "Value", "0/10", 28f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(commandText.rectTransform);
+            if (UIFactory.LabelShadow != null) commandText.fontSharedMaterial = UIFactory.LabelShadow;
 
             // ipucu
             hintText = UIFactory.Text(t, "Hint", "", 32f, Color.white, TextAlignmentOptions.Center, true);
@@ -112,12 +104,13 @@ namespace ToyKingdom
             // sonuç paneli
             var dim = UIFactory.Panel(t, "Result", UIFactory.Dim);
             UIFactory.Stretch(dim.rectTransform);
-            var box = UIFactory.Frame(dim.transform, "Box", new Vector2(820f, 520f));
-            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820f, 520f));
-            resultTitle = UIFactory.Text(box.transform, "Title", "", 56f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
-            UIFactory.Place(resultTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(760f, 90f));
-            resultDetail = UIFactory.Text(box.transform, "Detail", "", 36f, UIFactory.Brown, TextAlignmentOptions.Center);
-            UIFactory.Place(resultDetail.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(760f, 200f));
+            var box = UIFactory.Window(dim.transform, "Box", new Vector2(820f, 540f), "", UIFactory.Blue, out resultTitle);
+            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820f, 540f));
+            resultHeader = box.transform.Find("Border/Header").GetComponent<Image>();
+            resultTitle.alignment = TextAlignmentOptions.Center;
+            UIFactory.Stretch(resultTitle.rectTransform, 30f, 0f, 30f, 0f);
+            resultDetail = UIFactory.Text(box.transform, "Detail", "", 34f, UIFactory.BrownDark, TextAlignmentOptions.Center);
+            UIFactory.Place(resultDetail.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 20f), new Vector2(740f, 200f));
             var back = UIFactory.Button(box.transform, "Back", "Haritaya dön", UIFactory.Blue, 36f);
             UIFactory.Place((RectTransform)back.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(400f, 100f));
             back.onClick.AddListener(bm.ReturnToMap);
@@ -145,15 +138,15 @@ namespace ToyKingdom
             if (bm.Command != null)
             {
                 commandText.text = Mathf.FloorToInt(bm.Command.Current) + "/" + bm.Command.Max;
-                commandFill.fillAmount = bm.Command.Current / bm.Command.Max;
+                UIFactory.SetBar(commandFill, bm.Command.Current / bm.Command.Max);
             }
             int s = Mathf.CeilToInt(bm.TimeLeft);
             timerText.text = (s / 60) + ":" + (s % 60).ToString("00");
-            timerText.color = s <= 20 ? UIFactory.Red : UIFactory.BrownDark;
+            timerText.color = s <= 20 ? UIFactory.Hex("FF6B5E") : Color.white;
 
             float hp = 1f;
             foreach (var g in bm.Field.Gates) if (g != null) hp = Mathf.Min(hp, g.Normalized);
-            gateFill.fillAmount = hp;
+            UIFactory.SetBar(gateFill, hp);
             gateText.text = bm.Field.Gates.Count > 1 ? "Kapılar" : "Kapı";
 
             if (hintTimer > 0f)
@@ -167,6 +160,12 @@ namespace ToyKingdom
         {
             hintText.text = "";
             resultPanel.SetActive(true);
+            if (resultHeader != null)
+            {
+                resultHeader.color = r.victory ? UIFactory.Green : UIFactory.Red;
+                var flat = resultHeader.transform.Find("Flat");
+                if (flat != null) flat.GetComponent<Image>().color = UIFactory.Darken(resultHeader.color, 0.88f);
+            }
             if (r.victory)
             {
                 resultTitle.text = r.cityName + " fethedildi!";

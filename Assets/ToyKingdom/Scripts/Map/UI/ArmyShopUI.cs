@@ -22,22 +22,22 @@ namespace ToyKingdom
             shop.root = dim.gameObject;
             shop.ui = ui;
 
-            var box = UIFactory.Frame(dim.transform, "Box", new Vector2(1240f, 1010f));
-            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 1010f));
-            var title = UIFactory.Text(box.transform, "Title", "Ordu", 58f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
-            UIFactory.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(600f, 70f));
-            var sub = UIFactory.Text(box.transform, "Sub", "Bölükler savaşta rota çizerek gönderilir. Yarısı hayatta kalan bölük geri döner.", 26f, UIFactory.Brown, TextAlignmentOptions.Center);
-            sub.enableAutoSizing = true; sub.fontSizeMin = 18f; sub.fontSizeMax = 26f;
-            UIFactory.Place(sub.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-40f, -92f), new Vector2(860f, 40f));
+            var box = UIFactory.Window(dim.transform, "Box", new Vector2(1240f, 1020f), "Ordu", UIFactory.Blue, out _);
+            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 1020f));
+            var header = box.transform.Find("Border/Header");
+            var sub = UIFactory.Text(header, "Sub", "Bölükleri savaşta rota çizerek gönderirsin. Yarısı hayatta kalan bölük geri döner.", 22f,
+                new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Left);
+            UIFactory.Place(sub.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(170f, 0f), new Vector2(760f, 60f));
+            sub.enableAutoSizing = true; sub.fontSizeMin = 16f; sub.fontSizeMax = 22f;
 
-            var close = UIFactory.Button(box.transform, "Close", "Kapat", UIFactory.Brown, 34f);
-            UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(180f, 76f));
+            var close = UIFactory.Button(header, "Close", "Kapat", UIFactory.Hex("F4EBDD"), 30f);
+            UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 2f), new Vector2(170f, 68f));
             close.onClick.AddListener(shop.Close);
 
             var list = UIFactory.Rect("Rows", box.transform);
-            UIFactory.Place(list, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -145f), new Vector2(1160f, 840f));
+            UIFactory.Place(list, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -124f), new Vector2(1160f, 860f));
             var vlg = list.gameObject.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 12f;
+            vlg.spacing = 14f;
             vlg.childAlignment = TextAnchor.UpperCenter;
             vlg.childControlWidth = vlg.childControlHeight = false;
             vlg.childForceExpandWidth = vlg.childForceExpandHeight = false;

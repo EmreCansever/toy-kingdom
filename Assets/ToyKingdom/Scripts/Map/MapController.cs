@@ -27,6 +27,7 @@ namespace ToyKingdom
 
             var offlineReport = Simulate(false);
             RefreshAll();
+            CityNameplates.Create(cities);
 
             MapCity start = Find(SaveSystem.Data.heroCityId);
             if (start == null) start = Array.Find(cities, c => c.isHomeCity);
@@ -221,6 +222,13 @@ namespace ToyKingdom
         {
             foreach (var c in cities) c.RefreshVisual(CanAttack(c));
             if (ui != null) ui.RefreshTop();
+        }
+
+        public int IncomePerMinute()
+        {
+            int n = 0;
+            if (cities != null) foreach (var c in cities) if (c.IsConquered) n += c.Income;
+            return n;
         }
 
         public int OwnedCount()

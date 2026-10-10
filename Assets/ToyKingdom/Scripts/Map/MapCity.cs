@@ -13,6 +13,8 @@ namespace ToyKingdom
         public Vector3[] points;
     }
 
+    public enum CityStatus { Home, Owned, Warning, Attackable, Rebel, Far }
+
     /// <summary>Haritadaki bir şehir. Kulelerin rengi sahibine göre değişir.</summary>
     public class MapCity : MonoBehaviour
     {
@@ -38,6 +40,11 @@ namespace ToyKingdom
         public int BaseIncome => castle != null && !isHomeCity ? castle.passiveIncomePerMinute : KingdomSim.HomeBaseIncome;
         public int Income => KingdomSim.Income(SaveSystem.Data.State(CityId), BaseIncome, isHomeCity);
         public CityState State => SaveSystem.Data.State(CityId);
+        public string StatusText { get; private set; } = "";
+        public CityStatus Status { get; private set; } = CityStatus.Far;
+        public int Difficulty { get; private set; }
+        /// <summary>İsim plakasının dünyadaki yeri (kalenin tepesi).</summary>
+        public Vector3 LabelAnchor => transform.position + Vector3.up * (label != null ? label.transform.localPosition.y - 0.25f : 1.5f);
 
         public CityInfo Info => new CityInfo
         {
@@ -99,25 +106,35 @@ namespace ToyKingdom
                     if (towers[i] != null)
                         towers[i].sprite = art.Tower(color, i < towerVariants.Count ? towerVariants[i] : 0);
 
-            if (label != null)
+            // durum bilgisi (isim plakası arayüzü bunu okur)
+            if (IsConquered)
             {
-                label.text = DisplayName;
-                label.color = IsConquered ? new Color(0.12f, 0.3f, 0.6f) : rebel || attackable ? new Color(0.6f, 0.12f, 0.1f) : new Color(0.3f, 0.28f, 0.26f);
+                var st = State;
+                string warn = isHomeCity ? "" : st.unrest >= 70f ? "  ·  Huzursuz!" : !st.hasGovernor ? "  ·  Valisiz" :
+                    st.governor.loyalty < 25f ? "  ·  Vali şüpheli" : "";
+                StatusText = "+" + Income + " altın/dk" + warn;
+                Status = warn.Length > 0 ? CityStatus.Warning : isHomeCity ? CityStatus.Home : CityStatus.Owned;
             }
-            if (subLabel != null)
+            else if (rebel)
             {
-                if (IsConquered)
-                {
-                    var st = State;
-                    string warn = isHomeCity ? "" : st.unrest >= 70f ? " · Huzursuz!" : !st.hasGovernor ? " · Valisiz" :
-                        st.governor.loyalty < 25f ? " · Vali şüpheli" : "";
-                    subLabel.text = (isHomeCity ? "Başkent" : "Senin") + " · +" + Income + "/dk" + warn;
-                }
-                else if (rebel) subLabel.text = State.rebel == RebelState.Governor ? "İSYAN! Asi vali" : "İSYAN! Halk ayaklandı";
-                else if (attackable) subLabel.text = "Saldırılabilir · Zorluk " + castle.difficulty;
-                else subLabel.text = "Uzak · Zorluk " + (castle != null ? castle.difficulty : 0);
-                subLabel.color = label != null ? label.color : Color.black;
+                StatusText = State.rebel == RebelState.Governor ? "İsyan: asi vali" : "İsyan: halk ayaklandı";
+                Status = CityStatus.Rebel;
             }
+            else if (attackable)
+            {
+                StatusText = "Saldırılabilir";
+                Status = CityStatus.Attackable;
+            }
+            else
+            {
+                StatusText = "Uzak";
+                Status = CityStatus.Far;
+            }
+            Difficulty = castle != null ? castle.difficulty : 0;
+
+            // eski dünya yazıları kullanılmıyor
+            if (label != null) label.gameObject.SetActive(false);
+            if (subLabel != null) subLabel.gameObject.SetActive(false);
         }
     }
 }
