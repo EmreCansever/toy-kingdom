@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0aee9167f3de7a4bb845a259417736a, type: 3}
+  m_Name: Unit_climber
+  m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.UnitData
+  unitId: climber
+  displayName: Merdivenci
+  description: "Merdiven dayay\u0131p kulelere t\u0131rman\u0131r ve onlar\u0131
+    y\u0131kar."
+  icon: {fileID: 21300000, guid: 4f9004829f177574b96173f0844d4b83, type: 3}
+  anim: {fileID: 11400000, guid: 740706891cc49cc438e0bf2de825668b, type: 2}
+  tint: {r: 1, g: 0.8, b: 0.62, a: 1}
+  scale: 1
+  role: 2
+  squadSize: 5
+  cost: 4
+  goldPrice: 110
+  maxHealth: 55
+  moveSpeed: 1.05
+  damage: 5
+  attackInterval: 1.1
+  attackRange: 0.4
+  gateDamage: 3
+  towerDamage: 14
+  meleeArmor: 0.1
+  arrowArmor: 0.2

@@ -1,0 +1,10 @@
+* text=auto
+*.cs text eol=lf
+*.json text
+*.md text
+*.py text eol=lf
+*.png binary
+*.asset text
+*.unity text
+*.prefab text
+*.meta text
