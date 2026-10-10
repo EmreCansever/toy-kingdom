@@ -13,36 +13,33 @@ MonoBehaviour:
   m_Name: Castle_city_05
   m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.CastleData
   cityId: city_05
-  displayName: Kara Kale
-  description: "Krall\u0131\u011F\u0131n en g\xFC\xE7l\xFC kalesi. A\u011F\u0131r
-    \u015F\xF6valyeler olmadan kap\u0131s\u0131 k\u0131r\u0131lmaz."
-  difficulty: 4
-  color: 2
-  width: 7
-  depth: 7
-  midTowers: 1
-  secondGate: 1
+  displayName: "G\xFCm\xFC\u015Fsu"
+  description: "Ye\u015Fil vadide k\xFC\xE7\xFCk bir hisar. Sava\u015F s\u0131ras\u0131nda
+    kap\u0131dan takviye piyade \xE7\u0131kar."
+  difficulty: 2
+  color: 1
+  biome: 0
+  width: 5
+  depth: 5
+  midTowers: 0
+  secondGate: 0
   keep: 1
-  gateHealth: 850
-  towerData: {fileID: 11400000, guid: 5e7bb51989b2d9244996c93d54ce93b4, type: 2}
-  defenderStrength: 1
-  wallArchers: 6
+  gateHealth: 410.40002
+  towerData: {fileID: 11400000, guid: e27b55f7fbbaf3c40aefca8dc0428af2, type: 2}
+  defenderStrength: 0.75
+  wallArchers: 3
   wallArcherUnit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
   garrison:
   - unit: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
-    squads: 2
+    squads: 1
   - unit: {fileID: 11400000, guid: 7cf06929af1dc694ca8ab46174dcbdd9, type: 2}
     squads: 1
-  - unit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
-    squads: 2
-  - unit: {fileID: 11400000, guid: 502740d509b85ec4bab06b2191d950f6, type: 2}
-    squads: 1
-  reinforcement: {fileID: 11400000, guid: 502740d509b85ec4bab06b2191d950f6, type: 2}
+  reinforcement: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
   reinforcementInterval: 40
-  reinforcementCount: 2
-  timeLimit: 190
-  startingCommandPoints: 8
-  maxCommandPoints: 14
-  commandRegenPerSecond: 0.75
-  goldReward: 1500
-  passiveIncomePerMinute: 25
+  reinforcementCount: 1
+  timeLimit: 150
+  startingCommandPoints: 6
+  maxCommandPoints: 10
+  commandRegenPerSecond: 0.6
+  goldReward: 490
+  passiveIncomePerMinute: 9

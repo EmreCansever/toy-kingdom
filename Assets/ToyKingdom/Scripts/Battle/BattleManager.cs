@@ -271,12 +271,51 @@ namespace ToyKingdom
                 foreach (var sq in EnemySquads)
                     foreach (var m in sq.Members.ToArray())
                         if (m != null) m.TakeDamage(9999f, DamageType.Melee);
+                PlayConquest(result);
             }
 
             SaveSystem.Save();
             GameSession.LastResult = result;
             pendingResult = result;
-            endDelay = victory ? 1.6f : 0.6f;
+            endDelay = victory ? 1.0f + Field.TowerSprites.Count * 0.18f + 1.8f : 0.6f;
+        }
+
+        /// <summary>Fetih: kuleler sırayla maviye döner, parıltılar ve büyük "FETHEDİLDİ!" yazısı.</summary>
+        void PlayConquest(BattleResult result)
+        {
+            var art = GameArt.Instance;
+            var srs = new List<SpriteRenderer>();
+            var variants = new List<int>();
+            foreach (var kv in Field.TowerSprites)
+            {
+                if (kv.Key == null) continue;
+                var tower = kv.Key.GetComponent<Tower>();
+                if (tower != null && tower.IsDestroyed) continue;
+                srs.Add(kv.Key);
+                variants.Add(kv.Value);
+            }
+            // kapıdan içeri doğru: önce öndeki kuleler
+            var order = new List<int>();
+            for (int i = 0; i < srs.Count; i++) order.Add(i);
+            order.Sort((a, b) => srs[a].transform.position.y.CompareTo(srs[b].transform.position.y));
+            var sortedSr = new List<SpriteRenderer>();
+            var sortedVar = new List<int>();
+            foreach (var i in order) { sortedSr.Add(srs[i]); sortedVar.Add(variants[i]); }
+
+            Hint?.Invoke("");
+            FX.Run(ConquestRoutine(art, sortedSr, sortedVar, result));
+        }
+
+        System.Collections.IEnumerator ConquestRoutine(GameArt art, List<SpriteRenderer> towers, List<int> variants, BattleResult result)
+        {
+            yield return new WaitForSeconds(0.6f);
+            bool done = false;
+            FX.FlipTowers(towers, i => art != null ? art.Tower(CastleColor.Blue, variants[i]) : null,
+                new Color(1f, 0.85f, 0.3f), 0.18f, () => done = true);
+            while (!done) yield return null;
+            foreach (var g in Field.Gates)
+                if (g != null) FX.Sparkles(g.transform.position + Vector3.up * 0.6f, new Color(0.45f, 0.7f, 1f), 18, 1.1f);
+            FX.Banner("FETHEDİLDİ!", UIFactory.Blue, 1.2f, result.cityName + " artık senin");
         }
 
         public void ReturnToMap()

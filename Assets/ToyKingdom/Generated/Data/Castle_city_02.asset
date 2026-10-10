@@ -13,32 +13,32 @@ MonoBehaviour:
   m_Name: Castle_city_02
   m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.CastleData
   cityId: city_02
-  displayName: "De\u011Firmen Hisar\u0131"
-  description: "De\u011Firmenlerin koruyucusu. Sava\u015F s\u0131ras\u0131nda bir
-    takviye b\xF6l\xFC\u011F\xFC \xE7\u0131kar\u0131r."
-  difficulty: 2
-  color: 1
+  displayName: "Bozk\u0131r Kalesi"
+  description: "Ye\u015Fil vadide ah\u015Fap kuleli k\xFC\xE7\xFCk bir kale."
+  difficulty: 1
+  color: 3
+  biome: 0
   width: 5
   depth: 5
   midTowers: 0
   secondGate: 0
-  keep: 1
-  gateHealth: 380
+  keep: 0
+  gateHealth: 280.80002
   towerData: {fileID: 11400000, guid: e27b55f7fbbaf3c40aefca8dc0428af2, type: 2}
-  defenderStrength: 0.75
-  wallArchers: 3
+  defenderStrength: 0.6
+  wallArchers: 2
   wallArcherUnit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
   garrison:
   - unit: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
     squads: 1
   - unit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
     squads: 1
-  reinforcement: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
-  reinforcementInterval: 40
-  reinforcementCount: 1
+  reinforcement: {fileID: 0}
+  reinforcementInterval: 0
+  reinforcementCount: 0
   timeLimit: 150
   startingCommandPoints: 6
   maxCommandPoints: 10
-  commandRegenPerSecond: 0.6
-  goldReward: 450
-  passiveIncomePerMinute: 8
+  commandRegenPerSecond: 0.55
+  goldReward: 330
+  passiveIncomePerMinute: 6

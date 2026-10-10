@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Castle_city_01
   m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.CastleData
   cityId: city_01
-  displayName: "\xC7am K\xF6y\xFC"
-  description: "Ah\u015Fap kuleli k\xFC\xE7\xFCk bir kale. Kap\u0131y\u0131 koruyan
-    tek bir piyade b\xF6l\xFC\u011F\xFC var."
+  displayName: "Me\u015Fe K\xF6y\xFC"
+  description: "Ye\u015Fil vadide ah\u015Fap kuleli k\xFC\xE7\xFCk bir kale."
   difficulty: 1
   color: 3
+  biome: 0
   width: 5
   depth: 5
   midTowers: 0

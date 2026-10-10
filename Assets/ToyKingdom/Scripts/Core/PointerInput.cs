@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 #if !ENABLE_LEGACY_INPUT_MANAGER && ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
+using ETouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
+using ETouchPhase = UnityEngine.InputSystem.TouchPhase;
 #endif
 
 namespace ToyKingdom
@@ -36,20 +39,26 @@ namespace ToyKingdom
             bool down = false, held = false, up = false;
             Vector2 pos = Position;
             float scroll = 0f;
-            int touchCount = 0;
-            Vector2 t0 = default, t1 = default;
+            int fingers = 0;
+            Vector2 f0 = default, f1 = default;
 
 #if ENABLE_LEGACY_INPUT_MANAGER
-            touchCount = Input.touchCount;
-            if (touchCount > 0)
+            int count = Input.touchCount;
+            if (count > 0)
             {
                 Touch t = Input.GetTouch(0);
                 down = t.phase == TouchPhase.Began;
                 up = t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled;
                 held = !up;
                 pos = t.position;
-                t0 = t.position;
-                if (touchCount > 1) t1 = Input.GetTouch(1).position;
+                // sadece gerçekten basılı olan parmakları say
+                for (int i = 0; i < count; i++)
+                {
+                    var ti = Input.GetTouch(i);
+                    if (ti.phase == TouchPhase.Ended || ti.phase == TouchPhase.Canceled) continue;
+                    if (fingers == 0) f0 = ti.position; else if (fingers == 1) f1 = ti.position;
+                    fingers++;
+                }
             }
             else
             {
@@ -60,28 +69,26 @@ namespace ToyKingdom
                 scroll = Input.mouseScrollDelta.y;
             }
 #elif ENABLE_INPUT_SYSTEM
-            var ts = Touchscreen.current;
-            bool usedTouch = false;
-            if (ts != null)
+            if (!EnhancedTouchSupport.enabled) EnhancedTouchSupport.Enable();
+            var active = ETouch.activeTouches;
+            if (active.Count > 0)
             {
-                var pressed = new List<Vector2>(2);
-                foreach (var touch in ts.touches)
-                    if (touch.press.isPressed) pressed.Add(touch.position.ReadValue());
-                touchCount = pressed.Count;
-
-                var primary = ts.primaryTouch;
-                if (primary.press.isPressed || primary.press.wasReleasedThisFrame || primary.press.wasPressedThisFrame)
+                var t = active[0];
+                down = t.phase == ETouchPhase.Began;
+                up = t.phase == ETouchPhase.Ended || t.phase == ETouchPhase.Canceled;
+                held = !up;
+                pos = t.screenPosition;
+                // sadece gerçekten basılı olan, farklı kimlikli parmakları say
+                int firstId = -1;
+                for (int i = 0; i < active.Count; i++)
                 {
-                    usedTouch = true;
-                    down = primary.press.wasPressedThisFrame;
-                    up = primary.press.wasReleasedThisFrame;
-                    held = primary.press.isPressed;
-                    pos = primary.position.ReadValue();
-                    if (pressed.Count > 0) t0 = pressed[0];
-                    if (pressed.Count > 1) t1 = pressed[1];
+                    var ti = active[i];
+                    if (ti.phase == ETouchPhase.Ended || ti.phase == ETouchPhase.Canceled) continue;
+                    if (fingers == 0) { f0 = ti.screenPosition; firstId = ti.touchId; fingers = 1; }
+                    else if (ti.touchId != firstId) { f1 = ti.screenPosition; fingers = 2; break; }
                 }
             }
-            if (!usedTouch && Mouse.current != null)
+            else if (Mouse.current != null)
             {
                 var m = Mouse.current;
                 down = m.leftButton.wasPressedThisFrame;
@@ -89,18 +96,17 @@ namespace ToyKingdom
                 up = m.leftButton.wasReleasedThisFrame;
                 pos = m.position.ReadValue();
                 scroll = m.scroll.ReadValue().y / 120f;
-                touchCount = 0;
             }
 #endif
             Down = down;
             Held = held;
             Up = up;
             Position = pos;
-            Scroll = scroll;
+            Scroll = Mathf.Clamp(scroll, -3f, 3f);
 
-            if (touchCount >= 2)
+            if (fingers >= 2 && (f1 - f0).sqrMagnitude > 1f)
             {
-                float dist = Vector2.Distance(t0, t1);
+                float dist = Vector2.Distance(f0, f1);
                 PinchDelta = Pinching ? dist - lastPinchDistance : 0f;
                 lastPinchDistance = dist;
                 Pinching = true;

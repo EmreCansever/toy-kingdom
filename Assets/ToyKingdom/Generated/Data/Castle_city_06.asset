@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6de8ab5d2fc992f4f94d95d20707f693, type: 3}
+  m_Name: Castle_city_06
+  m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.CastleData
+  cityId: city_06
+  displayName: "S\xF6\u011F\xFCtl\xFC"
+  description: "Ye\u015Fil vadide k\xFC\xE7\xFCk bir hisar. Sava\u015F s\u0131ras\u0131nda
+    kap\u0131dan takviye piyade \xE7\u0131kar."
+  difficulty: 2
+  color: 1
+  biome: 0
+  width: 5
+  depth: 5
+  midTowers: 0
+  secondGate: 0
+  keep: 1
+  gateHealth: 440.8
+  towerData: {fileID: 11400000, guid: e27b55f7fbbaf3c40aefca8dc0428af2, type: 2}
+  defenderStrength: 0.75
+  wallArchers: 3
+  wallArcherUnit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
+  garrison:
+  - unit: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
+    squads: 1
+  - unit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
+    squads: 1
+  reinforcement: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
+  reinforcementInterval: 40
+  reinforcementCount: 1
+  timeLimit: 150
+  startingCommandPoints: 6
+  maxCommandPoints: 10
+  commandRegenPerSecond: 0.6
+  goldReward: 530
+  passiveIncomePerMinute: 10

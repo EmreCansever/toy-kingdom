@@ -18,6 +18,8 @@ namespace ToyKingdom
         public CastleData Castle { get; private set; }
         public List<CastleGate> Gates { get; } = new List<CastleGate>();
         public List<Tower> Towers { get; } = new List<Tower>();
+        /// <summary>Kaledeki tüm kule görselleri ve renk varyantları (fetih animasyonu için).</summary>
+        public List<KeyValuePair<SpriteRenderer, int>> TowerSprites { get; } = new List<KeyValuePair<SpriteRenderer, int>>();
         public Material SpriteMaterial { get; private set; }
 
         int cu0, cv0, cu1, cv1;
@@ -44,6 +46,11 @@ namespace ToyKingdom
             int gv = cv0 + d / 2;   // ana kapı: sol-ön (SW) duvarın ortası, saldıranlara bakar
             int gu = cu0 + w / 2;   // ikinci kapı: sağ-ön (SE) duvarın ortası
 
+            var cam = Camera.main;
+            if (cam != null)
+                cam.backgroundColor = castle.biome == Biome.Desert ? new Color(0.86f, 0.74f, 0.5f)
+                    : castle.biome == Biome.Winter ? new Color(0.82f, 0.88f, 0.93f) : new Color(0.55f, 0.74f, 0.42f);
+
             postRandom = new System.Random(castle.cityId.GetHashCode() ^ 0x2f1);
             BuildGround(gu, gv, castle.secondGate);
             BuildCastle(castle, gu, gv);
@@ -59,6 +66,7 @@ namespace ToyKingdom
             if (second) for (int v = -12; v < cv0; v++) road.Add(new Vector2Int(gu, v));
 
             var rnd = new System.Random(Castle.cityId.GetHashCode());
+            var bio = art.Biome(Castle.biome);
             for (int u = -16; u <= 30; u++)
             {
                 for (int v = -14; v <= 20; v++)
@@ -68,7 +76,7 @@ namespace ToyKingdom
 
                     var cell = new Vector2Int(u, v);
                     bool isRoad = road.Contains(cell);
-                    Sprite s = art.grass;
+                    Sprite s = bio.ground;
                     if (isRoad)
                     {
                         int m = 0;
@@ -77,7 +85,7 @@ namespace ToyKingdom
                         if (road.Contains(new Vector2Int(u - 1, v)) || (v == gv && u - 1 < -16)) m |= 4;            // SW
                         if (road.Contains(new Vector2Int(u, v + 1)) || (second && u == gu && v + 1 == cv0)) m |= 8;   // NW
                         if (m == 0) m = 5;
-                        if (art.roadByMask != null && m < art.roadByMask.Length && art.roadByMask[m] != null) s = art.roadByMask[m];
+                        s = bio.Road(m);
                     }
                     var sr = PlaceSprite(s, basePos, Iso.GroundOrder(u, v), "G");
                     if (SpriteMaterial == null) SpriteMaterial = sr.sharedMaterial;
@@ -87,21 +95,21 @@ namespace ToyKingdom
 
                     Vector3 surf = Iso.Surface(u, v);
                     bool inside = Playable.Contains(new Vector2(surf.x, surf.y));
-                    if (art.grassDetails != null && art.grassDetails.Length > 0 && rnd.NextDouble() < 0.12)
+                    if (bio.details != null && bio.details.Length > 0 && rnd.NextDouble() < 0.12)
                     {
                         float ox = (float)rnd.NextDouble() * 0.5f - 0.25f, oy = (float)rnd.NextDouble() * 0.4f - 0.2f;
                         var p = Iso.Surface(u + ox, v + oy);
-                        PlaceSprite(art.grassDetails[rnd.Next(art.grassDetails.Length)], p, Iso.Order(p, -2), "D");
+                        PlaceSprite(bio.Pick(bio.details, rnd.Next(64)), p, Iso.Order(p, -2), "D");
                     }
-                    if (art.trees != null && art.trees.Length > 0 && rnd.NextDouble() < (inside ? 0.0 : 0.4))
+                    if (bio.trees != null && bio.trees.Length > 0 && rnd.NextDouble() < (inside ? 0.0 : Castle.biome == Biome.Desert ? 0.15 : 0.4))
                     {
                         var p = Iso.Surface(u + (float)rnd.NextDouble() * 0.3f - 0.15f, v + (float)rnd.NextDouble() * 0.3f - 0.15f);
-                        PlaceSprite(art.trees[rnd.Next(art.trees.Length)], p + Vector3.down * 0.04f, Iso.Order(p, 3), "T");
+                        PlaceSprite(bio.Pick(bio.trees, rnd.Next(64)), p + Vector3.down * 0.04f, Iso.Order(p, 3), "T");
                     }
-                    else if (inside && art.stones != null && art.stones.Length > 0 && rnd.NextDouble() < 0.025)
+                    else if (inside && bio.stones != null && bio.stones.Length > 0 && rnd.NextDouble() < 0.025)
                     {
                         var p = Iso.Surface(u, v);
-                        PlaceSprite(art.stones[rnd.Next(art.stones.Length)], p + Vector3.down * 0.08f, Iso.Order(p, 1), "S");
+                        PlaceSprite(bio.Pick(bio.stones, rnd.Next(64)), p + Vector3.down * 0.08f, Iso.Order(p, 1), "S");
                     }
                 }
             }
@@ -152,7 +160,9 @@ namespace ToyKingdom
 
                     if (towerCells.Contains(cell))
                     {
-                        var t = PlaceSprite(art.Tower(c.color, rnd.Next(9)), Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Tower");
+                        int variant = rnd.Next(9);
+                        var t = PlaceSprite(art.Tower(c.color, variant), Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Tower");
+                        TowerSprites.Add(new KeyValuePair<SpriteRenderer, int>(t, variant));
                         var tower = t.gameObject.AddComponent<Tower>();
                         tower.Init(c.towerData, cell, art);
                         Towers.Add(tower);
@@ -190,7 +200,8 @@ namespace ToyKingdom
             if (c.keep && u == ku && v == kv)
             {
                 PlaceSprite(art.wallCross, Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Keep");
-                PlaceSprite(art.Tower(c.color, 4), Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "KeepTower");
+                var kt = PlaceSprite(art.Tower(c.color, 4), Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "KeepTower");
+                TowerSprites.Add(new KeyValuePair<SpriteRenderer, int>(kt, 4));
                 return;
             }
             if (art.houses != null && art.houses.Length > 0 && rnd.NextDouble() < 0.5)

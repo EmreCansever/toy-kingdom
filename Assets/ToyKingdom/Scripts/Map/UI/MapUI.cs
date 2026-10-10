@@ -16,9 +16,11 @@ namespace ToyKingdom
         GameObject toastBox;
         AttackPanel attack;
         ArmyShopUI shop;
+        CityPanel cityPanel;
         Coroutine toastRoutine;
+        readonly System.Collections.Generic.Queue<string> toasts = new System.Collections.Generic.Queue<string>();
 
-        public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen);
+        public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen);
 
         public void Build(MapController controller)
         {
@@ -42,18 +44,22 @@ namespace ToyKingdom
 
             // sağ üst: ordu
             var armyBtn = UIFactory.Button(t, "ArmyButton", "Ordu", UIFactory.Blue, 40f);
-            UIFactory.Place((RectTransform)armyBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-20f, -16f), new Vector2(240f, 90f));
+            UIFactory.Place((RectTransform)armyBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -16f), new Vector2(240f, 90f));
 
             // bildirim
-            toastBox = UIFactory.Frame(t, "Toast", new Vector2(1100f, 80f)).gameObject;
-            UIFactory.Place((RectTransform)toastBox.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(1100f, 80f));
+            toastBox = UIFactory.Frame(t, "Toast", new Vector2(1100f, 110f)).gameObject;
+            UIFactory.Place((RectTransform)toastBox.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(1100f, 110f));
             toastText = UIFactory.Text(toastBox.transform, "Text", "", 32f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
-            UIFactory.Stretch(toastText.rectTransform, 10f);
+            toastText.enableAutoSizing = true;
+            toastText.fontSizeMin = 20f;
+            toastText.fontSizeMax = 32f;
+            UIFactory.Stretch(toastText.rectTransform, 12f);
             toastBox.SetActive(false);
 
             // ipucu (ilk açılışta)
             attack = AttackPanel.Create(t);
             shop = ArmyShopUI.Create(t, this);
+            cityPanel = CityPanel.Create(t, () => map.RefreshAll(), Toast);
             armyBtn.onClick.AddListener(shop.Open);
 
             RefreshTop();
@@ -65,20 +71,30 @@ namespace ToyKingdom
             if (kingdomText != null && map != null) kingdomText.text = "Krallık: " + map.OwnedCount() + "/" + map.CityCount + " şehir";
         }
 
-        public void ShowAttack(MapCity city, bool canAttack, Action onAttack) => attack.Show(city, canAttack, onAttack);
+        public void ShowAttack(MapCity city, CastleData castle, bool canAttack, Action onAttack) => attack.Show(city, castle, canAttack, onAttack);
 
+        public void ShowCity(MapCity city) => cityPanel.Show(city);
+
+        /// <summary>Bildirimler sırayla gösterilir; aynı mesaj sırada varsa tekrar eklenmez.</summary>
         public void Toast(string message)
         {
-            if (toastRoutine != null) StopCoroutine(toastRoutine);
-            toastRoutine = StartCoroutine(ToastRoutine(message));
+            if (string.IsNullOrEmpty(message) || toasts.Contains(message)) return;
+            toasts.Enqueue(message);
+            if (toastRoutine == null) toastRoutine = StartCoroutine(ToastRoutine());
         }
 
-        IEnumerator ToastRoutine(string message)
+        IEnumerator ToastRoutine()
         {
-            toastText.text = message;
-            toastBox.SetActive(true);
-            yield return new WaitForSeconds(3f);
+            while (toasts.Count > 0)
+            {
+                toastText.text = toasts.Peek();
+                toastBox.SetActive(true);
+                FX.Punch(toastBox.transform, 0.06f, 0.25f);
+                yield return new WaitForSeconds(toasts.Count > 1 ? 2.2f : 3f);
+                toasts.Dequeue();
+            }
             toastBox.SetActive(false);
+            toastRoutine = null;
         }
     }
 }

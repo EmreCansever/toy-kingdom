@@ -25,7 +25,7 @@ namespace ToyKingdom
             ui = gameObject.AddComponent<MapUI>();
             ui.Build(this);
 
-            int offline = CollectIncome();
+            var offlineReport = Simulate(false);
             RefreshAll();
 
             MapCity start = Find(SaveSystem.Data.heroCityId);
@@ -36,13 +36,33 @@ namespace ToyKingdom
                 rig.FocusOn(start.doorPoint, true);
             }
 
+            string anim = SaveSystem.Data.pendingConquestAnim;
+            if (!string.IsNullOrEmpty(anim))
+            {
+                SaveSystem.Data.pendingConquestAnim = "";
+                SaveSystem.Save();
+                var won = Find(anim);
+                if (won != null)
+                {
+                    rig.FocusOn(won.doorPoint, true);
+                    won.PlayConquest();
+                }
+            }
+
             if (GameSession.LastResult != null)
             {
                 var r = GameSession.LastResult;
-                ui.Toast(r.victory ? r.cityName + " artık senin! +" + r.goldEarned + " altın" : r.cityName + " savunmayı tuttu");
+                if (r.victory)
+                {
+                    var c = Find(r.cityId);
+                    bool needGov = c != null && !c.isHomeCity && !c.State.hasGovernor;
+                    ui.Toast(r.cityName + " artık senin! +" + r.goldEarned + " altın" + (needGov ? "\nŞehre dokun ve bir vali ata" : ""));
+                }
+                else ui.Toast(r.cityName + " savunmayı tuttu");
                 GameSession.LastResult = null;
             }
-            else if (offline > 0) ui.Toast("Yokken krallığın " + offline + " altın kazandı");
+            else if (offlineReport.gold > 0) ui.Toast("Yokken krallığın " + offlineReport.gold + " altın kazandı");
+            foreach (var m in offlineReport.messages) ui.Toast(m);
         }
 
         MapCity Find(string id)
@@ -55,6 +75,7 @@ namespace ToyKingdom
         public bool CanAttack(MapCity city)
         {
             if (city.IsConquered || city.castle == null) return false;
+            if (city.IsRebel) return true; // krallığın içindeki isyan her zaman bastırılabilir
             foreach (var l in city.links) if (l.to != null && l.to.IsConquered) return true;
             return false;
         }
@@ -65,7 +86,17 @@ namespace ToyKingdom
             if (incomeTimer >= 5f)
             {
                 incomeTimer = 0f;
-                if (CollectIncome() > 0) ui.RefreshTop();
+                var rep = Simulate(true);
+                if (rep.gold > 0 || rep.messages.Count > 0)
+                {
+                    foreach (var id in rep.newRebels)
+                    {
+                        var c = Find(id);
+                        if (c != null) { c.PlayRebellion(); rig.FocusOn(c.doorPoint); }
+                    }
+                    foreach (var m in rep.messages) ui.Toast(m);
+                    RefreshAll();
+                }
             }
 
             rig.inputEnabled = !ui.IsModalOpen;
@@ -79,6 +110,12 @@ namespace ToyKingdom
 
         void OnCityTapped(MapCity city)
         {
+            // kendi şehrin: kahraman yürümeden yönetim paneli açılır
+            if (city.IsConquered)
+            {
+                ui.ShowCity(city);
+                return;
+            }
             if (hero.CurrentCity == city)
             {
                 ShowCity(city);
@@ -103,10 +140,10 @@ namespace ToyKingdom
         {
             if (city.IsConquered)
             {
-                ui.Toast(city.isHomeCity ? city.DisplayName + ": krallığının kalbi" : city.DisplayName + " dakikada " + city.Income + " altın üretiyor");
+                ui.ShowCity(city);
                 return;
             }
-            ui.ShowAttack(city, CanAttack(city), () => StartBattle(city));
+            ui.ShowAttack(city, BattleCastle(city), CanAttack(city), () => StartBattle(city));
         }
 
         /// <summary>Şehirler arası yol noktalarını bulur (en az şehir geçen rota).</summary>
@@ -147,30 +184,37 @@ namespace ToyKingdom
                 ui.Toast("Ordun yok! Önce Ordu menüsünden bölük al");
                 return;
             }
-            GameSession.SelectedCastle = city.castle;
+            GameSession.SelectedCastle = BattleCastle(city);
             SaveSystem.Save();
             SceneManager.LoadScene(battleSceneName);
         }
 
-        /// <summary>Geçen her tam dakika için fethedilen şehirlerin gelirini ekler.</summary>
-        int CollectIncome()
+        /// <summary>Saldırılacak kale: asi şehirde isyancıların güçlendirilmiş kopyası.</summary>
+        CastleData BattleCastle(MapCity city)
+        {
+            if (city.castle == null || !city.IsRebel) return city.castle;
+            var db = UnitDatabase.Instance;
+            return KingdomSim.RebelCastle(city.castle, city.State, db != null ? db.Get("infantry") : null, db != null ? db.Get("knight") : null);
+        }
+
+        /// <summary>Geçen her tam dakika için krallık simülasyonunu ilerletir (gelir, huzursuzluk, sadakat, isyan).</summary>
+        KingdomSim.TickReport Simulate(bool online)
         {
             var data = SaveSystem.Data;
             long now = DateTime.UtcNow.Ticks;
             if (data.lastIncomeTicks <= 0 || data.lastIncomeTicks > now) data.lastIncomeTicks = now;
             long minutes = (now - data.lastIncomeTicks) / TimeSpan.TicksPerMinute;
-            if (minutes <= 0) return 0;
+            if (minutes <= 0) return new KingdomSim.TickReport();
 
             long cap = (long)(maxOfflineHours * 60f);
-            long paid = Math.Min(minutes, cap);
-            int perMinute = 0;
-            foreach (var c in cities) if (c.IsConquered) perMinute += c.Income;
+            int run = (int)Math.Min(minutes, cap);
+            var infos = new List<CityInfo>();
+            foreach (var c in cities) infos.Add(c.Info);
 
-            int earned = (int)(paid * perMinute);
-            data.gold += earned;
+            var rep = KingdomSim.Advance(data, infos, run, online);
             data.lastIncomeTicks = minutes > cap ? now : data.lastIncomeTicks + minutes * TimeSpan.TicksPerMinute;
             SaveSystem.Save();
-            return earned;
+            return rep;
         }
 
         public void RefreshAll()

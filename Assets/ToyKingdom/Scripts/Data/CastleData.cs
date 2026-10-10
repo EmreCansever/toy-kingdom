@@ -25,6 +25,8 @@ namespace ToyKingdom
         [TextArea] public string description = "Ahşap kuleli küçük bir kale.";
         [Range(1, 5)] public int difficulty = 1;
         public CastleColor color = CastleColor.Wood;
+        [Tooltip("Kalenin bulunduğu bölge (savaş alanının zemini)")]
+        public Biome biome = Biome.Spring;
 
         [Header("Kale yapısı (hücre)")]
         [Range(4, 9)] public int width = 5;

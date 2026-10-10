@@ -15,19 +15,60 @@ namespace ToyKingdom
     [Serializable]
     public class SaveData
     {
-        public int version = 3;
+        public int version = 4;
         public int gold = 600;
         public List<string> conqueredCities = new List<string>();
         /// <summary>Birlik türüne göre bölük sayısı.</summary>
         public List<ArmyEntry> army = new List<ArmyEntry>();
         public string heroCityId = "";
         public long lastIncomeTicks;
+        /// <summary>Fethedilen şehirlerin yönetim durumu (vali, yapılar, vergi, isyan).</summary>
+        public List<CityState> cities = new List<CityState>();
+        /// <summary>Son fethedilen şehir: haritada fetih animasyonu oynatılır.</summary>
+        public string pendingConquestAnim = "";
 
-        public bool IsConquered(string cityId) => conqueredCities.Contains(cityId);
+        /// <summary>Şehir bizim ve isyanda değil.</summary>
+        public bool IsConquered(string cityId) => conqueredCities.Contains(cityId) && !IsRebel(cityId);
 
+        public bool Owns(string cityId) => conqueredCities.Contains(cityId);
+
+        public bool IsRebel(string cityId)
+        {
+            var s = cities.Find(c => c.cityId == cityId);
+            return s != null && s.rebel != RebelState.None;
+        }
+
+        public CityState State(string cityId)
+        {
+            var s = cities.Find(c => c.cityId == cityId);
+            if (s == null)
+            {
+                s = new CityState { cityId = cityId };
+                cities.Add(s);
+            }
+            return s;
+        }
+
+        /// <summary>Şehri ilk kez fetheder ya da isyanı bastırır.</summary>
         public void Conquer(string cityId)
         {
-            if (!conqueredCities.Contains(cityId)) conqueredCities.Add(cityId);
+            var s = State(cityId);
+            if (!conqueredCities.Contains(cityId))
+            {
+                conqueredCities.Add(cityId);
+                s.unrest = 45f; // yeni fethedilen halk tedirgin
+            }
+            else if (s.rebel != RebelState.None)
+            {
+                // asi vali yargılanır, halk ayaklanmasında vali kaçar; şehir sindirilmiştir
+                s.hasGovernor = false;
+                s.unrest = 30f;
+                s.candidateSeed++;
+            }
+            s.rebel = RebelState.None;
+            s.rebelPower = 0;
+            s.warnedUnrest = s.warnedLoyalty = false;
+            pendingConquestAnim = cityId;
         }
 
         public int GetArmyCount(string unitId)
@@ -58,7 +99,7 @@ namespace ToyKingdom
     /// <summary>Oyun durumunu cihaza JSON olarak kaydeder.</summary>
     public static class SaveSystem
     {
-        const int CurrentVersion = 3;
+        const int CurrentVersion = 4;
         static SaveData _data;
 
         static string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
@@ -80,6 +121,13 @@ namespace ToyKingdom
                 try
                 {
                     var loaded = JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath));
+                    if (loaded != null && loaded.version == 3)
+                    {
+                        // eski kayıt: fethedilenler korunur, yönetim durumu eklenir
+                        loaded.version = CurrentVersion;
+                        if (loaded.cities == null) loaded.cities = new List<CityState>();
+                        foreach (var id in loaded.conqueredCities) loaded.State(id);
+                    }
                     if (loaded != null && loaded.version == CurrentVersion) _data = loaded;
                 }
                 catch (Exception e) { Debug.LogWarning("Kayıt okunamadı, yeni oyun başlıyor: " + e.Message); }

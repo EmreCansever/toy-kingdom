@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6de8ab5d2fc992f4f94d95d20707f693, type: 3}
+  m_Name: Castle_city_15
+  m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.CastleData
+  cityId: city_15
+  displayName: "Karak\u0131\u015F Kalesi"
+  description: "Karl\u0131 da\u011Flar\u0131n ete\u011Finde dev bir kale. Sur ortalar\u0131nda
+    ek kuleler var, iki kap\u0131s\u0131 var, sald\u0131r\u0131y\u0131 b\xF6lmek
+    i\u015Fe yarayabilir, sava\u015F s\u0131ras\u0131nda kap\u0131dan takviye kalkanl\u0131
+    \xE7\u0131kar, kap\u0131s\u0131 buzla g\xFC\xE7lendirilmi\u015F."
+  difficulty: 4
+  color: 2
+  biome: 2
+  width: 7
+  depth: 7
+  midTowers: 1
+  secondGate: 1
+  keep: 1
+  gateHealth: 960.4799
+  towerData: {fileID: 11400000, guid: 5e7bb51989b2d9244996c93d54ce93b4, type: 2}
+  defenderStrength: 1
+  wallArchers: 5
+  wallArcherUnit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
+  garrison:
+  - unit: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
+    squads: 2
+  - unit: {fileID: 11400000, guid: 7cf06929af1dc694ca8ab46174dcbdd9, type: 2}
+    squads: 2
+  - unit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
+    squads: 2
+  reinforcement: {fileID: 11400000, guid: 7cf06929af1dc694ca8ab46174dcbdd9, type: 2}
+  reinforcementInterval: 35
+  reinforcementCount: 2
+  timeLimit: 180
+  startingCommandPoints: 8
+  maxCommandPoints: 14
+  commandRegenPerSecond: 0.7
+  goldReward: 1120
+  passiveIncomePerMinute: 19

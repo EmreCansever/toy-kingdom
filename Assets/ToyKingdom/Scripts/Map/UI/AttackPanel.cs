@@ -58,11 +58,12 @@ namespace ToyKingdom
             return p;
         }
 
-        public void Show(MapCity city, bool canAttack, Action attack)
+        public void Show(MapCity city, CastleData castle, bool canAttack, Action attack)
         {
             onAttack = attack;
-            var c = city.castle;
-            title.text = city.DisplayName;
+            var c = castle;
+            title.text = c != null ? c.displayName : city.DisplayName;
+            ((TMP_Text)attackButton.GetComponentInChildren<TMP_Text>()).text = city.IsRebel ? "Bastır" : "Saldır";
             description.text = c != null ? c.description : "";
             if (c != null)
             {
@@ -76,7 +77,9 @@ namespace ToyKingdom
                 if (c.wallArchers > 0) sb.Append("\nSurlarda ").Append(c.wallArchers).Append(" okçu");
                 if (c.reinforcementCount > 0) sb.Append(c.wallArchers > 0 ? " · " : "\n").Append(c.reinforcementCount).Append(" takviye bölüğü gelecek");
                 defense.text = sb.ToString();
-                reward.text = "Ganimet: " + c.goldReward + " altın\nGelir: dakikada " + c.passiveIncomePerMinute + " altın";
+                reward.text = city.IsRebel
+                    ? "Ganimet: " + c.goldReward + " altın\nBastırılınca şehir geri döner, vali yeniden atanmalı"
+                    : "Ganimet: " + c.goldReward + " altın\nGelir: dakikada " + c.passiveIncomePerMinute + " altın";
             }
             attackButton.interactable = canAttack;
             status.text = canAttack ? "" : "Önce bu şehre yolla bağlı bir şehri fethet";

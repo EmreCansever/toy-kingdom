@@ -1,21 +1,21 @@
+using System;
 using UnityEngine;
 
 namespace ToyKingdom
 {
     public enum CastleColor { Blue, Green, Red, Wood }
 
-    /// <summary>
-    /// Oyunun kullandığı tüm sprite'lar tek yerde. Assets/.../Resources/GameArt.asset olarak durur
-    /// ve çalışma anında Resources'tan yüklenir. Grafikleri değiştirmek için bu dosyadaki referansları değiştir.
-    /// </summary>
-    [CreateAssetMenu(menuName = "ToyKingdom/Oyun grafikleri", fileName = "GameArt")]
-    public class GameArt : ScriptableObject
+    /// <summary>Haritanın bölgeleri: yeşil vadi, çöl, kış.</summary>
+    public enum Biome { Spring, Desert, Winter }
+
+    /// <summary>Bir bölgenin zemin, yol, nehir ve doğa sprite'ları.</summary>
+    [Serializable]
+    public class BiomeArt
     {
-        [Header("Zemin")]
-        public Sprite grass;
-        public Sprite dirt;
-        public Sprite[] grassDetails;
-        public Sprite[] fieldTiles;
+        public Sprite ground;
+        public Sprite[] details;
+        public Sprite[] trees;
+        public Sprite[] stones;
         [Tooltip("Kenar maskesine göre yol parçaları. İndeks = maske (NE=1, SE=2, SW=4, NW=8), 0 kullanılmaz")]
         public Sprite[] roadByMask = new Sprite[16];
         [Tooltip("Kenar maskesine göre nehir parçaları")]
@@ -25,9 +25,30 @@ namespace ToyKingdom
         [Tooltip("Nehir NW-SE, yol NE-SW")]
         public Sprite bridgeRoadNESW;
 
-        [Header("Doğa ve köy")]
-        public Sprite[] trees;
-        public Sprite[] stones;
+        public Sprite Road(int mask) =>
+            roadByMask != null && mask > 0 && mask < roadByMask.Length && roadByMask[mask] != null ? roadByMask[mask] : ground;
+
+        public Sprite River(int mask) =>
+            riverByMask != null && mask > 0 && mask < riverByMask.Length && riverByMask[mask] != null ? riverByMask[mask] : ground;
+
+        public Sprite Pick(Sprite[] arr, int index) =>
+            arr != null && arr.Length > 0 ? arr[Mathf.Abs(index) % arr.Length] : null;
+    }
+
+    /// <summary>
+    /// Oyunun kullandığı tüm sprite'lar tek yerde. Assets/.../Resources/GameArt.asset olarak durur
+    /// ve çalışma anında Resources'tan yüklenir. Grafikleri değiştirmek için bu dosyadaki referansları değiştir.
+    /// </summary>
+    [CreateAssetMenu(menuName = "ToyKingdom/Oyun grafikleri", fileName = "GameArt")]
+    public class GameArt : ScriptableObject
+    {
+        [Header("Bölgeler")]
+        public BiomeArt spring = new BiomeArt();
+        public BiomeArt desert = new BiomeArt();
+        public BiomeArt winter = new BiomeArt();
+
+        [Header("Köy")]
+        public Sprite[] fieldTiles;
         public Sprite[] houses;
         public Sprite[] mills;
         public Sprite smoke;
@@ -58,6 +79,17 @@ namespace ToyKingdom
         public Sprite tileHighlight;
         public Sprite circle;
         public Sprite ladder;
+        public Sprite star;
+
+        public BiomeArt Biome(Biome b)
+        {
+            switch (b)
+            {
+                case ToyKingdom.Biome.Desert: return desert;
+                case ToyKingdom.Biome.Winter: return winter;
+                default: return spring;
+            }
+        }
 
         public Sprite[] Towers(CastleColor c)
         {

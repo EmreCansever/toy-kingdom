@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6de8ab5d2fc992f4f94d95d20707f693, type: 3}
+  m_Name: Castle_city_11
+  m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.CastleData
+  cityId: city_11
+  displayName: "Donmu\u015F Kule"
+  description: "Karl\u0131 da\u011Flar\u0131n ete\u011Finde ta\u015F bir kale. Sur
+    ortalar\u0131nda ek kuleler var, iki kap\u0131s\u0131 var, sald\u0131r\u0131y\u0131
+    b\xF6lmek i\u015Fe yarayabilir, sava\u015F s\u0131ras\u0131nda kap\u0131dan takviye
+    kalkanl\u0131 \xE7\u0131kar, kap\u0131s\u0131 buzla g\xFC\xE7lendirilmi\u015F."
+  difficulty: 3
+  color: 2
+  biome: 2
+  width: 6
+  depth: 6
+  midTowers: 1
+  secondGate: 1
+  keep: 1
+  gateHealth: 770.04
+  towerData: {fileID: 11400000, guid: d7b463583b1441e469f897d457710f70, type: 2}
+  defenderStrength: 0.9
+  wallArchers: 4
+  wallArcherUnit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
+  garrison:
+  - unit: {fileID: 11400000, guid: 55c47a7ddf47e2d4795fefa1bf1c068a, type: 2}
+    squads: 2
+  - unit: {fileID: 11400000, guid: 7cf06929af1dc694ca8ab46174dcbdd9, type: 2}
+    squads: 1
+  - unit: {fileID: 11400000, guid: 19f4c5714520a5549bab0758b274b807, type: 2}
+    squads: 1
+  reinforcement: {fileID: 11400000, guid: 7cf06929af1dc694ca8ab46174dcbdd9, type: 2}
+  reinforcementInterval: 35
+  reinforcementCount: 2
+  timeLimit: 165
+  startingCommandPoints: 7
+  maxCommandPoints: 12
+  commandRegenPerSecond: 0.65
+  goldReward: 850
+  passiveIncomePerMinute: 15

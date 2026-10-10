@@ -12,73 +12,190 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38c4fbe9abf78754889d4c467c17c1c9, type: 3}
   m_Name: GameArt
   m_EditorClassIdentifier: Assembly-CSharp::ToyKingdom.GameArt
-  grass: {fileID: 21300000, guid: 6635fe8b48d007446a7bc8f924ded8a3, type: 3}
-  dirt: {fileID: 21300000, guid: 8b5adc380a68eb94b973d3c0e4de5e6f, type: 3}
-  grassDetails:
-  - {fileID: 21300000, guid: eb5a8278d0fd191409176585aa594466, type: 3}
-  - {fileID: 21300000, guid: dfc4fe5e352d2bb4f9b150bef5334ff8, type: 3}
-  - {fileID: 21300000, guid: 97f27fbab3e1f0f42936066f7aec96fd, type: 3}
-  - {fileID: 21300000, guid: 41c73e1bd4b11eb49acb0e7635bc2aa4, type: 3}
-  - {fileID: 21300000, guid: 204245e5e314d004c9392d097550885b, type: 3}
-  - {fileID: 21300000, guid: 8e888a69969bcad40972b6f7b50b4227, type: 3}
-  - {fileID: 21300000, guid: 9e8a61683a755d9479802dc0c3ef57e0, type: 3}
-  - {fileID: 21300000, guid: 000997776772c8742a44e3a527a3093a, type: 3}
-  - {fileID: 21300000, guid: 166e16d8dd9b8ad43a1c9374342be29c, type: 3}
+  spring:
+    ground: {fileID: 21300000, guid: 6635fe8b48d007446a7bc8f924ded8a3, type: 3}
+    details:
+    - {fileID: 21300000, guid: eb5a8278d0fd191409176585aa594466, type: 3}
+    - {fileID: 21300000, guid: dfc4fe5e352d2bb4f9b150bef5334ff8, type: 3}
+    - {fileID: 21300000, guid: 97f27fbab3e1f0f42936066f7aec96fd, type: 3}
+    - {fileID: 21300000, guid: 41c73e1bd4b11eb49acb0e7635bc2aa4, type: 3}
+    - {fileID: 21300000, guid: 204245e5e314d004c9392d097550885b, type: 3}
+    - {fileID: 21300000, guid: 8e888a69969bcad40972b6f7b50b4227, type: 3}
+    - {fileID: 21300000, guid: 9e8a61683a755d9479802dc0c3ef57e0, type: 3}
+    - {fileID: 21300000, guid: 000997776772c8742a44e3a527a3093a, type: 3}
+    - {fileID: 21300000, guid: 166e16d8dd9b8ad43a1c9374342be29c, type: 3}
+    trees:
+    - {fileID: 21300000, guid: 0986a2dab04d0c94882d0ac28ebb0a85, type: 3}
+    - {fileID: 21300000, guid: 1b851091753e760409877d57fe75b873, type: 3}
+    - {fileID: 21300000, guid: 6102a8d056a1abd469f1e27dd37ee39b, type: 3}
+    - {fileID: 21300000, guid: 48281cde544ae8049b9776f4205dfbbf, type: 3}
+    stones:
+    - {fileID: 21300000, guid: f8259f0e920af2646a04d60c8161c9c2, type: 3}
+    - {fileID: 21300000, guid: c15bd866530a75c469a62edf74155c43, type: 3}
+    - {fileID: 21300000, guid: acd2918dd12817443a41e85214417124, type: 3}
+    - {fileID: 21300000, guid: 2ba3a552f39c0be48a452ca64bff7b37, type: 3}
+    - {fileID: 21300000, guid: ba5f4f5c1d946124f97d19fcb661e0d1, type: 3}
+    - {fileID: 21300000, guid: 5c1992d9b66a33a43a6af9b43cfa6124, type: 3}
+    - {fileID: 21300000, guid: 5dd573b5fb09f5448a5f9a4e6715e365, type: 3}
+    - {fileID: 21300000, guid: 084375d4e54b37f41885e455362209cc, type: 3}
+    roadByMask:
+    - {fileID: 0}
+    - {fileID: 21300000, guid: d2bfe33eab4a5d142aff12e7325f8588, type: 3}
+    - {fileID: 21300000, guid: 8c79f28ad96b1de4eb6adcd78208c2ba, type: 3}
+    - {fileID: 21300000, guid: 9b262ebaa062ae44499c0645f273eb70, type: 3}
+    - {fileID: 21300000, guid: 2a60ac3e9cf90d3478fe83215ac52696, type: 3}
+    - {fileID: 21300000, guid: 15386a6f60749df4893cffe2baf8a452, type: 3}
+    - {fileID: 21300000, guid: 211d466f94e69e246ba0f908873aa596, type: 3}
+    - {fileID: 21300000, guid: 7a89d879f1fd58c4e9a86e2d82e0e292, type: 3}
+    - {fileID: 21300000, guid: 2f9516de55f0c6c4ba856b2fa01607d6, type: 3}
+    - {fileID: 21300000, guid: aa15807210000a84689aff2fab312e94, type: 3}
+    - {fileID: 21300000, guid: 6bc7534c3c8352d418226a6f11432d2c, type: 3}
+    - {fileID: 21300000, guid: 6e413c59c146ca444b549e91987971b0, type: 3}
+    - {fileID: 21300000, guid: 682c3e22ac5ed2b43bfadb793ca9d850, type: 3}
+    - {fileID: 21300000, guid: 228b2e003a278494ca334fce48ad8537, type: 3}
+    - {fileID: 21300000, guid: 4cc9f0a36b1bf364d89a77f386c20f47, type: 3}
+    - {fileID: 21300000, guid: 320f33a35d0e9a341b437e238bc146ad, type: 3}
+    riverByMask:
+    - {fileID: 0}
+    - {fileID: 21300000, guid: 7363208cd25cea944b6d92e6a00ca0af, type: 3}
+    - {fileID: 21300000, guid: 7225b6d9f0e92a64594c5bfef1e4fb5d, type: 3}
+    - {fileID: 21300000, guid: 4eaebf2a82c4fca4b8edc4c6b63c3e21, type: 3}
+    - {fileID: 21300000, guid: 65f9eeef25722d4418cb3d46355f2090, type: 3}
+    - {fileID: 21300000, guid: b50f93b4b1d110a4eb81f76a4bc059fc, type: 3}
+    - {fileID: 21300000, guid: fd55c4877ccd26f4b856f81b6a7b4cd0, type: 3}
+    - {fileID: 21300000, guid: e2ee639048361e544ae0bfe8488641ed, type: 3}
+    - {fileID: 21300000, guid: ce67d2e826a74a74cafed3a6a95a38ef, type: 3}
+    - {fileID: 21300000, guid: 01be3446a91764c4496295724c00175f, type: 3}
+    - {fileID: 21300000, guid: 64b51981460b3f44cbc612e93f1f286a, type: 3}
+    - {fileID: 21300000, guid: 10daa0e4783a1a94abbecdc5fbd962ab, type: 3}
+    - {fileID: 21300000, guid: 96c027dcbbad141449ba2a090f629101, type: 3}
+    - {fileID: 21300000, guid: aa68771508b31f540a90c13ee7b8c1ae, type: 3}
+    - {fileID: 21300000, guid: 8ac2d58dcee346f428e8a8e6d64dd183, type: 3}
+    - {fileID: 21300000, guid: 48ed3e2f66bb2eb4881251b7ed551792, type: 3}
+    bridgeRoadNWSE: {fileID: 21300000, guid: 62e942141d3173a4daa2bea8f786f2e9, type: 3}
+    bridgeRoadNESW: {fileID: 21300000, guid: 427f6e715eb15394dbcfd4bfb7a06309, type: 3}
+  desert:
+    ground: {fileID: 21300000, guid: 197aedab32e141340abf57ad95dfe321, type: 3}
+    details:
+    - {fileID: 21300000, guid: bf03ab00b5cff4a4f9be933281cede49, type: 3}
+    - {fileID: 21300000, guid: 11b9ef7819639a14d98e979a0ffddbac, type: 3}
+    - {fileID: 21300000, guid: 6ee1cac1d70e8c74e98e10ec4b682ca4, type: 3}
+    - {fileID: 21300000, guid: cc3ce1d7fdc20e24abd44babfac2d8f2, type: 3}
+    - {fileID: 21300000, guid: 260549b0c4df16c41800960497bfd0c2, type: 3}
+    - {fileID: 21300000, guid: 65bbc594758df9e458c5c78c79261343, type: 3}
+    - {fileID: 21300000, guid: 13e3d2be66527564fa9cea4ab74ec4f7, type: 3}
+    - {fileID: 21300000, guid: 534ee972b2a8288468be50d4243a866c, type: 3}
+    - {fileID: 21300000, guid: 3824f2c6d303b2647a839e00ca0e9dfe, type: 3}
+    trees:
+    - {fileID: 21300000, guid: 9fcb320abce93ac4aa31ffe7ec82abc4, type: 3}
+    - {fileID: 21300000, guid: d4488d1ddf2f59443b5c1c2fcd56f265, type: 3}
+    - {fileID: 21300000, guid: 4b2fee0261b48204aab813c40213d88b, type: 3}
+    - {fileID: 21300000, guid: e344bf1988d5b534b8f8f4d3ffba6e05, type: 3}
+    - {fileID: 21300000, guid: 29a058167b0a7ca4a8691856dbca4009, type: 3}
+    stones:
+    - {fileID: 21300000, guid: 2c757fd37614c2747b49d067038be166, type: 3}
+    - {fileID: 21300000, guid: 885c052b22bca6f4688330083c9bf72f, type: 3}
+    - {fileID: 21300000, guid: 53a95e448a666e047adf82e179ce12be, type: 3}
+    - {fileID: 21300000, guid: 967979f6aeb200a4c950c8c14dbad153, type: 3}
+    roadByMask:
+    - {fileID: 0}
+    - {fileID: 21300000, guid: 8db20e6cf48042c4bb2da07530c04025, type: 3}
+    - {fileID: 21300000, guid: 2470fd07f5ee5f44dab7d4a737251a2d, type: 3}
+    - {fileID: 21300000, guid: a75d81294228bc74d841c53b5365f7cc, type: 3}
+    - {fileID: 21300000, guid: e85bcba73ee2ca649b4fa4e80588ee80, type: 3}
+    - {fileID: 21300000, guid: 9c0fe88b2533dae4c82a5dc4d3e04666, type: 3}
+    - {fileID: 21300000, guid: 8749da6bc4fd2324b9fa3c28872bffc6, type: 3}
+    - {fileID: 21300000, guid: 75507ba7c2a93af41b7395781311dd08, type: 3}
+    - {fileID: 21300000, guid: f54d4ff20e32a6c4797396aa527183fd, type: 3}
+    - {fileID: 21300000, guid: 6e1affbac1ab7df4883a08173d638f6b, type: 3}
+    - {fileID: 21300000, guid: a71330a0509cb1a49a3196c2edf2b5e4, type: 3}
+    - {fileID: 21300000, guid: 182ac3a6bb3c84e49996a838d8e2ca9d, type: 3}
+    - {fileID: 21300000, guid: 25acf5b3fa635d04db578556f8a9aee9, type: 3}
+    - {fileID: 21300000, guid: aabb4fc7a2681ef459d57615498c3159, type: 3}
+    - {fileID: 21300000, guid: 7f80113b6f17e44428a2272c9a952eb9, type: 3}
+    - {fileID: 21300000, guid: 998a20e2aa0164f4ba4116a88cf2d631, type: 3}
+    riverByMask:
+    - {fileID: 0}
+    - {fileID: 21300000, guid: 0a74c2c6cd906ee448915b057a3fd1dd, type: 3}
+    - {fileID: 21300000, guid: f5850f3373a0cfa42bcd7f6a4002ae60, type: 3}
+    - {fileID: 21300000, guid: b999fe37f0ca5c1489eabd2a12b7b75e, type: 3}
+    - {fileID: 21300000, guid: 1e942d96f69b4cb4182cc3b9c47a9418, type: 3}
+    - {fileID: 21300000, guid: e21fcc9aa6fdac44285a82587cd86d23, type: 3}
+    - {fileID: 21300000, guid: ace5b5c55670175499c7077d36ab9b26, type: 3}
+    - {fileID: 21300000, guid: 7148d9b9884531442a696341312ebc6c, type: 3}
+    - {fileID: 21300000, guid: afc826175b069134296e7361898edd14, type: 3}
+    - {fileID: 21300000, guid: 18a580fac5d214342b5ee7fcdcf0348a, type: 3}
+    - {fileID: 21300000, guid: dba92d814b20c1c46a149a444391f7e2, type: 3}
+    - {fileID: 21300000, guid: 6286366899a330f40aa0a5fdd445111c, type: 3}
+    - {fileID: 21300000, guid: 8e06a0484369c26489e6d754f6583398, type: 3}
+    - {fileID: 21300000, guid: 359561a090146b041ac5fadf38fb0707, type: 3}
+    - {fileID: 21300000, guid: dff5cbc0b019ddd468fc1aa6596f8366, type: 3}
+    - {fileID: 21300000, guid: c2ae973196a9590489bba076a354040c, type: 3}
+    bridgeRoadNWSE: {fileID: 21300000, guid: ea4eb901bf53bf74680bf059647ee136, type: 3}
+    bridgeRoadNESW: {fileID: 21300000, guid: 54af42acdf3bfe44da12865f20c98a3c, type: 3}
+  winter:
+    ground: {fileID: 21300000, guid: 1d5453fa296431b4c81e46fb18fb2e03, type: 3}
+    details:
+    - {fileID: 21300000, guid: 7b5c28d3b4cc8fe4794bd6d5fe927a97, type: 3}
+    - {fileID: 21300000, guid: 352b7d73ac63a1743a9ef3f12e216e8e, type: 3}
+    - {fileID: 21300000, guid: f5718a482cf3e3d45aa4624130013a62, type: 3}
+    - {fileID: 21300000, guid: 168ada20132e97749bc9e1f66a6f33d3, type: 3}
+    - {fileID: 21300000, guid: bcdf1c96861b7a34a8da3c6c73faa0f4, type: 3}
+    - {fileID: 21300000, guid: 4b29c17894b4d3b49813cc3a2eb5a778, type: 3}
+    - {fileID: 21300000, guid: 98e8d5e3af7ef344788612b5c65eb340, type: 3}
+    - {fileID: 21300000, guid: fd6074ad926d86247a38fc63970dfe98, type: 3}
+    - {fileID: 21300000, guid: fddb2e572d1f14e458c127b6ac015510, type: 3}
+    trees:
+    - {fileID: 21300000, guid: c9c86269fb081ce42959fc5bc262b45e, type: 3}
+    - {fileID: 21300000, guid: d51b8ffb38f21f14c834f5830b436871, type: 3}
+    - {fileID: 21300000, guid: 4dbe90b8f2cd6f644b62d3bd561f0c07, type: 3}
+    - {fileID: 21300000, guid: 83ca137dbef4a324d9140c9dff167e86, type: 3}
+    stones:
+    - {fileID: 21300000, guid: f8259f0e920af2646a04d60c8161c9c2, type: 3}
+    - {fileID: 21300000, guid: c15bd866530a75c469a62edf74155c43, type: 3}
+    - {fileID: 21300000, guid: acd2918dd12817443a41e85214417124, type: 3}
+    - {fileID: 21300000, guid: 2ba3a552f39c0be48a452ca64bff7b37, type: 3}
+    roadByMask:
+    - {fileID: 0}
+    - {fileID: 21300000, guid: 1afd56910bd992945a40650a4deda24b, type: 3}
+    - {fileID: 21300000, guid: c4e7c7f2cf6aa1848be8d5927257f3f4, type: 3}
+    - {fileID: 21300000, guid: 7c27a739754dad343b8a5fd2547b7e94, type: 3}
+    - {fileID: 21300000, guid: cb8600bdd68c8374f8082141b6d8e3d4, type: 3}
+    - {fileID: 21300000, guid: 633b32362f0133a4ca256310f3e5624a, type: 3}
+    - {fileID: 21300000, guid: 60f3dafb263bc794e9878952fc126c25, type: 3}
+    - {fileID: 21300000, guid: 9f0c7191179c1b14c8c6b2846eed748b, type: 3}
+    - {fileID: 21300000, guid: ed03d113a0f59d44299e4d03e782332a, type: 3}
+    - {fileID: 21300000, guid: 565747600cde85a43a59852301a5293f, type: 3}
+    - {fileID: 21300000, guid: d080bc569b9c59b4681577171bcded06, type: 3}
+    - {fileID: 21300000, guid: 678e30956f06da646aa1e8204fcc9586, type: 3}
+    - {fileID: 21300000, guid: c515a919fa4d2304c99a557329d1242a, type: 3}
+    - {fileID: 21300000, guid: d79b6b8fb76053741847a81b6743f23a, type: 3}
+    - {fileID: 21300000, guid: e06b83925cf49ac41939f812a637e8a2, type: 3}
+    - {fileID: 21300000, guid: 12ea3778c44e4a34ebdaf8c8d58b86c9, type: 3}
+    riverByMask:
+    - {fileID: 0}
+    - {fileID: 21300000, guid: 1a6c214e8a4f2494a83bd276669a6176, type: 3}
+    - {fileID: 21300000, guid: f59d4982cad4c004ea902bb8cf339dc6, type: 3}
+    - {fileID: 21300000, guid: a03f3d8fa2a13574d9d532b0d4204ea2, type: 3}
+    - {fileID: 21300000, guid: 18086158d42b6f641ba8ddb64e5b1e36, type: 3}
+    - {fileID: 21300000, guid: 10ec98b74329ba24aa73423564817bc6, type: 3}
+    - {fileID: 21300000, guid: be4facc8d710c2f43b796e9d6806f572, type: 3}
+    - {fileID: 21300000, guid: 16970d82bca358b4bbaf956718780dc7, type: 3}
+    - {fileID: 21300000, guid: 594fc774b8c5d2d47acbd767c6e2da35, type: 3}
+    - {fileID: 21300000, guid: 68f795732f1aee64bb4831b29c90f0cf, type: 3}
+    - {fileID: 21300000, guid: 2f5b71e5401272048bc3bb7375e2611d, type: 3}
+    - {fileID: 21300000, guid: c4621553df48a92409ea487fe32ee6cf, type: 3}
+    - {fileID: 21300000, guid: 29a5e587394a9f14897bc6e66b6d1ceb, type: 3}
+    - {fileID: 21300000, guid: fd3647b1408c38e4bb93c0975ed2dcca, type: 3}
+    - {fileID: 21300000, guid: 27aea4ae6e9195444b37cb216febd1b4, type: 3}
+    - {fileID: 21300000, guid: 8055bc909c87ed64a90a8df22745746b, type: 3}
+    bridgeRoadNWSE: {fileID: 21300000, guid: 151cc6b7b4e56af4c988bed3a17c8172, type: 3}
+    bridgeRoadNESW: {fileID: 21300000, guid: 6b82c128973c61049ac236ae9a5f54a0, type: 3}
   fieldTiles:
   - {fileID: 21300000, guid: 62f46bdea35c909408b85a0df982dd6f, type: 3}
   - {fileID: 21300000, guid: cbbbaae276223684dad0b418e1dca6c3, type: 3}
   - {fileID: 21300000, guid: 0d7aab9d83c80a14b8b0a3ef1fe43ad1, type: 3}
   - {fileID: 21300000, guid: 4ff600a39db748243836ba386a2c79ac, type: 3}
-  roadByMask:
-  - {fileID: 0}
-  - {fileID: 21300000, guid: d2bfe33eab4a5d142aff12e7325f8588, type: 3}
-  - {fileID: 21300000, guid: 8c79f28ad96b1de4eb6adcd78208c2ba, type: 3}
-  - {fileID: 21300000, guid: 9b262ebaa062ae44499c0645f273eb70, type: 3}
-  - {fileID: 21300000, guid: 2a60ac3e9cf90d3478fe83215ac52696, type: 3}
-  - {fileID: 21300000, guid: 15386a6f60749df4893cffe2baf8a452, type: 3}
-  - {fileID: 21300000, guid: 211d466f94e69e246ba0f908873aa596, type: 3}
-  - {fileID: 21300000, guid: 7a89d879f1fd58c4e9a86e2d82e0e292, type: 3}
-  - {fileID: 21300000, guid: 2f9516de55f0c6c4ba856b2fa01607d6, type: 3}
-  - {fileID: 21300000, guid: aa15807210000a84689aff2fab312e94, type: 3}
-  - {fileID: 21300000, guid: 6bc7534c3c8352d418226a6f11432d2c, type: 3}
-  - {fileID: 21300000, guid: 6e413c59c146ca444b549e91987971b0, type: 3}
-  - {fileID: 21300000, guid: 682c3e22ac5ed2b43bfadb793ca9d850, type: 3}
-  - {fileID: 21300000, guid: 228b2e003a278494ca334fce48ad8537, type: 3}
-  - {fileID: 21300000, guid: 4cc9f0a36b1bf364d89a77f386c20f47, type: 3}
-  - {fileID: 21300000, guid: 320f33a35d0e9a341b437e238bc146ad, type: 3}
-  riverByMask:
-  - {fileID: 0}
-  - {fileID: 21300000, guid: 7363208cd25cea944b6d92e6a00ca0af, type: 3}
-  - {fileID: 21300000, guid: 7225b6d9f0e92a64594c5bfef1e4fb5d, type: 3}
-  - {fileID: 21300000, guid: 4eaebf2a82c4fca4b8edc4c6b63c3e21, type: 3}
-  - {fileID: 21300000, guid: 65f9eeef25722d4418cb3d46355f2090, type: 3}
-  - {fileID: 21300000, guid: b50f93b4b1d110a4eb81f76a4bc059fc, type: 3}
-  - {fileID: 21300000, guid: fd55c4877ccd26f4b856f81b6a7b4cd0, type: 3}
-  - {fileID: 21300000, guid: e2ee639048361e544ae0bfe8488641ed, type: 3}
-  - {fileID: 21300000, guid: ce67d2e826a74a74cafed3a6a95a38ef, type: 3}
-  - {fileID: 21300000, guid: 01be3446a91764c4496295724c00175f, type: 3}
-  - {fileID: 21300000, guid: 64b51981460b3f44cbc612e93f1f286a, type: 3}
-  - {fileID: 21300000, guid: 10daa0e4783a1a94abbecdc5fbd962ab, type: 3}
-  - {fileID: 21300000, guid: 96c027dcbbad141449ba2a090f629101, type: 3}
-  - {fileID: 21300000, guid: aa68771508b31f540a90c13ee7b8c1ae, type: 3}
-  - {fileID: 21300000, guid: 8ac2d58dcee346f428e8a8e6d64dd183, type: 3}
-  - {fileID: 21300000, guid: 48ed3e2f66bb2eb4881251b7ed551792, type: 3}
-  bridgeRoadNWSE: {fileID: 21300000, guid: 62e942141d3173a4daa2bea8f786f2e9, type: 3}
-  bridgeRoadNESW: {fileID: 21300000, guid: 427f6e715eb15394dbcfd4bfb7a06309, type: 3}
-  trees:
-  - {fileID: 21300000, guid: 0986a2dab04d0c94882d0ac28ebb0a85, type: 3}
-  - {fileID: 21300000, guid: 1b851091753e760409877d57fe75b873, type: 3}
-  - {fileID: 21300000, guid: 6102a8d056a1abd469f1e27dd37ee39b, type: 3}
-  - {fileID: 21300000, guid: 48281cde544ae8049b9776f4205dfbbf, type: 3}
-  stones:
-  - {fileID: 21300000, guid: f8259f0e920af2646a04d60c8161c9c2, type: 3}
-  - {fileID: 21300000, guid: c15bd866530a75c469a62edf74155c43, type: 3}
-  - {fileID: 21300000, guid: acd2918dd12817443a41e85214417124, type: 3}
-  - {fileID: 21300000, guid: 2ba3a552f39c0be48a452ca64bff7b37, type: 3}
-  - {fileID: 21300000, guid: ba5f4f5c1d946124f97d19fcb661e0d1, type: 3}
-  - {fileID: 21300000, guid: 5c1992d9b66a33a43a6af9b43cfa6124, type: 3}
-  - {fileID: 21300000, guid: 5dd573b5fb09f5448a5f9a4e6715e365, type: 3}
-  - {fileID: 21300000, guid: 084375d4e54b37f41885e455362209cc, type: 3}
   houses:
   - {fileID: 21300000, guid: c2e746fbcc2adcc48941672790e3490a, type: 3}
   - {fileID: 21300000, guid: c8aa9eaa2a84da948afb657abd7c6437, type: 3}
@@ -188,3 +305,4 @@ MonoBehaviour:
   tileHighlight: {fileID: 21300000, guid: 3be88a367aa1331498f7394738a46e03, type: 3}
   circle: {fileID: 21300000, guid: c46399b63231d8d49ad4a3758c0ed4b5, type: 3}
   ladder: {fileID: 21300000, guid: 464adb94f6489a74f88f67f6874d16d9, type: 3}
+  star: {fileID: 21300000, guid: 2ecc71719850e39498bd782afc9da1f9, type: 3}

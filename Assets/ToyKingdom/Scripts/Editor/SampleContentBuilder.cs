@@ -66,14 +66,15 @@ namespace ToyKingdom.EditorTools
                 var db = ScriptableObject.CreateInstance<UnitDatabase>();
                 db.units = new List<UnitData> { units["infantry"], units["shield"], units["archer"], units["climber"], units["knight"] };
                 AssetDatabase.CreateAsset(db, ResDir + "/UnitDatabase.asset");
-                var castles = BuildCastles(units);
+                var layout = JsonUtility.FromJson<Layout>(File.ReadAllText(LayoutPath));
+                var castles = BuildCastles(units, layout);
                 AssetDatabase.SaveAssets();
 
                 EditorUtility.DisplayProgressBar("Toy Kingdom", "Savaş sahnesi", 0.65f);
                 string battlePath = BuildBattleScene(castles["city_01"]);
 
                 EditorUtility.DisplayProgressBar("Toy Kingdom", "Dünya haritası", 0.8f);
-                string mapPath = BuildMapScene(art, castles);
+                string mapPath = BuildMapScene(art, castles, layout);
 
                 EditorBuildSettings.scenes = new[]
                 {
@@ -193,28 +194,19 @@ namespace ToyKingdom.EditorTools
         static GameArt BuildGameArt(CharacterAnimSet knight)
         {
             var a = ScriptableObject.CreateInstance<GameArt>();
-            a.grass = S("Enviroument/Spring/grass.png");
-            a.dirt = S("Enviroument/Spring/ground(1).png");
-            a.grassDetails = Range("Enviroument/Spring/grass_detail({0}).png", 1, 9);
+            a.spring = Bio("Spring", "", "Enviroument/Spring/grass.png",
+                Range("Enviroument/Spring/grass_detail({0}).png", 1, 9),
+                Range("Enviroument/Spring/trees/tree({0}).png", 1, 4),
+                Concat(Range("Enviroument/Spring/stones/stone({0}).png", 1, 4), Range("Enviroument/Spring/stones/stone_ground ({0}).png", 1, 4)));
+            a.desert = Bio("Desert", "_desert", "Enviroument/Desert/sand.png",
+                Range("Enviroument/Desert/sand_detail({0}).png", 1, 9),
+                Range("Enviroument/Desert/cactuses/cactus({0}).png", 1, 5),
+                Range("Enviroument/Desert/stones/stone_deser({0}).png", 1, 4));
+            a.winter = Bio("Winter", "_winter", "Enviroument/Winter/snow.png",
+                Range("Enviroument/Winter/snow_detail({0}).png", 1, 9),
+                Range("Enviroument/Winter/trees/tree({0}).png", 1, 4),
+                Range("Enviroument/Spring/stones/stone({0}).png", 1, 4));
             a.fieldTiles = new[] { S("Buildings/wheat/wheat(1).png"), S("Buildings/wheat/wheat(2).png"), S("Buildings/corn/corn(1).png"), S("Buildings/corn/corn(2).png") };
-
-            // kenar maskesi (NE=1, SE=2, SW=4, NW=8) -> paket dosya numarası
-            int[] roadFile = { 0, 14, 12, 9, 13, 3, 11, 5, 15, 10, 2, 6, 8, 7, 4, 1 };
-            int[] riverFile = { 0, 14, 12, 9, 13, 2, 11, 5, 15, 10, 3, 6, 8, 7, 4, 1 };
-            a.roadByMask = new Sprite[16];
-            a.riverByMask = new Sprite[16];
-            for (int m = 1; m < 16; m++)
-            {
-                a.roadByMask[m] = S("Roads/Spring/road(" + roadFile[m] + ").png");
-                a.riverByMask[m] = S("Rivers/Spring/river(" + riverFile[m] + ").png");
-            }
-            a.bridgeRoadNWSE = S("Rivers/Spring/river(16).png");
-            a.bridgeRoadNESW = S("Rivers/Spring/river(17).png");
-
-            a.trees = Range("Enviroument/Spring/trees/tree({0}).png", 1, 4);
-            var stones = new List<Sprite>(Range("Enviroument/Spring/stones/stone({0}).png", 1, 4));
-            stones.AddRange(Range("Enviroument/Spring/stones/stone_ground ({0}).png", 1, 4));
-            a.stones = stones.ToArray();
             a.houses = Folder("Buildings/house");
             a.mills = Folder("Buildings/mill");
             a.smoke = S("Buildings/smoke.png");
@@ -263,8 +255,39 @@ namespace ToyKingdom.EditorTools
                 return dx * dx + dy * dy <= 0.235f ? Color.white : Color.clear;
             });
 
+            a.star = MakeSprite("star", 48, 48, 48f, new Vector2(0.5f, 0.5f), (u, v) =>
+            {
+                float dx = u - 0.5f, dy = v - 0.5f;
+                float r = Mathf.Sqrt(dx * dx + dy * dy);
+                float ang = Mathf.Atan2(dy, dx);
+                float edge = 0.22f + 0.24f * Mathf.Pow(Mathf.Abs(Mathf.Cos(ang * 2f)), 6f);
+                if (r > edge) return Color.clear;
+                return new Color(1f, 1f, 1f, Mathf.Clamp01((edge - r) * 30f));
+            });
+
             AssetDatabase.CreateAsset(a, ResDir + "/GameArt.asset");
             return a;
+        }
+
+        static Sprite[] Concat(Sprite[] a, Sprite[] b)
+        {
+            var l = new List<Sprite>(a); l.AddRange(b); return l.ToArray();
+        }
+
+        static BiomeArt Bio(string folder, string sfx, string ground, Sprite[] details, Sprite[] trees, Sprite[] stones)
+        {
+            // kenar maskesi (NE=1, SE=2, SW=4, NW=8) -> paket dosya numarası (üç bölgede de aynı)
+            int[] roadFile = { 0, 14, 12, 9, 13, 3, 11, 5, 15, 10, 2, 6, 8, 7, 4, 1 };
+            int[] riverFile = { 0, 14, 12, 9, 13, 2, 11, 5, 15, 10, 3, 6, 8, 7, 4, 1 };
+            var b = new BiomeArt { ground = S(ground), details = details, trees = trees, stones = stones };
+            for (int m = 1; m < 16; m++)
+            {
+                b.roadByMask[m] = S("Roads/" + folder + "/road" + sfx + "(" + roadFile[m] + ").png");
+                b.riverByMask[m] = S("Rivers/" + folder + "/river" + sfx + "(" + riverFile[m] + ").png");
+            }
+            b.bridgeRoadNWSE = S("Rivers/" + folder + "/river" + sfx + "(16).png");
+            b.bridgeRoadNESW = S("Rivers/" + folder + "/river" + sfx + "(17).png");
+            return b;
         }
 
         static Sprite MakeSprite(string name, int w, int h, float ppu, Vector2 pivot, Func<float, float, Color> pixel)
@@ -351,39 +374,84 @@ namespace ToyKingdom.EditorTools
             return t;
         }
 
-        static Dictionary<string, CastleData> BuildCastles(Dictionary<string, UnitData> u)
+        /// <summary>
+        /// Zorluk tablosu. Her şehir WorldLayout.json'daki zorluk derecesine göre bu tablodan bir kale alır;
+        /// aynı derecedeki kaleler sıralarına göre biraz daha güçlenir, bölge de küçük farklar ekler.
+        /// </summary>
+        static Dictionary<string, CastleData> BuildCastles(Dictionary<string, UnitData> u, Layout layout)
         {
             var light = Tower("archer_light", 3.8f, 1.6f, 5f, 1, 110f);
             var normal = Tower("archer", 4.2f, 1.3f, 6f, 1, 170f);
             var heavy = Tower("archer_heavy", 4.6f, 1.1f, 7f, 2, 250f);
             var d = new Dictionary<string, CastleData>();
+            var seenPerTier = new int[7];
 
-            d["city_01"] = Castle("city_01", "Çam Köyü", "Ahşap kuleli küçük bir kale. Kapıyı koruyan tek bir piyade bölüğü var.",
-                1, CastleColor.Wood, 5, 5, false, false, false, 260f, light,
-                G(u["infantry"], 1), null, 0f, 0, 150f, 6, 10, 0.55f, 300, 5);
-            d["city_01"].wallArchers = 2;
-            d["city_02"] = Castle("city_02", "Değirmen Hisarı", "Değirmenlerin koruyucusu. Savaş sırasında bir takviye bölüğü çıkarır.",
-                2, CastleColor.Green, 5, 5, false, false, true, 380f, light,
-                G(u["infantry"], 1, u["archer"], 1), u["infantry"], 40f, 1, 150f, 6, 10, 0.6f, 450, 8);
-            d["city_02"].wallArchers = 3;
-            d["city_03"] = Castle("city_03", "Taş Kale", "Sur ortalarında ek kuleler. Kalkanlılar olmadan ok yağmuru ağır gelir.",
-                3, CastleColor.Green, 6, 6, true, false, true, 520f, normal,
-                G(u["infantry"], 1, u["shield"], 1, u["archer"], 1), u["infantry"], 35f, 2, 165f, 7, 12, 0.65f, 650, 12);
-            d["city_03"].wallArchers = 4;
-            d["city_04"] = Castle("city_04", "Nehir Kalesi", "İki kapılı nehir kalesi. Saldırıyı iki kapıya bölmek akıllıca olabilir.",
-                3, CastleColor.Red, 6, 6, true, true, true, 600f, normal,
-                G(u["infantry"], 2, u["shield"], 1, u["archer"], 1), u["shield"], 35f, 2, 170f, 7, 12, 0.7f, 900, 16);
-            d["city_04"].wallArchers = 5;
-            d["city_05"] = Castle("city_05", "Kara Kale", "Krallığın en güçlü kalesi. Ağır şövalyeler olmadan kapısı kırılmaz.",
-                4, CastleColor.Red, 7, 7, true, true, true, 850f, heavy,
-                G(u["infantry"], 2, u["shield"], 1, u["archer"], 2, u["knight"], 1), u["knight"], 40f, 2, 190f, 8, 14, 0.75f, 1500, 25);
-            d["city_05"].wallArchers = 6;
-            foreach (var c in d.Values)
+            foreach (var city in layout.cities)
             {
+                if (city.home) continue;
+                int diff = Mathf.Clamp(city.difficulty, 1, 5);
+                int k = seenPerTier[diff]++;            // bu derecede kaçıncı kale
+                float step = 1f + 0.08f * k;            // aynı derecede kademeli güçlenme
+                Biome biome = city.biome == "D" ? Biome.Desert : city.biome == "W" ? Biome.Winter : Biome.Spring;
+                CastleData c;
+                switch (diff)
+                {
+                    case 1:
+                        c = Castle(city.id, city.name, 1, CastleColor.Wood, 5, 5, false, false, false, 260f * step, light,
+                            k == 0 ? G(u["infantry"], 1) : G(u["infantry"], 1, u["archer"], 1),
+                            null, 0f, 0, 150f, 6, 10, 0.55f, 300 + 30 * k, 5 + k);
+                        c.wallArchers = 2;
+                        break;
+                    case 2:
+                        c = Castle(city.id, city.name, 2, CastleColor.Green, 5, 5, false, false, true, 380f * step, light,
+                            k % 2 == 0 ? G(u["infantry"], 1, u["archer"], 1) : G(u["infantry"], 1, u["shield"], 1),
+                            u["infantry"], 40f, 1, 150f, 6, 10, 0.6f, 450 + 40 * k, 8 + k);
+                        c.wallArchers = 3;
+                        break;
+                    case 3:
+                        c = Castle(city.id, city.name, 3, k % 2 == 0 ? CastleColor.Green : CastleColor.Red, 6, 6, true, k >= 3, true, 540f * step, normal,
+                            G(u["infantry"], 2, u["shield"], 1, u["archer"], 1),
+                            k % 2 == 0 ? u["infantry"] : u["shield"], 35f, 2, 165f, 7, 12, 0.65f, 700 + 50 * k, 12 + k);
+                        c.wallArchers = 4;
+                        break;
+                    case 4:
+                        c = Castle(city.id, city.name, 4, CastleColor.Red, 7, 7, true, true, true, 720f * step, k >= 2 ? heavy : normal,
+                            G(u["infantry"], 2, u["shield"], 2, u["archer"], 2),
+                            u["shield"], 35f, 2, 180f, 8, 14, 0.7f, 1000 + 60 * k, 17 + k);
+                        c.wallArchers = 5;
+                        break;
+                    default:
+                        c = Castle(city.id, city.name, 5, CastleColor.Red, 7, 7, true, true, true, 900f * step, heavy,
+                            G(u["infantry"], 3, u["shield"], 2, u["archer"], 2, u["knight"], 1),
+                            u["knight"], 40f, 3, 200f, 8, 15, 0.75f, 1500 + 80 * k, 25 + 2 * k);
+                        c.wallArchers = 6;
+                        break;
+                }
+                c.biome = biome;
+                // bölge farkları: çöl kaleleri daha çok okçu, kış kaleleri daha sağlam kapı
+                if (biome == Biome.Desert) c.wallArchers += 1;
+                if (biome == Biome.Winter) c.gateHealth *= 1.15f;
                 c.wallArcherUnit = u["archer"];
+                c.description = Describe(c);
                 EditorUtility.SetDirty(c);
+                d[city.id] = c;
             }
             return d;
+        }
+
+        static string Describe(CastleData c)
+        {
+            string where = c.biome == Biome.Desert ? "Çölün ortasında" : c.biome == Biome.Winter ? "Karlı dağların eteğinde" : "Yeşil vadide";
+            string size = c.width >= 7 ? "dev bir kale" : c.width >= 6 ? "taş bir kale" : c.keep ? "küçük bir hisar" : "ahşap kuleli küçük bir kale";
+            var notes = new List<string>();
+            if (c.midTowers) notes.Add("sur ortalarında ek kuleler var");
+            if (c.secondGate) notes.Add("iki kapısı var, saldırıyı bölmek işe yarayabilir");
+            if (c.reinforcement != null) notes.Add("savaş sırasında kapıdan takviye " + c.reinforcement.displayName.ToLower() + " çıkar");
+            if (c.biome == Biome.Desert) notes.Add("surlarda fazladan okçu bekler");
+            if (c.biome == Biome.Winter) notes.Add("kapısı buzla güçlendirilmiş");
+            string s = where + " " + size + ".";
+            if (notes.Count > 0) s += " " + char.ToUpper(notes[0][0]) + notes[0].Substring(1) + (notes.Count > 1 ? ", " + string.Join(", ", notes.GetRange(1, notes.Count - 1)) : "") + ".";
+            return s;
         }
 
         static List<GarrisonEntry> G(params object[] pairs)
@@ -394,19 +462,19 @@ namespace ToyKingdom.EditorTools
             return list;
         }
 
-        static CastleData Castle(string id, string name, string desc, int diff, CastleColor color, int w, int dep,
+        static CastleData Castle(string id, string name, int diff, CastleColor color, int w, int dep,
             bool mid, bool second, bool keep, float gateHp, TowerData tower, List<GarrisonEntry> garrison,
             UnitData reinf, float reinfInterval, int reinfCount, float time, int cpStart, int cpMax, float regen,
             int reward, int income)
         {
             var c = ScriptableObject.CreateInstance<CastleData>();
-            c.cityId = id; c.displayName = name; c.description = desc; c.difficulty = diff; c.color = color;
+            c.cityId = id; c.displayName = name; c.difficulty = diff; c.color = color;
             c.width = w; c.depth = dep; c.midTowers = mid; c.secondGate = second; c.keep = keep;
             c.gateHealth = gateHp; c.towerData = tower; c.garrison = garrison;
             c.reinforcement = reinf; c.reinforcementInterval = reinfInterval; c.reinforcementCount = reinfCount;
             c.timeLimit = time; c.startingCommandPoints = cpStart; c.maxCommandPoints = cpMax; c.commandRegenPerSecond = regen;
             c.goldReward = reward; c.passiveIncomePerMinute = income;
-            c.defenderStrength = diff <= 1 ? 0.6f : diff == 2 ? 0.75f : diff == 3 ? 0.9f : 1f;
+            c.defenderStrength = diff <= 1 ? 0.6f : diff == 2 ? 0.75f : diff == 3 ? 0.9f : diff == 4 ? 1f : 1.1f;
             AssetDatabase.CreateAsset(c, DataDir + "/Castle_" + id + ".asset");
             return c;
         }
@@ -446,13 +514,19 @@ namespace ToyKingdom.EditorTools
 
         [Serializable] class LTile { public int u, v, m, var; public string t; }
         [Serializable] class LProp { public int u, v, var; public string k; public float ox, oy; }
-        [Serializable] class LCity { public string id, name; public int u, v, size; public bool home; public int[] door; }
+        [Serializable] class LCity { public string id, name, biome; public int u, v, size, difficulty; public bool home; public int[] door; }
         [Serializable] class LLink { public string a, b; public int[] cells; }
-        [Serializable] class Layout { public int size; public LTile[] tiles; public LProp[] props; public LCity[] cities; public LLink[] links; }
+        [Serializable] class Layout { public int size; public string[] biomeRows; public LTile[] tiles; public LProp[] props; public LCity[] cities; public LLink[] links; }
 
-        static string BuildMapScene(GameArt art, Dictionary<string, CastleData> castles)
+        static Biome BiomeAt(Layout l, int u, int v)
         {
-            var layout = JsonUtility.FromJson<Layout>(File.ReadAllText(LayoutPath));
+            if (l.biomeRows == null || v < 0 || v >= l.biomeRows.Length || u < 0 || u >= l.biomeRows[v].Length) return Biome.Spring;
+            char c = l.biomeRows[v][u];
+            return c == 'D' ? Biome.Desert : c == 'W' ? Biome.Winter : Biome.Spring;
+        }
+
+        static string BuildMapScene(GameArt art, Dictionary<string, CastleData> castles, Layout layout)
+        {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var cam = MakeCamera(new Color(0.62f, 0.83f, 0.94f), 3f);
             int n = layout.size;
@@ -468,15 +542,16 @@ namespace ToyKingdom.EditorTools
             for (int u = 0; u < n; u++)
                 for (int v = 0; v < n; v++)
                 {
-                    Sprite s = art.grass;
+                    var bio = art.Biome(BiomeAt(layout, u, v));
+                    Sprite s = bio.ground;
                     if (tiles.TryGetValue(new Vector2Int(u, v), out var t))
                     {
                         switch (t.t)
                         {
-                            case "road": s = art.roadByMask[Mathf.Clamp(t.m, 1, 15)]; break;
-                            case "river": s = art.riverByMask[Mathf.Clamp(t.m, 1, 15)]; break;
-                            case "bridgeNWSE": s = art.bridgeRoadNWSE; break;
-                            case "bridgeNESW": s = art.bridgeRoadNESW; break;
+                            case "road": s = bio.Road(t.m); break;
+                            case "river": s = bio.River(t.m); break;
+                            case "bridgeNWSE": s = bio.bridgeRoadNWSE; break;
+                            case "bridgeNESW": s = bio.bridgeRoadNESW; break;
                             case "field": s = art.fieldTiles[Mathf.Abs(t.var) % art.fieldTiles.Length]; break;
                         }
                     }
@@ -486,11 +561,12 @@ namespace ToyKingdom.EditorTools
             foreach (var p in layout.props)
             {
                 Vector3 pos = Iso.Surface(p.u + p.ox, p.v + p.oy);
+                var bio = art.Biome(BiomeAt(layout, p.u, p.v));
                 switch (p.k)
                 {
-                    case "tree": Sr(props, "Tree", art.trees[p.var % art.trees.Length], pos + Vector3.down * 0.04f, Iso.Order(pos, 3)); break;
-                    case "stone": Sr(props, "Stone", art.stones[p.var % art.stones.Length], pos + Vector3.down * 0.08f, Iso.Order(pos, 3)); break;
-                    case "detail": Sr(props, "Detail", art.grassDetails[p.var % art.grassDetails.Length], pos + Vector3.down * 0.04f, Iso.Order(pos, -2)); break;
+                    case "tree": Sr(props, "Tree", bio.Pick(bio.trees, p.var), pos + Vector3.down * 0.04f, Iso.Order(pos, 3)); break;
+                    case "stone": Sr(props, "Stone", bio.Pick(bio.stones, p.var), pos + Vector3.down * 0.08f, Iso.Order(pos, 3)); break;
+                    case "detail": Sr(props, "Detail", bio.Pick(bio.details, p.var), pos + Vector3.down * 0.04f, Iso.Order(pos, -2)); break;
                     case "house": Sr(props, "House", art.houses[p.var % art.houses.Length], pos + Vector3.down * 0.14f, Iso.Order(pos, 3)); break;
                     case "mill": Sr(props, "Mill", art.mills[p.var % art.mills.Length], pos + Vector3.down * 0.14f, Iso.Order(pos, 3)); break;
                 }
