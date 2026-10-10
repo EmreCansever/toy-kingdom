@@ -57,7 +57,7 @@ namespace ToyKingdom
             var name = UIFactory.Text(top.transform, "Name", bm.Castle.displayName, 32f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Place(name.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(580f, 46f));
             gateFill = UIFactory.Bar(top.transform, "GateBar", UIFactory.Red, new Vector2(0f, 16f), new Vector2(560f, 34f), new Vector2(0.5f, 0f));
-            gateText = UIFactory.Text(gateFill.transform.parent, "Label", "Kapı", 20f, Color.white, TextAlignmentOptions.Center, true);
+            gateText = UIFactory.Text(gateFill.transform.parent, "Label", "Kapı", 24f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(gateText.rectTransform);
             if (UIFactory.LabelShadow != null) gateText.fontSharedMaterial = UIFactory.LabelShadow;
 

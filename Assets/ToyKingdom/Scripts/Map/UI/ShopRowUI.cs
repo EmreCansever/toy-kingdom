@@ -36,7 +36,7 @@ namespace ToyKingdom
             UIFactory.Place(desc.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(textX, -46f), new Vector2(textW, 62f));
             var stats = Fit(UIFactory.Text(t, "Stats",
                 unit.squadSize + " asker · Can " + unit.maxHealth + " · Hasar " + unit.damage + " · Kapıya " + unit.gateDamage + " · Komuta " + unit.cost,
-                21f, UIFactory.Muted, TextAlignmentOptions.TopLeft), 17f);
+                21f, UIFactory.Brown, TextAlignmentOptions.TopLeft), 17f);
             UIFactory.Place(stats.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(textX, -110f), new Vector2(textW, 32f));
 
             // sağ sütun: elde/fiyat ve satın alma düğmeleri

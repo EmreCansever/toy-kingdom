@@ -38,8 +38,8 @@ namespace ToyKingdom
             UIFactory.Stretch(coinIn.rectTransform, 9f);
             goldText = UIFactory.Text(goldBox.transform, "Value", "0", 40f, Color.white, TextAlignmentOptions.Left, true);
             UIFactory.Place(goldText.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(86f, 0f), new Vector2(200f, 70f));
-            incomeText = UIFactory.Text(t, "Income", "", 22f, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Left);
-            UIFactory.Place(incomeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -108f), new Vector2(360f, 34f));
+            incomeText = UIFactory.Text(t, "Income", "", 26f, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Left);
+            UIFactory.Place(incomeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -110f), new Vector2(420f, 40f));
             incomeText.outlineWidth = 0.22f;
             incomeText.outlineColor = new Color32(20, 24, 36, 220);
 

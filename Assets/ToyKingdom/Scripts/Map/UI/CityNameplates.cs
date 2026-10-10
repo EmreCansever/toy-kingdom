@@ -41,37 +41,37 @@ namespace ToyKingdom
         Plate Build(MapCity city)
         {
             var p = new Plate { city = city };
-            var bg = UIFactory.Chip(canvasRt, "Plate_" + city.CityId, new Vector2(260f, 74f), 22f);
+            var bg = UIFactory.Chip(canvasRt, "Plate_" + city.CityId, new Vector2(300f, 96f), 26f);
             bg.raycastTarget = false;
             p.bg = bg;
             p.rt = bg.rectTransform;
             p.rt.pivot = new Vector2(0.5f, 0f);
 
-            p.dot = UIFactory.Rounded(bg.transform, "Dot", Color.white, 9f);
-            UIFactory.Place(p.dot.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(18f, -22f), new Vector2(18f, 18f));
+            p.dot = UIFactory.Rounded(bg.transform, "Dot", Color.white, 11f);
+            UIFactory.Place(p.dot.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(22f, -29f), new Vector2(22f, 22f));
             p.dot.raycastTarget = false;
 
-            p.name = UIFactory.Text(bg.transform, "Name", city.DisplayName, 27f, Color.white, TextAlignmentOptions.Left, true);
-            UIFactory.Place(p.name.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(44f, -2f), new Vector2(400f, 40f));
-            p.name.enableWordWrapping = false;
+            p.name = UIFactory.Text(bg.transform, "Name", city.DisplayName, 36f, Color.white, TextAlignmentOptions.Left, true);
+            UIFactory.Place(p.name.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(54f, -4f), new Vector2(460f, 52f));
+            p.name.textWrappingMode = TextWrappingModes.NoWrap;
 
-            p.status = UIFactory.Text(bg.transform, "Status", "", 19f, new Color(1f, 1f, 1f, 0.78f), TextAlignmentOptions.Left);
-            UIFactory.Place(p.status.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(20f, 7f), new Vector2(400f, 28f));
-            p.status.enableWordWrapping = false;
+            p.status = UIFactory.Text(bg.transform, "Status", "", 25f, new Color(1f, 1f, 1f, 0.82f), TextAlignmentOptions.Left);
+            UIFactory.Place(p.status.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 9f), new Vector2(460f, 36f));
+            p.status.textWrappingMode = TextWrappingModes.NoWrap;
 
             // zorluk noktaları (düşman şehirlerinde)
             p.pips = UIFactory.Rect("Pips", bg.transform);
-            UIFactory.Place(p.pips, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-16f, 14f), new Vector2(90f, 14f));
+            UIFactory.Place(p.pips, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-20f, 19f), new Vector2(112f, 16f));
             for (int i = 0; i < 5; i++)
             {
-                var pip = UIFactory.Rounded(p.pips, "Pip" + i, Color.white, 5f);
-                UIFactory.Place(pip.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(i * 17f, 0f), new Vector2(12f, 12f));
+                var pip = UIFactory.Rounded(p.pips, "Pip" + i, Color.white, 7f);
+                UIFactory.Place(pip.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(i * 22f, 0f), new Vector2(15f, 15f));
                 pip.raycastTarget = false;
             }
 
             // küçük işaretçi üçgen yerine alt kenarda ince çizgi
             var stem = UIFactory.Rounded(bg.transform, "Stem", UIFactory.Glass, 3f);
-            UIFactory.Place(stem.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, 2f), new Vector2(6f, 16f));
+            UIFactory.Place(stem.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, 2f), new Vector2(7f, 18f));
             stem.raycastTarget = false;
             return p;
         }
@@ -111,9 +111,9 @@ namespace ToyKingdom
                 img.color = i < c.Difficulty ? col : new Color(1f, 1f, 1f, 0.18f);
             }
 
-            float w = Mathf.Max(p.name.GetPreferredValues(c.DisplayName).x + 64f,
-                p.status.GetPreferredValues(text).x + 40f + (p.pips.gameObject.activeSelf ? 100f : 0f));
-            p.rt.sizeDelta = new Vector2(Mathf.Clamp(w, 170f, 520f), 74f);
+            float w = Mathf.Max(p.name.GetPreferredValues(c.DisplayName).x + 80f,
+                p.status.GetPreferredValues(text).x + 50f + (p.pips.gameObject.activeSelf ? 128f : 0f));
+            p.rt.sizeDelta = new Vector2(Mathf.Clamp(w, 210f, 640f), 96f);
             p.bg.color = c.Status == CityStatus.Far ? new Color(0.09f, 0.11f, 0.17f, 0.62f) : UIFactory.Glass;
         }
 
@@ -122,7 +122,7 @@ namespace ToyKingdom
             if (cam == null) cam = Camera.main;
             if (cam == null) return;
             // uzaklaştıkça küçül, yakınlaştıkça biraz büyü
-            float scale = Mathf.Clamp(3.2f / cam.orthographicSize, 0.62f, 1.05f);
+            float scale = Mathf.Clamp(3.6f / cam.orthographicSize, 0.8f, 1.15f);
             Vector2 half = canvasRt.rect.size * 0.5f;
             foreach (var p in plates)
             {

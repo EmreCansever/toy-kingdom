@@ -47,11 +47,11 @@ namespace ToyKingdom
                 UIFactory.Place(pip.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(i * 30f, 0f), new Vector2(22f, 22f));
             }
 
-            p.description = UIFactory.Text(b, "Description", "", 27f, UIFactory.Ink, TextAlignmentOptions.Center);
+            p.description = UIFactory.Text(b, "Description", "", 30f, UIFactory.Ink, TextAlignmentOptions.Center);
             UIFactory.Place(p.description.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -122f), new Vector2(W - 120f, 86f));
             p.description.enableAutoSizing = true;
             p.description.fontSizeMin = 20f;
-            p.description.fontSizeMax = 27f;
+            p.description.fontSizeMax = 30f;
 
             // savunma kutucukları
             float tileW = 182f, gap = 14f;
@@ -62,9 +62,9 @@ namespace ToyKingdom
                 UIFactory.Place(tile.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(startX + i * (tileW + gap), -228f), new Vector2(tileW, 132f));
                 var v = UIFactory.Text(tile.transform, "Value", "0", 50f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
                 UIFactory.Place(v.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(tileW, 64f));
-                var l = UIFactory.Text(tile.transform, "Label", "", 21f, UIFactory.Muted, TextAlignmentOptions.Center);
+                var l = UIFactory.Text(tile.transform, "Label", "", 25f, UIFactory.Brown, TextAlignmentOptions.Center);
                 UIFactory.Place(l.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(tileW - 12f, 50f));
-                l.enableAutoSizing = true; l.fontSizeMin = 15f; l.fontSizeMax = 21f;
+                l.enableAutoSizing = true; l.fontSizeMin = 18f; l.fontSizeMax = 25f;
                 p.statValues.Add(v);
                 p.statLabels.Add(l);
             }
@@ -74,14 +74,14 @@ namespace ToyKingdom
             UIFactory.Place(reward.rectTransform, new Vector2(0.5f, 1f), new Vector2(1f, 1f), new Vector2(-7f, -378f), new Vector2(370f, 104f));
             p.rewardValue = UIFactory.Text(reward.transform, "Value", "", 40f, UIFactory.Hex("B86E00"), TextAlignmentOptions.Center, true);
             UIFactory.Place(p.rewardValue.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(360f, 56f));
-            p.rewardLabel = UIFactory.Text(reward.transform, "Label", "Ganimet (altın)", 20f, UIFactory.Muted, TextAlignmentOptions.Center);
+            p.rewardLabel = UIFactory.Text(reward.transform, "Label", "Ganimet (altın)", 24f, UIFactory.Brown, TextAlignmentOptions.Center);
             UIFactory.Place(p.rewardLabel.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(360f, 30f));
 
             var income = UIFactory.Rounded(b, "Income", UIFactory.Hex("E3F0FF"), 18f);
             UIFactory.Place(income.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 1f), new Vector2(7f, -378f), new Vector2(370f, 104f));
             p.incomeValue = UIFactory.Text(income.transform, "Value", "", 40f, UIFactory.Hex("1F5DB0"), TextAlignmentOptions.Center, true);
             UIFactory.Place(p.incomeValue.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(360f, 56f));
-            p.incomeLabel = UIFactory.Text(income.transform, "Label", "Gelir (altın / dakika)", 20f, UIFactory.Muted, TextAlignmentOptions.Center);
+            p.incomeLabel = UIFactory.Text(income.transform, "Label", "Gelir (altın / dakika)", 24f, UIFactory.Brown, TextAlignmentOptions.Center);
             UIFactory.Place(p.incomeLabel.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(360f, 30f));
 
             p.status = UIFactory.Text(b, "Status", "", 25f, UIFactory.Red, TextAlignmentOptions.Center, true);

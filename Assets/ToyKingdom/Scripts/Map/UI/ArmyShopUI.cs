@@ -25,10 +25,10 @@ namespace ToyKingdom
             var box = UIFactory.Window(dim.transform, "Box", new Vector2(1240f, 1020f), "Ordu", UIFactory.Blue, out _);
             UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 1020f));
             var header = box.transform.Find("Border/Header");
-            var sub = UIFactory.Text(header, "Sub", "Bölükleri savaşta rota çizerek gönderirsin. Yarısı hayatta kalan bölük geri döner.", 22f,
+            var sub = UIFactory.Text(header, "Sub", "Rota çizerek savaşa gönder. Yarısı yaşayan bölük geri döner.", 26f,
                 new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Left);
             UIFactory.Place(sub.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(170f, 0f), new Vector2(760f, 60f));
-            sub.enableAutoSizing = true; sub.fontSizeMin = 16f; sub.fontSizeMax = 22f;
+            sub.enableAutoSizing = true; sub.fontSizeMin = 16f; sub.fontSizeMax = 26f;
 
             var close = UIFactory.Button(header, "Close", "Kapat", UIFactory.Hex("F4EBDD"), 30f);
             UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 2f), new Vector2(170f, 68f));
