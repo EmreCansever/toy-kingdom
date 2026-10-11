@@ -34,6 +34,7 @@ namespace ToyKingdom
             rig.diamondCenter = new Vector2(0f, n * Iso.HalfH + Iso.GroundTop);
             rig.diamondHalfW = n * Iso.HalfW * 0.82f;
             rig.diamondHalfH = n * Iso.HalfH * 0.82f;
+            EnsureCitiesReachable();
 
             RivalAI.Setup(SaveSystem.Data, Infos());
             trade = MapTradeLayer.Create(cities);
@@ -116,6 +117,29 @@ namespace ToyKingdom
             var d = new Dictionary<string, CityInfo>();
             foreach (var c in cities) d[c.CityId] = c.Info;
             return d;
+        }
+
+        /// <summary>
+        /// Köşedeki şehirler (başkent) de ekranın ortasına alınabilsin: kamera sınırları her kaleyi kapsayacak kadar genişletilir.
+        /// </summary>
+        void EnsureCitiesReachable()
+        {
+            var cam = rig.GetComponent<Camera>();
+            if (cam == null) return;
+            float h = cam.orthographicSize, w = h * cam.aspect;
+            foreach (var c in cities)
+            {
+                Vector2 p = c.transform.position + Vector3.up * 0.3f;
+                float dx = p.x - rig.diamondCenter.x, dy = p.y - rig.diamondCenter.y;
+                float k = Mathf.Abs(dx) / rig.diamondHalfW + Mathf.Abs(dy) / rig.diamondHalfH;
+                if (k > 1f) { rig.diamondHalfW *= k; rig.diamondHalfH *= k; }
+                var b = rig.bounds;
+                if (p.y - h < b.yMin) b.yMin = p.y - h;
+                if (p.y + h > b.yMax) b.yMax = p.y + h;
+                if (p.x - w < b.xMin) b.xMin = p.x - w;
+                if (p.x + w > b.xMax) b.xMax = p.x + w;
+                rig.bounds = b;
+            }
         }
 
         /// <summary>Mektup cevabı (arayüzden).</summary>
