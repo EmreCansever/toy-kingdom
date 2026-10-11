@@ -20,13 +20,14 @@ namespace ToyKingdom
         CityPanel cityPanel;
         LettersUI letters;
         DiplomacyPanel diplomacy;
+        TradePanel tradePanel;
         TMP_Text letterBadge;
         GameObject letterBadgeRoot;
         Coroutine toastRoutine;
         readonly System.Collections.Generic.Queue<string> toasts = new System.Collections.Generic.Queue<string>();
 
         public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) ||
-                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen);
+                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen);
 
         public void Build(MapController controller)
         {
@@ -89,6 +90,12 @@ namespace ToyKingdom
             UIFactory.Stretch(letterBadge.rectTransform);
             letterBadgeRoot = badge.gameObject;
 
+            var tradeBtn = UIFactory.Button(t, "TradeButton", "Ticaret", UIFactory.Hex("2E7D5B"), 32f);
+            UIFactory.Place((RectTransform)tradeBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -460f), new Vector2(240f, 84f));
+            tradePanel = TradePanel.Create(t, map.InfoDict, () => map.RefreshAll(), Toast);
+            tradeBtn.onClick.AddListener(() => tradePanel.Open());
+            toastBox.transform.SetAsLastSibling();
+
             letters = LettersUI.Create(t, (l, i) => map.AnswerLetter(l, i), Toast);
             diplomacy = DiplomacyPanel.Create(t, (a, r) => map.Diplomacy(a, r));
             letBtn.onClick.AddListener(letters.OpenInbox);
@@ -117,11 +124,13 @@ namespace ToyKingdom
 
         public void ShowCity(MapCity city) => cityPanel.Show(city);
 
+        public void ShowTrade(string roadKey) => tradePanel.Open(roadKey);
+
         public void ShowLetter(Letter l)
         {
             if (letters == null) return;
             // başka bir pencere açıksa zorla açma: rozet yeterli
-            if ((attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || letters.IsOpen)
+            if ((attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || letters.IsOpen)
             {
                 RefreshLetters();
                 return;

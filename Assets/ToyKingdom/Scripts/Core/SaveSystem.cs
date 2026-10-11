@@ -49,6 +49,15 @@ namespace ToyKingdom
         public List<long> caravanTicks = new List<long>();
         public List<int> caravanAmounts = new List<int>();
 
+        // ------------------------------------------------------------------ ticaret
+        /// <summary>Kendi şehirlerimiz arasındaki ticaret yolları.</summary>
+        public List<RoadState> roads = new List<RoadState>();
+        /// <summary>Şu an yolda olan kervanlar.</summary>
+        public List<CaravanState> caravans = new List<CaravanState>();
+        public int nextCaravanId = 1;
+
+        public RoadState Road(string key) => roads.Find(r => r.key == key);
+
         public int UnreadLetters()
         {
             int n = 0;
@@ -140,21 +149,22 @@ namespace ToyKingdom
         }
 
         /// <summary>
-        /// En fazla kaç bölük beslenebilir: başkent 6, her şehir +1, her Kışla seviyesi +2.
+        /// En fazla kaç bölük beslenebilir: başkent 10, her şehir +2, her Kışla seviyesi +3.
         /// </summary>
         public int ArmyCapacity()
         {
-            int cap = 6;
-            foreach (var id in conqueredCities) if (!IsRebel(id)) cap += 1;
-            foreach (var c in cities) if (c.rebel == RebelState.None && (c.cityId == "home" || conqueredCities.Contains(c.cityId))) cap += 2 * c.barracks;
+            int cap = 10;
+            foreach (var id in conqueredCities) if (!IsRebel(id)) cap += 2;
+            foreach (var c in cities) if (c.rebel == RebelState.None && (c.cityId == "home" || conqueredCities.Contains(c.cityId))) cap += 3 * c.barracks;
             return cap;
         }
 
-        /// <summary>Kapasiteden düşen bölükler: ordudakiler + şehirlere takviye bırakılanlar.</summary>
+        /// <summary>Kapasiteden düşen bölükler: ordudakiler + şehirlere takviye bırakılanlar + yol devriyeleri.</summary>
         public int UsedCapacity()
         {
             int n = TotalArmy();
             foreach (var c in cities) if (c.owner == "player") n += c.garrison;
+            foreach (var r in roads) n += r.PatrolCount();
             return n;
         }
 

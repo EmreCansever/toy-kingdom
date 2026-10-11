@@ -16,6 +16,7 @@ namespace ToyKingdom
 
         MapCity[] cities;
         MapUI ui;
+        MapTradeLayer trade;
         float incomeTimer;
         float countdownTimer;
 
@@ -35,6 +36,7 @@ namespace ToyKingdom
             rig.diamondHalfH = n * Iso.HalfH * 0.82f;
 
             RivalAI.Setup(SaveSystem.Data, Infos());
+            trade = MapTradeLayer.Create(cities);
             var offlineReport = Simulate(false);
             RefreshAll();
             CityNameplates.Create(cities);
@@ -93,7 +95,27 @@ namespace ToyKingdom
             HandleRivalReport(lastRivalReport, false);
             lastRivalReport = new RivalAI.Report();
             HandleCourt(false);
+            HandleTrade();
             SyncArmies();
+        }
+
+        /// <summary>Ticaretten gelenler: kervan kazançları ve eşkıya haberleri.</summary>
+        void HandleTrade()
+        {
+            var rep = Trade.Take();
+            if (!rep.Any) return;
+            foreach (var m in rep.messages) ui.Toast(m);
+            foreach (var g in rep.gains) if (trade != null) trade.ShowGain(g.Key, g.Value);
+            if (rep.messages.Count > 0) SaveSystem.Save();
+            ui.RefreshTop();
+        }
+
+        /// <summary>Şehir bilgileri kimliğe göre (ticaret paneli için).</summary>
+        public IDictionary<string, CityInfo> InfoDict()
+        {
+            var d = new Dictionary<string, CityInfo>();
+            foreach (var c in cities) d[c.CityId] = c.Info;
+            return d;
         }
 
         /// <summary>Mektup cevabı (arayüzden).</summary>
@@ -235,6 +257,7 @@ namespace ToyKingdom
                 HandleRivalReport(lastRivalReport, true);
                 lastRivalReport = new RivalAI.Report();
                 HandleCourt(true);
+                HandleTrade();
                 if (rep.gold > 0 || rep.messages.Count > 0)
                 {
                     foreach (var id in rep.newRebels)
@@ -260,8 +283,14 @@ namespace ToyKingdom
             if (!rig.TryConsumeTap(out Vector3 world)) return;
             if (hero.IsMoving) return;
 
-            Collider2D hit = Physics2D.OverlapPoint(world);
-            MapCity city = hit != null ? hit.GetComponentInParent<MapCity>() : null;
+            var hits = Physics2D.OverlapPointAll(world);
+            foreach (var h in hits)
+            {
+                var road = h.GetComponent<MapRoadTap>();
+                if (road != null) { ui.ShowTrade(road.key); return; }
+            }
+            MapCity city = null;
+            foreach (var h in hits) { city = h.GetComponentInParent<MapCity>(); if (city != null) break; }
             if (city != null) OnCityTapped(city);
         }
 
@@ -379,6 +408,7 @@ namespace ToyKingdom
                 var inf = Infos();
                 RivalAI.Advance(data, inf, 0, online, lastRivalReport);
                 Court.Tick(data, inf, 0, online);
+                Trade.Tick(data, inf, 0, online);
                 if (lastRivalReport.Any) SaveSystem.Save();
                 return new KingdomSim.TickReport();
             }
@@ -390,6 +420,7 @@ namespace ToyKingdom
             var rep = KingdomSim.Advance(data, infos, run, online);
             RivalAI.Advance(data, infos, run, online, lastRivalReport);
             Court.Tick(data, infos, run, online);
+            Trade.Tick(data, infos, run, online);
             data.lastIncomeTicks = minutes > cap ? now : data.lastIncomeTicks + minutes * TimeSpan.TicksPerMinute;
             SaveSystem.Save();
             return rep;
