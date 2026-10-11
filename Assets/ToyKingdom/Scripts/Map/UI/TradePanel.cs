@@ -46,6 +46,10 @@ namespace ToyKingdom
             UIFactory.Place(p.list, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -118f), new Vector2(760f, 840f));
             p.detail = UIFactory.Rect("Detail", box.transform);
             UIFactory.Place(p.detail, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(806f, -118f), new Vector2(808f, 840f));
+            // pencere dışına dokunmak da kapatır
+            var back = dim.gameObject.AddComponent<Button>();
+            back.transition = Selectable.Transition.None;
+            back.onClick.AddListener(p.Hide);
             p.root.SetActive(false);
             return p;
         }
@@ -169,11 +173,13 @@ namespace ToyKingdom
                 new Vector2(26f, -70f), new Vector2(760f, 38f));
 
             Txt(t, "Güvenlik", 26f, UIFactory.BrownDark, true, new Vector2(26f, -124f), new Vector2(160f, 40f));
-            var bar = UIFactory.Bar(t, "Sec", col, new Vector2(190f, -128f), new Vector2(380f, 30f), new Vector2(0f, 1f));
+            var bar = UIFactory.Bar(t, "Sec", col, new Vector2(190f, -128f), new Vector2(300f, 30f), new Vector2(0f, 1f));
             UIFactory.SetBar(bar, r.security / 100f);
             string trend = target > r.security + 2f ? "  yükseliyor, hedef " + Mathf.RoundToInt(target) : target < r.security - 2f ? "  düşüyor, hedef " + Mathf.RoundToInt(target) : "  dengede";
-            Txt(t, Mathf.RoundToInt(r.security) + trend, 24f, target < r.security - 2f ? UIFactory.Red : UIFactory.BrownDark, true,
-                new Vector2(584f, -124f), new Vector2(214f, 40f)).enableAutoSizing = true;
+            var tr = Txt(t, Mathf.RoundToInt(r.security) + trend, 22f, target < r.security - 2f ? UIFactory.Red : UIFactory.BrownDark, true,
+                new Vector2(506f, -124f), new Vector2(292f, 40f));
+            tr.enableAutoSizing = true; tr.fontSizeMin = 14f; tr.fontSizeMax = 22f;
+            tr.textWrappingMode = TextWrappingModes.NoWrap;
 
             int value = Trade.CaravanValue(data, r, inf);
             float effect = (45f - r.security) * 0.02f;
