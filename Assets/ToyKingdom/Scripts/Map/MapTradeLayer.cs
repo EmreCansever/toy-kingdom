@@ -120,8 +120,6 @@ namespace ToyKingdom
             if (cam == null) return;
             var data = SaveSystem.Data;
             float scale = Mathf.Clamp(3.6f / cam.orthographicSize, 0.7f, 1.05f);
-            Vector2 half = canvasRt.rect.size * 0.5f;
-
             foreach (var v in roads.Values)
             {
                 var r = data.Road(v.key);
@@ -129,14 +127,15 @@ namespace ToyKingdom
                 if (show && v.chip == null) BuildMarker(v);
                 if (v.chip != null)
                 {
-                    bool vis = show;
-                    Vector3 sp = cam.WorldToScreenPoint(v.mid);
-                    vis &= sp.z > 0f && sp.x > -100f && sp.x < Screen.width + 100f && sp.y > -60f && sp.y < Screen.height + 60f;
+                    // görünürlük ekran boyutuna değil, kameranın görüş alanına göre (simülatörde Screen farklı olabilir)
+                    Vector3 vp = cam.WorldToViewportPoint(v.mid);
+                    bool vis = show && vp.z > 0f && vp.x > -0.05f && vp.x < 1.05f && vp.y > -0.05f && vp.y < 1.05f;
                     if (v.chip.gameObject.activeSelf != vis) v.chip.gameObject.SetActive(vis);
                     if (v.tap.activeSelf != show) v.tap.SetActive(show);
                     if (vis)
                     {
-                        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt, sp, null, out Vector2 local);
+                        Vector2 size = canvasRt.rect.size;
+                        Vector2 local = new Vector2((vp.x - 0.5f) * size.x, (vp.y - 0.5f) * size.y);
                         v.chip.anchoredPosition = local;
                         v.chip.localScale = Vector3.one * scale;
                         RefreshMarker(v, r);
