@@ -117,13 +117,19 @@ namespace ToyKingdom
             bool rebel = city.IsRebel;
             title.text = c != null ? c.displayName : city.DisplayName;
             attackLabel.text = rebel ? "Bastır" : "Saldır";
-            header.color = rebel ? UIFactory.Hex("A3271E") : UIFactory.Red;
+            string rivalId = city.RivalId;
+            header.color = rebel ? UIFactory.Hex("A3271E") : rivalId != null ? UIFactory.Darken(RivalAI.Get(rivalId).color, 0.85f) : UIFactory.Red;
             var flat = header.transform.Find("Flat");
             if (flat != null) flat.GetComponent<Image>().color = UIFactory.Darken(header.color, 0.88f);
             description.text = c != null ? c.description : "";
             if (c != null)
             {
                 var tags = new List<string>();
+                if (rivalId != null)
+                {
+                    var rs = SaveSystem.Data.Rival(rivalId);
+                    tags.Add(RivalAI.Get(rivalId).name + (rs != null && rs.capitalId == city.CityId ? " başkenti" : "") + (rs != null ? " (güç " + Mathf.RoundToInt(rs.power) + ")" : ""));
+                }
                 if (c.RallyDefense) tags.Add("Hızlı savunma");
                 if (c.BoilingOil) tags.Add("Kızgın yağ");
                 if (c.Courtyard) tags.Add("Son direniş: " + c.FinalStandSquads + " bölük");

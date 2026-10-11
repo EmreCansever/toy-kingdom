@@ -258,5 +258,9 @@ namespace ToyKingdom
         public int baseIncome;
         public int difficulty;
         public bool home;
+        /// <summary>'S' yeşil vadi, 'D' çöl, 'W' kış.</summary>
+        public char biome;
+        /// <summary>Yolla bağlı komşu şehirler.</summary>
+        public string[] neighbors;
     }
 }

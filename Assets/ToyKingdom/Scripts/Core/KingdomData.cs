@@ -23,8 +23,10 @@ namespace ToyKingdom
     public class CityState
     {
         public string cityId;
-        /// <summary>Sahibi: "player" ya da ileride rakip krallık kimliği.</summary>
-        public string owner = "player";
+        /// <summary>Sahibi: "" tarafsız, "player" oyuncu ya da rakip krallık kimliği ("sand", "frost").</summary>
+        public string owner = "";
+        /// <summary>Şehre takviye olarak bırakılan bölük sayısı (rakip saldırılarına karşı savunma).</summary>
+        public int garrison;
         public bool hasGovernor;
         public Governor governor = new Governor();
         public int market, barracks, walls, temple;
@@ -59,5 +61,27 @@ namespace ToyKingdom
                 default: temple = level; break;
             }
         }
+    }
+
+    /// <summary>Rakip krallığın durumu. Kayıtta tutulur.</summary>
+    [Serializable]
+    public class RivalState
+    {
+        public string id;
+        public string capitalId;
+        public bool alive = true;
+        /// <summary>Ordu gücü: şehirlerinden gelen gelirle büyür, fetihlerde ve saldırılarda harcanır.</summary>
+        public float power = 30f;
+        /// <summary>Bir sonraki genişleme ve saldırıya kalan dakika.</summary>
+        public float expandTimer = 6f;
+        public float attackTimer = 14f;
+        // devam eden saldırı
+        public string attackTarget = "";
+        public string attackFrom = "";
+        public float attackPower;
+        public long attackStartTicks;
+        public long attackArriveTicks;
+
+        public bool Attacking => !string.IsNullOrEmpty(attackTarget);
     }
 }

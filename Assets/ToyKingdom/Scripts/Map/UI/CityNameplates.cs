@@ -85,6 +85,7 @@ namespace ToyKingdom
                 case CityStatus.Warning: return UIFactory.Hex("FFB443");
                 case CityStatus.Attackable: return UIFactory.Hex("FF5E4D");
                 case CityStatus.Rebel: return UIFactory.Hex("FF3B30");
+                case CityStatus.Threat: return UIFactory.Hex("FF3B30");
                 default: return UIFactory.Hex("9AA0AA");
             }
         }
@@ -97,13 +98,13 @@ namespace ToyKingdom
             p.lastStatus = c.Status;
             p.lastText = text;
 
-            var col = StatusColor(c.Status);
+            var col = c.Status == CityStatus.Rival && c.RivalId != null ? RivalAI.Get(c.RivalId).color : StatusColor(c.Status);
             p.dot.color = col;
             p.name.text = c.DisplayName;
             p.status.text = text;
-            p.status.color = c.Status == CityStatus.Rebel || c.Status == CityStatus.Warning ? col : new Color(1f, 1f, 1f, 0.78f);
+            p.status.color = c.Status == CityStatus.Rebel || c.Status == CityStatus.Warning || c.Status == CityStatus.Threat || c.Status == CityStatus.Rival ? col : new Color(1f, 1f, 1f, 0.78f);
 
-            bool enemy = c.Status == CityStatus.Attackable || c.Status == CityStatus.Far || c.Status == CityStatus.Rebel;
+            bool enemy = c.Status == CityStatus.Attackable || c.Status == CityStatus.Far || c.Status == CityStatus.Rebel || c.Status == CityStatus.Rival;
             p.pips.gameObject.SetActive(enemy && c.Difficulty > 0);
             for (int i = 0; i < p.pips.childCount; i++)
             {

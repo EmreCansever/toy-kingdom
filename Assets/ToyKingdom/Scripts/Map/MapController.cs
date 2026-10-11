@@ -17,6 +17,7 @@ namespace ToyKingdom
         MapCity[] cities;
         MapUI ui;
         float incomeTimer;
+        float countdownTimer;
 
         void Start()
         {
@@ -25,9 +26,18 @@ namespace ToyKingdom
             ui = gameObject.AddComponent<MapUI>();
             ui.Build(this);
 
+            // kamera karo alanının dışına taşmasın
+            float n = rig.bounds.width / (2f * Iso.HalfW * 0.85f);
+            rig.useDiamond = true;
+            rig.diamondCenter = new Vector2(0f, n * Iso.HalfH + Iso.GroundTop);
+            rig.diamondHalfW = n * Iso.HalfW * 0.82f;
+            rig.diamondHalfH = n * Iso.HalfH * 0.82f;
+
+            RivalAI.Setup(SaveSystem.Data, Infos());
             var offlineReport = Simulate(false);
             RefreshAll();
             CityNameplates.Create(cities);
+            ui.BuildRivals();
 
             MapCity start = Find(SaveSystem.Data.heroCityId);
             if (start == null) start = Array.Find(cities, c => c.isHomeCity);
@@ -64,6 +74,73 @@ namespace ToyKingdom
             }
             else if (offlineReport.gold > 0) ui.Toast("Yokken krallığın " + offlineReport.gold + " altın kazandı");
             foreach (var m in offlineReport.messages) ui.Toast(m);
+            if (!string.IsNullOrEmpty(SaveSystem.Data.pendingMessage))
+            {
+                FX.Banner("ZAFER!", UIFactory.Gold, 2f, SaveSystem.Data.pendingMessage);
+                ui.Toast(SaveSystem.Data.pendingMessage);
+                SaveSystem.Data.pendingMessage = "";
+                SaveSystem.Save();
+            }
+            HandleRivalReport(lastRivalReport, false);
+            lastRivalReport = new RivalAI.Report();
+            SyncArmies();
+        }
+
+        List<CityInfo> Infos()
+        {
+            var infos = new List<CityInfo>();
+            foreach (var c in cities) infos.Add(c.Info);
+            return infos;
+        }
+
+        RivalAI.Report lastRivalReport = new RivalAI.Report();
+        readonly Dictionary<string, MapRivalArmy> armies = new Dictionary<string, MapRivalArmy>();
+
+        /// <summary>Yoldaki rakip ordularını haritada gösterir.</summary>
+        void SyncArmies()
+        {
+            foreach (var r in SaveSystem.Data.rivals)
+            {
+                bool has = armies.TryGetValue(r.id, out var a) && a != null;
+                if (r.Attacking && !has)
+                {
+                    var from = Find(r.attackFrom);
+                    var to = Find(r.attackTarget);
+                    if (from == null || to == null) continue;
+                    var route = FindRoute(from, to);
+                    if (route == null) continue;
+                    route.Insert(0, from.doorPoint);
+                    armies[r.id] = MapRivalArmy.Create(r, route);
+                }
+            }
+        }
+
+        void HandleRivalReport(RivalAI.Report rep, bool live)
+        {
+            if (rep == null || !rep.Any) return;
+            foreach (var id in rep.captured)
+            {
+                var c = Find(id);
+                if (c == null) continue;
+                string owner = c.RivalId;
+                if (owner != null) c.PlayCapturedByRival(owner);
+            }
+            foreach (var id in rep.defended)
+            {
+                var c = Find(id);
+                if (c != null) c.PlayDefended();
+            }
+            if (live && rep.attacksStarted.Count > 0)
+            {
+                var r = SaveSystem.Data.Rival(rep.attacksStarted[0]);
+                var target = r != null ? Find(r.attackTarget) : null;
+                if (target != null) rig.FocusOn(target.doorPoint);
+                FX.Banner("SALDIRI!", UIFactory.Red, 1.4f, r != null ? RivalAI.Get(r.id).name + " ordusu yolda" : null);
+            }
+            foreach (var m in rep.messages) ui.Toast(m);
+            SyncArmies();
+            RefreshAll();
+            ui.RefreshRivals();
         }
 
         MapCity Find(string id)
@@ -88,6 +165,8 @@ namespace ToyKingdom
             {
                 incomeTimer = 0f;
                 var rep = Simulate(true);
+                HandleRivalReport(lastRivalReport, true);
+                lastRivalReport = new RivalAI.Report();
                 if (rep.gold > 0 || rep.messages.Count > 0)
                 {
                     foreach (var id in rep.newRebels)
@@ -98,6 +177,15 @@ namespace ToyKingdom
                     foreach (var m in rep.messages) ui.Toast(m);
                     RefreshAll();
                 }
+            }
+
+            // saldırı geri sayımı her saniye güncellensin
+            countdownTimer += Time.deltaTime;
+            if (countdownTimer >= 1f)
+            {
+                countdownTimer = 0f;
+                foreach (var r in SaveSystem.Data.rivals)
+                    if (r.Attacking) { var t = Find(r.attackTarget); if (t != null) t.RefreshVisual(false); }
             }
 
             rig.inputEnabled = !ui.IsModalOpen;
@@ -190,12 +278,17 @@ namespace ToyKingdom
             SceneManager.LoadScene(battleSceneName);
         }
 
-        /// <summary>Saldırılacak kale: asi şehirde isyancıların güçlendirilmiş kopyası.</summary>
+        /// <summary>Saldırılacak kale: asi şehirde isyancıların, rakip şehrinde rakip krallığın güçlendirilmiş kopyası.</summary>
         CastleData BattleCastle(MapCity city)
         {
-            if (city.castle == null || !city.IsRebel) return city.castle;
+            if (city.castle == null) return null;
             var db = UnitDatabase.Instance;
-            return KingdomSim.RebelCastle(city.castle, city.State, db != null ? db.Get("infantry") : null, db != null ? db.Get("knight") : null);
+            var inf = db != null ? db.Get("infantry") : null;
+            var kn = db != null ? db.Get("knight") : null;
+            if (city.IsRebel) return KingdomSim.RebelCastle(city.castle, city.State, inf, kn);
+            var rival = city.RivalId != null ? SaveSystem.Data.Rival(city.RivalId) : null;
+            if (rival != null) return RivalAI.RivalCastle(city.castle, rival, city.State, inf, kn);
+            return city.castle;
         }
 
         /// <summary>Geçen her tam dakika için krallık simülasyonunu ilerletir (gelir, huzursuzluk, sadakat, isyan).</summary>
@@ -205,14 +298,20 @@ namespace ToyKingdom
             long now = DateTime.UtcNow.Ticks;
             if (data.lastIncomeTicks <= 0 || data.lastIncomeTicks > now) data.lastIncomeTicks = now;
             long minutes = (now - data.lastIncomeTicks) / TimeSpan.TicksPerMinute;
-            if (minutes <= 0) return new KingdomSim.TickReport();
+            if (minutes <= 0)
+            {
+                // dakika dolmasa da yoldaki saldırıların varışı kontrol edilir
+                RivalAI.Advance(data, Infos(), 0, online, lastRivalReport);
+                if (lastRivalReport.Any) SaveSystem.Save();
+                return new KingdomSim.TickReport();
+            }
 
             long cap = (long)(maxOfflineHours * 60f);
             int run = (int)Math.Min(minutes, cap);
-            var infos = new List<CityInfo>();
-            foreach (var c in cities) infos.Add(c.Info);
+            var infos = Infos();
 
             var rep = KingdomSim.Advance(data, infos, run, online);
+            RivalAI.Advance(data, infos, run, online, lastRivalReport);
             data.lastIncomeTicks = minutes > cap ? now : data.lastIncomeTicks + minutes * TimeSpan.TicksPerMinute;
             SaveSystem.Save();
             return rep;

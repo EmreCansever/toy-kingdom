@@ -28,6 +28,7 @@ namespace ToyKingdom
             map = controller;
             var canvas = UIFactory.Canvas("MapUI", 10);
             var t = canvas.transform;
+            canvasRoot = t;
 
             // sol üst: altın
             var goldBox = UIFactory.Chip(t, "Gold", new Vector2(300f, 84f));
@@ -79,12 +80,60 @@ namespace ToyKingdom
         {
             if (goldText != null) goldText.text = SaveSystem.Data.gold.ToString("N0");
             if (incomeText != null && map != null) incomeText.text = "+" + map.IncomePerMinute() + " altın / dakika";
+            RefreshRivals();
             if (kingdomText != null && map != null) kingdomText.text = "Krallık  " + map.OwnedCount() + " / " + map.CityCount + " şehir";
         }
 
         public void ShowAttack(MapCity city, CastleData castle, bool canAttack, Action onAttack) => attack.Show(city, castle, canAttack, onAttack);
 
         public void ShowCity(MapCity city) => cityPanel.Show(city);
+
+        // ------------------------------------------------------------------ rakipler
+
+        readonly System.Collections.Generic.List<TMP_Text> rivalTexts = new System.Collections.Generic.List<TMP_Text>();
+        readonly System.Collections.Generic.List<Image> rivalDots = new System.Collections.Generic.List<Image>();
+        Transform canvasRoot;
+
+        /// <summary>Sağ üstte, Ordu düğmesinin altında rakip krallıkların özeti.</summary>
+        public void BuildRivals()
+        {
+            if (canvasRoot == null) return;
+            var data = SaveSystem.Data;
+            for (int i = 0; i < data.rivals.Count; i++)
+            {
+                var chip = UIFactory.Chip(canvasRoot, "Rival" + i, new Vector2(500f, 56f));
+                UIFactory.Place(chip.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -128f - i * 66f), new Vector2(500f, 56f));
+                chip.raycastTarget = false;
+                var dot = UIFactory.Rounded(chip.transform, "Dot", RivalAI.Get(data.rivals[i].id).color, 9f);
+                UIFactory.Place(dot.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(20f, 0f), new Vector2(18f, 18f));
+                dot.raycastTarget = false;
+                var t = UIFactory.Text(chip.transform, "Text", "", 23f, Color.white, TextAlignmentOptions.Left, true);
+                UIFactory.Stretch(t.rectTransform, 50f, 0f, 16f, 0f);
+                t.enableAutoSizing = true; t.fontSizeMin = 16f; t.fontSizeMax = 23f;
+                t.textWrappingMode = TextWrappingModes.NoWrap;
+                rivalTexts.Add(t);
+                rivalDots.Add(dot);
+            }
+            RefreshRivals();
+        }
+
+        public void RefreshRivals()
+        {
+            var data = SaveSystem.Data;
+            for (int i = 0; i < rivalTexts.Count && i < data.rivals.Count; i++)
+            {
+                var r = data.rivals[i];
+                var def = RivalAI.Get(r.id);
+                if (!r.alive)
+                {
+                    rivalTexts[i].text = "<s>" + def.name + "</s>  yıkıldı";
+                    rivalTexts[i].color = new Color(1f, 1f, 1f, 0.5f);
+                    continue;
+                }
+                int count = RivalAI.OwnedBy(data, r.id).Count;
+                rivalTexts[i].text = def.name + "   " + count + " şehir  ·  güç " + Mathf.RoundToInt(r.power) + (r.Attacking ? "  ·  <color=#FF7A6B>saldırıda</color>" : "");
+            }
+        }
 
         /// <summary>Bildirimler sırayla gösterilir; aynı mesaj sırada varsa tekrar eklenmez.</summary>
         public void Toast(string message)

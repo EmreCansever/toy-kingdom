@@ -15,7 +15,7 @@ namespace ToyKingdom
     [Serializable]
     public class SaveData
     {
-        public int version = 4;
+        public int version = 5;
         public int gold = 600;
         public List<string> conqueredCities = new List<string>();
         /// <summary>Birlik türüne göre bölük sayısı.</summary>
@@ -26,6 +26,35 @@ namespace ToyKingdom
         public List<CityState> cities = new List<CityState>();
         /// <summary>Son fethedilen şehir: haritada fetih animasyonu oynatılır.</summary>
         public string pendingConquestAnim = "";
+        /// <summary>Rakip krallıklar (ilk açılışta haritaya göre kurulur).</summary>
+        public List<RivalState> rivals = new List<RivalState>();
+        /// <summary>Oyunun başından beri oynanan (çevrimiçi) dakika: rakiplerin ilk saldırısı için.</summary>
+        public float playMinutes;
+        /// <summary>Haritaya dönüşte gösterilecek önemli bildirim.</summary>
+        public string pendingMessage = "";
+
+        public RivalState Rival(string id) => rivals.Find(r => r.id == id);
+
+        /// <summary>Şehir bir rakip krallığa mı ait? Öyleyse kimliğini döner.</summary>
+        public string RivalOwner(string cityId)
+        {
+            var s = cities.Find(c => c.cityId == cityId);
+            if (s == null || string.IsNullOrEmpty(s.owner) || s.owner == "player") return null;
+            return s.owner;
+        }
+
+        /// <summary>Oyuncu şehri bir rakibe kaybeder.</summary>
+        public void LoseCity(string cityId, string rivalId)
+        {
+            conqueredCities.Remove(cityId);
+            var s = State(cityId);
+            s.owner = rivalId;
+            s.hasGovernor = false;
+            s.garrison = 0;
+            s.rebel = RebelState.None;
+            s.unrest = 30f;
+            s.candidateSeed++;
+        }
 
         /// <summary>Şehir bizim ve isyanda değil.</summary>
         public bool IsConquered(string cityId) => conqueredCities.Contains(cityId) && !IsRebel(cityId);
@@ -53,6 +82,16 @@ namespace ToyKingdom
         public void Conquer(string cityId)
         {
             var s = State(cityId);
+            string former = s.owner;
+            s.owner = "player";
+            if (!string.IsNullOrEmpty(former) && former != "player")
+            {
+                // rakipten alındı: vali ve takviye sıfırdan
+                s.hasGovernor = false;
+                s.garrison = 0;
+                string msg = RivalAI.OnPlayerConquered(this, cityId, former);
+                if (msg != null) pendingMessage = msg;
+            }
             if (!conqueredCities.Contains(cityId))
             {
                 conqueredCities.Add(cityId);
@@ -88,6 +127,14 @@ namespace ToyKingdom
             return cap;
         }
 
+        /// <summary>Kapasiteden düşen bölükler: ordudakiler + şehirlere takviye bırakılanlar.</summary>
+        public int UsedCapacity()
+        {
+            int n = TotalArmy();
+            foreach (var c in cities) if (c.owner == "player") n += c.garrison;
+            return n;
+        }
+
         public int TotalArmy()
         {
             int total = 0;
@@ -110,7 +157,7 @@ namespace ToyKingdom
     /// <summary>Oyun durumunu cihaza JSON olarak kaydeder.</summary>
     public static class SaveSystem
     {
-        const int CurrentVersion = 4;
+        const int CurrentVersion = 5;
         static SaveData _data;
 
         static string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
@@ -132,12 +179,20 @@ namespace ToyKingdom
                 try
                 {
                     var loaded = JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath));
+                    if (loaded != null && loaded.version == 4)
+                    {
+                        // rakip krallıklar eklendi: sahiplik alanı yeniden kurulur
+                        loaded.version = CurrentVersion;
+                        if (loaded.rivals == null) loaded.rivals = new List<RivalState>();
+                        foreach (var c in loaded.cities) c.owner = loaded.conqueredCities.Contains(c.cityId) || c.cityId == "home" ? "player" : "";
+                    }
                     if (loaded != null && loaded.version == 3)
                     {
                         // eski kayıt: fethedilenler korunur, yönetim durumu eklenir
                         loaded.version = CurrentVersion;
                         if (loaded.cities == null) loaded.cities = new List<CityState>();
-                        foreach (var id in loaded.conqueredCities) loaded.State(id);
+                        foreach (var id in loaded.conqueredCities) loaded.State(id).owner = "player";
+                        if (loaded.rivals == null) loaded.rivals = new List<RivalState>();
                     }
                     if (loaded != null && loaded.version == CurrentVersion) _data = loaded;
                 }

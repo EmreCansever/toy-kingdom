@@ -17,6 +17,10 @@ namespace ToyKingdom
         public bool inputEnabled = true;
         /// <summary>true dönerse bu basış kamerayı kaydırmaz (ör. savaşta rota çizimi başlıyor).</summary>
         public System.Func<Vector2, bool> blockPress;
+        /// <summary>İzometrik harita için: kamera merkezi bu eşkenar dörtgenin (karo alanı) içinde kalır, boş gökyüzü görünmez.</summary>
+        public bool useDiamond;
+        public Vector2 diamondCenter;
+        public float diamondHalfW, diamondHalfH;
 
         public Camera Cam { get; private set; }
 
@@ -134,6 +138,12 @@ namespace ToyKingdom
             float h = Cam.orthographicSize;
             float w = h * Cam.aspect;
             Vector3 p = transform.position;
+            if (useDiamond && diamondHalfW > 0f && diamondHalfH > 0f)
+            {
+                float dx = p.x - diamondCenter.x, dy = p.y - diamondCenter.y;
+                float k = Mathf.Abs(dx) / diamondHalfW + Mathf.Abs(dy) / diamondHalfH;
+                if (k > 1f) { p.x = diamondCenter.x + dx / k; p.y = diamondCenter.y + dy / k; }
+            }
             p.x = bounds.width > 2f * w ? Mathf.Clamp(p.x, bounds.xMin + w, bounds.xMax - w) : bounds.center.x;
             p.y = bounds.height > 2f * h ? Mathf.Clamp(p.y, bounds.yMin + h, bounds.yMax - h) : bounds.center.y;
             transform.position = p;

@@ -69,7 +69,7 @@ namespace ToyKingdom
             int gold = SaveSystem.Data.gold;
             owned.text = "Elde: " + SaveSystem.Data.GetArmyCount(data.unitId) + "  ·  " + price + " altın";
             var d = SaveSystem.Data;
-            int room = d.ArmyCapacity() - d.TotalArmy();
+            int room = d.ArmyCapacity() - d.UsedCapacity();
             buy1.interactable = gold >= data.goldPrice && room >= 1;
             buy3.interactable = gold >= data.goldPrice * 3 && room >= 3;
         }

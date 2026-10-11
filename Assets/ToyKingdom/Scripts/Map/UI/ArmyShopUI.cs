@@ -66,7 +66,7 @@ namespace ToyKingdom
         void RefreshAll()
         {
             var d = SaveSystem.Data;
-            if (capacity != null) capacity.text = "Ordu  " + d.TotalArmy() + " / " + d.ArmyCapacity();
+            if (capacity != null) capacity.text = "Ordu  " + d.UsedCapacity() + " / " + d.ArmyCapacity();
             foreach (var r in rows) r.Refresh();
         }
 
@@ -79,7 +79,7 @@ namespace ToyKingdom
                 ui.Toast("Yeterli altının yok");
                 return;
             }
-            if (save.TotalArmy() + amount > save.ArmyCapacity())
+            if (save.UsedCapacity() + amount > save.ArmyCapacity())
             {
                 ui.Toast("Ordu kapasitesi dolu. Şehir fethet ya da Kışla kur");
                 return;

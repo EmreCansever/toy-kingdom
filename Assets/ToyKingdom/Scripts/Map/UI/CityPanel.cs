@@ -65,7 +65,8 @@ namespace ToyKingdom
             // açıkken simülasyon değişirse göstergeler güncel kalsın
             if (!IsOpen) return;
             refreshTimer += Time.deltaTime;
-            if (refreshTimer >= 5f) { refreshTimer = 0f; Rebuild(); }
+            float interval = city != null && city.IncomingAttack != null ? 2f : 5f;
+            if (refreshTimer >= interval) { refreshTimer = 0f; Rebuild(); }
         }
 
         // ------------------------------------------------------------------ çizim
@@ -92,13 +93,14 @@ namespace ToyKingdom
                     new Vector2(1150f, -16f), new Vector2(300f, 44f), TextAlignmentOptions.Left);
                 GovernorColumn(s);
                 TaxRow(s);
+                DefenseRow(s);
             }
             BuildingsColumn(s, home);
         }
 
         void GovernorColumn(CityState s)
         {
-            var col = Column("Governor", new Vector2(14f, -96f), new Vector2(720f, 720f));
+            var col = Column("Governor", new Vector2(14f, -96f), new Vector2(720f, 640f));
             Label(col, "Vali", 40f, UIFactory.BrownDark, new Vector2(16f, -10f), new Vector2(660f, 50f), TextAlignmentOptions.Left);
 
             if (!s.hasGovernor)
@@ -109,9 +111,9 @@ namespace ToyKingdom
                 for (int i = 0; i < cands.Count; i++)
                 {
                     var g = cands[i];
-                    float y = -150f - i * 182f;
+                    float y = -146f - i * 162f;
                     var row = UIFactory.Rounded(col, "Cand" + i, UIFactory.Parchment, 16f);
-                    UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(688f, 168f));
+                    UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(688f, 150f));
                     Label(row.transform, g.name + "  " + Stars(g.power), 32f, UIFactory.BrownDark, new Vector2(16f, -8f), new Vector2(420f, 44f), TextAlignmentOptions.Left);
                     Label(row.transform, KingdomSim.TraitName(g.trait) + ": " + KingdomSim.TraitInfo(g.trait), 25f, UIFactory.Ink,
                         new Vector2(16f, -54f), new Vector2(430f, 40f), TextAlignmentOptions.Left);
@@ -177,6 +179,48 @@ namespace ToyKingdom
             });
         }
 
+        /// <summary>Rakip saldırılarına karşı savunma: güç, takviye bölükleri, yaklaşan ordu.</summary>
+        void DefenseRow(CityState s)
+        {
+            var atk = city.IncomingAttack;
+            var row = UIFactory.Rounded(content, "Defense", atk != null ? UIFactory.Hex("FFE1DC") : UIFactory.ParchmentDark, 18f);
+            UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(14f, -748f), new Vector2(1470f, 82f));
+            float defense = RivalAI.Defense(s, city.Difficulty);
+            string text = "Savunma gücü <b>" + Mathf.RoundToInt(defense) + "</b>   ·   Takviye: " + s.garrison + " bölük";
+            if (atk != null)
+            {
+                long left = System.Math.Max(0L, atk.attackArriveTicks - System.DateTime.UtcNow.Ticks) / System.TimeSpan.TicksPerSecond;
+                bool holds = defense >= atk.attackPower;
+                text += "   ·   <color=#B8382F>" + RivalAI.Get(atk.id).name + " geliyor " + (left / 60) + ":" + (left % 60).ToString("00") +
+                        "  ·  saldırı gücü " + Mathf.RoundToInt(atk.attackPower) + "</color>" + (holds ? "  <color=#3E9E4F>(dayanır)</color>" : "  <color=#B8382F>(düşer!)</color>");
+            }
+            var t = Label(row.transform, text, 24f, UIFactory.BrownDark, new Vector2(24f, -22f), new Vector2(1120f, 40f), TextAlignmentOptions.Left);
+            t.enableAutoSizing = true; t.fontSizeMin = 16f; t.fontSizeMax = 24f;
+
+            var data = SaveSystem.Data;
+            string unit = BestGarrisonUnit(data);
+            var btn = Btn(row.transform, "Takviye gönder  (+" + Mathf.RoundToInt(RivalAI.GarrisonDefense) + ")", UIFactory.Purple,
+                new Vector2(-12f, 0f), new Vector2(300f, 66f), 24f, true);
+            btn.interactable = unit != null;
+            btn.onClick.AddListener(() =>
+            {
+                string u = BestGarrisonUnit(SaveSystem.Data);
+                if (u == null) { toast?.Invoke("Ordunda bölük yok"); return; }
+                SaveSystem.Data.AddArmy(u, -1);
+                s.garrison++;
+                Done("Bir bölük " + city.DisplayName + " surlarına yerleşti");
+            });
+        }
+
+        /// <summary>Takviyeye gönderilecek bölük: ordudaki en kalabalık birlik türü.</summary>
+        static string BestGarrisonUnit(SaveData data)
+        {
+            string best = null;
+            int n = 0;
+            foreach (var e in data.army) if (e.count > n) { n = e.count; best = e.unitId; }
+            return best;
+        }
+
         void TaxRow(CityState s)
         {
             var col = Column("Tax", new Vector2(750f, -96f), new Vector2(734f, 130f));
@@ -203,15 +247,15 @@ namespace ToyKingdom
         {
             Vector2 pos = home ? new Vector2(14f, -6f) : new Vector2(750f, -240f);
             var list = home ? new[] { Building.Market, Building.Barracks, Building.Walls } : new[] { Building.Market, Building.Barracks, Building.Walls, Building.Temple };
-            var col = Column("Buildings", pos, new Vector2(home ? 1470f : 734f, home ? 440f : 576f));
+            var col = Column("Buildings", pos, new Vector2(home ? 1470f : 734f, home ? 420f : 500f));
             Label(col, "Yatırımlar", 34f, UIFactory.BrownDark, new Vector2(16f, -8f), new Vector2(400f, 46f), TextAlignmentOptions.Left);
             for (int i = 0; i < list.Length; i++)
             {
                 var b = list[i];
                 int lvl = s.Level(b);
-                float y = -64f - i * 124f;
+                float y = -62f - i * 108f;
                 var row = UIFactory.Rounded(col, b.ToString(), UIFactory.Parchment, 16f);
-                UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(home ? 1438f : 702f, 112f));
+                UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, y), new Vector2(home ? 1438f : 702f, 98f));
                 Label(row.transform, KingdomSim.BuildingName(b) + "  " + Pips(lvl), 30f, UIFactory.BrownDark, new Vector2(14f, -6f), new Vector2(420f, 44f), TextAlignmentOptions.Left);
                 Label(row.transform, KingdomSim.BuildingInfo(b), 25f, UIFactory.Ink, new Vector2(14f, -52f), new Vector2(470f, 36f), TextAlignmentOptions.Left);
                 if (lvl >= KingdomSim.MaxLevel)

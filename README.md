@@ -18,6 +18,14 @@ Unity 6 (6000.3) ile geliştiriliyor. Hedef platform: yatay ekranlı telefonlar.
 - **Savunma:** Bloklardan kurulan kaleler, ok atan ve yıkılabilen kuleler, sur üstü okçular, kale önüne dağılıp
   devriye gezen savunucular ve savaş sırasında kapıdan çıkan takviyeler. Kaleler zorlaştıkça büyür.
 
+- **Krallık yönetimi:** Fethedilen şehirlere vali ata (sadakat, güç, özellik), vergi ayarla, Pazar/Kışla/Sur/Tapınak kur.
+  Huzursuzluk ya da sadakatsiz vali isyana yol açar; asi şehir savaşla geri alınır.
+- **Kuşatma derinliği:** Moral ve bozgun, kapıya koşan savunucular, kızgın yağ, okçulara akın, kapı kırılınca son direniş
+  (kapının önünü tut), ordu kapasitesi. Geniş meydan: batı, kuzey ve güney kenarlarından konuşlanma, kaydırılabilir kamera.
+- **Rakip krallıklar:** Kum Sultanlığı (çöl) ve Buz Krallığı (kış) güç toplar, tarafsız şehirleri alır, zamanla senin
+  şehirlerine önceden haber verilen saldırılar düzenler. Sur, kışla, vali ve takviye bölükleriyle savunursun; rakip
+  başkenti düşerse krallık dağılır ve kalan şehirleri sana geçer.
+
 ## Başlarken
 
 1. Repoyu klonla ve klasörü **Unity Hub > Add > Add project from disk** ile ekle (Unity 6000.3.x).
