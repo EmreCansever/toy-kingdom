@@ -15,5 +15,7 @@ namespace ToyKingdom
     {
         public static CastleData SelectedCastle;
         public static BattleResult LastResult;
+        /// <summary>Saldırılan şehri elinde tutan rakip (yoksa boş): kaybedilen savaşta esir fidyesi için.</summary>
+        public static string SelectedRivalId;
     }
 }

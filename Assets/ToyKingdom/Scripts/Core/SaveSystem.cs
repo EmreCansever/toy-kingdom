@@ -33,6 +33,29 @@ namespace ToyKingdom
         /// <summary>Haritaya dönüşte gösterilecek önemli bildirim.</summary>
         public string pendingMessage = "";
 
+        // ------------------------------------------------------------------ saray
+        public List<Letter> letters = new List<Letter>();
+        public int nextLetterId = 1;
+        /// <summary>Bir sonraki saray olayına kalan (çevrimiçi) dakika.</summary>
+        public float eventTimer = 4f;
+        /// <summary>Bakım giderinin küsurat birikimi.</summary>
+        public float upkeepRemainder;
+        public bool inDebt;
+        /// <summary>Kaybedilen savaşta esir düşen bölüklerin birlik türleri (fidye mektubu için).</summary>
+        public List<string> pendingCaptives = new List<string>();
+        public string pendingCaptor = "";
+        public string pendingCaptiveCity = "";
+        /// <summary>Kervan yatırımları: dönüş zamanı ve tutarı.</summary>
+        public List<long> caravanTicks = new List<long>();
+        public List<int> caravanAmounts = new List<int>();
+
+        public int UnreadLetters()
+        {
+            int n = 0;
+            foreach (var l in letters) if (!l.read || l.NeedsAnswer) n++;
+            return n;
+        }
+
         public RivalState Rival(string id) => rivals.Find(r => r.id == id);
 
         /// <summary>Şehir bir rakip krallığa mı ait? Öyleyse kimliğini döner.</summary>

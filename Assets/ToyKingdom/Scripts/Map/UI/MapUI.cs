@@ -18,10 +18,15 @@ namespace ToyKingdom
         AttackPanel attack;
         ArmyShopUI shop;
         CityPanel cityPanel;
+        LettersUI letters;
+        DiplomacyPanel diplomacy;
+        TMP_Text letterBadge;
+        GameObject letterBadgeRoot;
         Coroutine toastRoutine;
         readonly System.Collections.Generic.Queue<string> toasts = new System.Collections.Generic.Queue<string>();
 
-        public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen);
+        public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) ||
+                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen);
 
         public void Build(MapController controller)
         {
@@ -40,7 +45,7 @@ namespace ToyKingdom
             goldText = UIFactory.Text(goldBox.transform, "Value", "0", 40f, Color.white, TextAlignmentOptions.Left, true);
             UIFactory.Place(goldText.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(86f, 0f), new Vector2(200f, 70f));
             incomeText = UIFactory.Text(t, "Income", "", 26f, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Left);
-            UIFactory.Place(incomeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -110f), new Vector2(420f, 40f));
+            UIFactory.Place(incomeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -110f), new Vector2(620f, 40f));
             incomeText.outlineWidth = 0.22f;
             incomeText.outlineColor = new Color32(20, 24, 36, 220);
 
@@ -71,6 +76,23 @@ namespace ToyKingdom
             attack = AttackPanel.Create(t);
             shop = ArmyShopUI.Create(t, this);
             cityPanel = CityPanel.Create(t, () => map.RefreshAll(), Toast);
+
+            // sağ: saray (alt kenar telefonlarda hareket çubuğuyla çakışmasın diye üstte)
+            var dipBtn = UIFactory.Button(t, "DiplomacyButton", "Diplomasi", UIFactory.Hex("5B3A8C"), 32f);
+            UIFactory.Place((RectTransform)dipBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -268f), new Vector2(240f, 84f));
+            var letBtn = UIFactory.Button(t, "LettersButton", "Mektuplar", UIFactory.Hex("8A5A2B"), 32f);
+            UIFactory.Place((RectTransform)letBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -364f), new Vector2(240f, 84f));
+            var badge = UIFactory.Rounded(letBtn.transform, "Badge", UIFactory.Red, 20f);
+            UIFactory.Place(badge.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-12f, -6f), new Vector2(42f, 42f));
+            badge.raycastTarget = false;
+            letterBadge = UIFactory.Text(badge.transform, "N", "0", 24f, Color.white, TextAlignmentOptions.Center, true);
+            UIFactory.Stretch(letterBadge.rectTransform);
+            letterBadgeRoot = badge.gameObject;
+
+            letters = LettersUI.Create(t, (l, i) => map.AnswerLetter(l, i), Toast);
+            diplomacy = DiplomacyPanel.Create(t, (a, r) => map.Diplomacy(a, r));
+            letBtn.onClick.AddListener(letters.OpenInbox);
+            dipBtn.onClick.AddListener(diplomacy.Open);
             armyBtn.onClick.AddListener(shop.Open);
 
             RefreshTop();
@@ -79,7 +101,14 @@ namespace ToyKingdom
         public void RefreshTop()
         {
             if (goldText != null) goldText.text = SaveSystem.Data.gold.ToString("N0");
-            if (incomeText != null && map != null) incomeText.text = "+" + map.IncomePerMinute() + " altın / dakika";
+            if (incomeText != null && map != null)
+            {
+                int inc = map.IncomePerMinute();
+                int up = Mathf.RoundToInt(KingdomSim.Upkeep(SaveSystem.Data));
+                int net = inc - up;
+                incomeText.text = "<color=" + (net < 0 ? "#FF7A6B" : "#BFF2A6") + ">" + (net >= 0 ? "+" : "") + net + " / dk</color>  (gelir " + inc + ", gider " + up + ")";
+            }
+            if (goldText != null) goldText.color = SaveSystem.Data.gold < 0 ? UIFactory.Hex("FF7A6B") : Color.white;
             RefreshRivals();
             if (kingdomText != null && map != null) kingdomText.text = "Krallık  " + map.OwnedCount() + " / " + map.CityCount + " şehir";
         }
@@ -87,6 +116,27 @@ namespace ToyKingdom
         public void ShowAttack(MapCity city, CastleData castle, bool canAttack, Action onAttack) => attack.Show(city, castle, canAttack, onAttack);
 
         public void ShowCity(MapCity city) => cityPanel.Show(city);
+
+        public void ShowLetter(Letter l)
+        {
+            if (letters == null) return;
+            // başka bir pencere açıksa zorla açma: rozet yeterli
+            if ((attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || letters.IsOpen)
+            {
+                RefreshLetters();
+                return;
+            }
+            letters.Show(l);
+        }
+
+        public void RefreshLetters()
+        {
+            if (letterBadge == null) return;
+            int n = 0;
+            foreach (var l in SaveSystem.Data.letters) if (l.NeedsAnswer || !l.read) n++;
+            letterBadgeRoot.SetActive(n > 0);
+            letterBadge.text = n.ToString();
+        }
 
         // ------------------------------------------------------------------ rakipler
 
@@ -148,6 +198,7 @@ namespace ToyKingdom
             while (toasts.Count > 0)
             {
                 toastText.text = toasts.Peek();
+                toastBox.transform.SetAsLastSibling(); // pencerelerin üstünde görünsün
                 toastBox.SetActive(true);
                 FX.Punch(toastBox.transform, 0.06f, 0.25f);
                 yield return new WaitForSeconds(toasts.Count > 1 ? 2.2f : 3f);

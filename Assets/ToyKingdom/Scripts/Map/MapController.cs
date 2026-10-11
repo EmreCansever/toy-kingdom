@@ -67,6 +67,14 @@ namespace ToyKingdom
                 {
                     var c = Find(r.cityId);
                     bool needGov = c != null && !c.isHomeCity && !c.State.hasGovernor;
+                    // gururlu kral sınırına dayanan fatihi uyarır
+                    if (c != null)
+                        foreach (var l in c.links)
+                        {
+                            var owner = l.to != null ? l.to.RivalId : null;
+                            var rs = owner != null ? SaveSystem.Data.Rival(owner) : null;
+                            if (rs != null && rs.alive && RivalAI.Get(owner).trait == RivalAI.KingTrait.Proud) { Court.BorderThreat(SaveSystem.Data, rs, c.DisplayName); break; }
+                        }
                     ui.Toast(r.cityName + " artık senin! +" + r.goldEarned + " altın" + (needGov ? "\nŞehre dokun ve bir vali ata" : ""));
                 }
                 else ui.Toast(r.cityName + " savunmayı tuttu");
@@ -83,7 +91,65 @@ namespace ToyKingdom
             }
             HandleRivalReport(lastRivalReport, false);
             lastRivalReport = new RivalAI.Report();
+            HandleCourt(false);
             SyncArmies();
+        }
+
+        /// <summary>Mektup cevabı (arayüzden).</summary>
+        public string AnswerLetter(Letter l, int option)
+        {
+            string res = Court.Resolve(SaveSystem.Data, Infos(), l, option);
+            SaveSystem.Save();
+            HandleCourt(true);
+            ui.RefreshTop();
+            return res;
+        }
+
+        /// <summary>Diplomasi panelindeki eylemler.</summary>
+        public string Diplomacy(string action, RivalState r)
+        {
+            var data = SaveSystem.Data;
+            string res;
+            switch (action)
+            {
+                case "gift": res = Court.SendGift(data, r); break;
+                case "peace": res = Court.ProposePeace(data, r); break;
+                case "tribute": res = Court.DemandTribute(data, r); break;
+                default: res = Court.DeclareWar(data, r); break;
+            }
+            ui.Toast(res);
+            SaveSystem.Save();
+            HandleCourt(true);
+            ui.RefreshTop();
+            return res;
+        }
+
+        /// <summary>Saraydan gelenleri işler: yeni mektupları açar, sonuçları gösterir.</summary>
+        public void HandleCourt(bool live)
+        {
+            var rep = Court.Take();
+            if (!rep.Any) { ui.RefreshLetters(); return; }
+            foreach (var m in rep.messages) ui.Toast(m);
+            foreach (var id in rep.cityChanged)
+            {
+                var c = Find(id);
+                if (c != null && c.IsConquered) c.PlayConquest();
+            }
+            if (rep.attacksStarted.Count > 0)
+            {
+                var r = SaveSystem.Data.Rival(rep.attacksStarted[0]);
+                var target = r != null ? Find(r.attackTarget) : null;
+                if (target != null) rig.FocusOn(target.doorPoint);
+                FX.Banner("SALDIRI!", UIFactory.Red, 1.4f, r != null ? RivalAI.Get(r.id).name + " ordusu yolda" : null);
+            }
+            SaveSystem.Save();
+            SyncArmies();
+            RefreshAll();
+            ui.RefreshRivals();
+            ui.RefreshLetters();
+            // cevap bekleyen yeni mektup varsa hemen aç
+            foreach (var l in rep.newLetters)
+                if (l.NeedsAnswer || l.kind == LetterKind.Debt) { ui.ShowLetter(l); break; }
         }
 
         List<CityInfo> Infos()
@@ -167,6 +233,7 @@ namespace ToyKingdom
                 var rep = Simulate(true);
                 HandleRivalReport(lastRivalReport, true);
                 lastRivalReport = new RivalAI.Report();
+                HandleCourt(true);
                 if (rep.gold > 0 || rep.messages.Count > 0)
                 {
                     foreach (var id in rep.newRebels)
@@ -274,6 +341,9 @@ namespace ToyKingdom
                 return;
             }
             GameSession.SelectedCastle = BattleCastle(city);
+            GameSession.SelectedRivalId = city.RivalId;
+            var rival = city.RivalId != null ? SaveSystem.Data.Rival(city.RivalId) : null;
+            if (rival != null && rival.AtPeace) ui.Toast(Court.DeclareWar(SaveSystem.Data, rival));
             SaveSystem.Save();
             SceneManager.LoadScene(battleSceneName);
         }
@@ -301,7 +371,9 @@ namespace ToyKingdom
             if (minutes <= 0)
             {
                 // dakika dolmasa da yoldaki saldırıların varışı kontrol edilir
-                RivalAI.Advance(data, Infos(), 0, online, lastRivalReport);
+                var inf = Infos();
+                RivalAI.Advance(data, inf, 0, online, lastRivalReport);
+                Court.Tick(data, inf, 0, online);
                 if (lastRivalReport.Any) SaveSystem.Save();
                 return new KingdomSim.TickReport();
             }
@@ -312,6 +384,7 @@ namespace ToyKingdom
 
             var rep = KingdomSim.Advance(data, infos, run, online);
             RivalAI.Advance(data, infos, run, online, lastRivalReport);
+            Court.Tick(data, infos, run, online);
             data.lastIncomeTicks = minutes > cap ? now : data.lastIncomeTicks + minutes * TimeSpan.TicksPerMinute;
             SaveSystem.Save();
             return rep;

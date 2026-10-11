@@ -129,6 +129,7 @@ namespace ToyKingdom
                 {
                     var rs = SaveSystem.Data.Rival(rivalId);
                     tags.Add(RivalAI.Get(rivalId).name + (rs != null && rs.capitalId == city.CityId ? " başkenti" : "") + (rs != null ? " (güç " + Mathf.RoundToInt(rs.power) + ")" : ""));
+                    if (rs != null && rs.AtPeace) tags.Add("BARIŞ VAR: saldırırsan anlaşmayı bozarsın");
                 }
                 if (c.RallyDefense) tags.Add("Hızlı savunma");
                 if (c.BoilingOil) tags.Add("Kızgın yağ");

@@ -112,6 +112,8 @@ namespace ToyKingdom
             if (s == null) return baseIncome;
             if (s.rebel != RebelState.None) return 0;
             float m = 1f + 0.25f * s.market;
+            m *= PolicyIncome(s.policy);
+            if (s.incomeModUntil > System.DateTime.UtcNow.Ticks) m *= s.incomeMod;
             if (!home)
             {
                 m *= TaxIncome(s.tax);
@@ -119,6 +121,25 @@ namespace ToyKingdom
                 if (s.hasGovernor && s.governor.trait == GovernorTrait.Ambitious) m *= 1.15f;
             }
             return Mathf.Max(1, Mathf.RoundToInt(baseIncome * m));
+        }
+
+        public static float PolicyIncome(CityPolicy p) => p == CityPolicy.Trade ? 1.3f : p == CityPolicy.Military ? 0.85f : p == CityPolicy.Peace ? 0.75f : 1f;
+
+        public static string PolicyName(CityPolicy p) =>
+            p == CityPolicy.Trade ? "Ticaret" : p == CityPolicy.Military ? "Askeri" : p == CityPolicy.Peace ? "Huzur" : "Serbest";
+
+        public static string PolicyInfo(CityPolicy p) =>
+            p == CityPolicy.Trade ? "Gelir +%30, halk biraz huzursuzlanır, savunma -%15" :
+            p == CityPolicy.Military ? "Savunma +%35, gelir -%15" :
+            p == CityPolicy.Peace ? "Huzursuzluk hızla azalır, gelir -%25" : "Özel bir öncelik yok";
+
+        /// <summary>Dakikalık bakım gideri: her bölük (ordu ve takviye) 0,5, her vali gücü kadar maaş alır.</summary>
+        public static float Upkeep(SaveData data)
+        {
+            float u = 0.5f * data.UsedCapacity();
+            foreach (var c in data.cities)
+                if (c.owner == "player" && c.hasGovernor && c.rebel == RebelState.None) u += 0.6f * c.governor.power;
+            return u;
         }
 
         /// <summary>Huzursuzluğun dakikalık değişimi (artı = kötüleşiyor).</summary>
@@ -133,6 +154,8 @@ namespace ToyKingdom
                 if (s.governor.trait == GovernorTrait.Cruel) r -= 0.7f;
             }
             r -= 0.4f * s.temple + 0.25f * s.barracks + 0.1f * s.walls;
+            if (s.policy == CityPolicy.Trade) r += 0.25f;
+            if (s.policy == CityPolicy.Peace) r -= 0.7f;
             return r;
         }
 
@@ -154,6 +177,7 @@ namespace ToyKingdom
         public class TickReport
         {
             public int gold;
+            public int upkeep;
             public readonly List<string> messages = new List<string>();
             public readonly List<string> newRebels = new List<string>();
         }
@@ -203,7 +227,35 @@ namespace ToyKingdom
                     if (s.hasGovernor && s.governor.loyalty >= 40f) s.warnedLoyalty = false;
                 }
             }
-            data.gold += rep.gold;
+            // bakım giderleri: ordu ve vali maaşları
+            float upkeep = Upkeep(data) * minutes + data.upkeepRemainder;
+            int paid = Mathf.FloorToInt(upkeep);
+            data.upkeepRemainder = upkeep - paid;
+            rep.upkeep = paid;
+            data.gold += rep.gold - paid;
+
+            // hazine borçta: halk huzursuzlanır, askerler kaçar
+            if (data.gold < 0)
+            {
+                foreach (var c in cities)
+                {
+                    if (c.home || !data.IsConquered(c.id)) continue;
+                    var s = data.State(c.id);
+                    s.unrest = Mathf.Min(online ? 100f : 90f, s.unrest + 3f * Mathf.Min(minutes, 10));
+                }
+                if (online)
+                {
+                    for (int i = 0; i < minutes && i < 5; i++)
+                    {
+                        if (UnityEngine.Random.value > 0.3f) continue;
+                        string unit = null; int n = 0;
+                        foreach (var e in data.army) if (e.count > n) { n = e.count; unit = e.unitId; }
+                        if (unit == null) break;
+                        data.AddArmy(unit, -1);
+                        rep.messages.Add("Maaşı ödenmeyen bir bölük ordudan kaçtı!");
+                    }
+                }
+            }
             return rep;
         }
 

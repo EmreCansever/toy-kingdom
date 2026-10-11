@@ -26,6 +26,14 @@ Unity 6 (6000.3) ile geliştiriliyor. Hedef platform: yatay ekranlı telefonlar.
   şehirlerine önceden haber verilen saldırılar düzenler. Sur, kışla, vali ve takviye bölükleriyle savunursun; rakip
   başkenti düşerse krallık dağılır ve kalan şehirleri sana geçer.
 
+- **Saray ve diplomasi:** Her krallığın bir hükümdarı var (Sultan Kara Davud: açgözlü ve sinsi; Kraliçe Ayaz Hatun:
+  gururlu ve onurlu). Krallar mektup yollar: saldırmadan önce haraç ister, savaş ilan eder, barış önerir, aldıkları
+  şehri satmayı ya da esirleri fidyeyle vermeyi teklif eder. Her mektubun cevap süresi vardır; cevap vermezsen en kötü
+  seçenek uygulanır. Diplomasi panelinden hediye gönder, barış öner, haraç iste ya da savaş ilan et.
+- **Hazine ve şehir kontrolü:** Bölükler ve valiler maaş alır; hazine borca girerse halk huzursuzlanır, askerler kaçar.
+  Şehirlere kararname (Ticaret / Askeri / Huzur) çıkar, halktan asker topla. Vezir kıtlık, salgın, yolsuzluk, kervan
+  ve şenlik gibi kararlar ister.
+
 ## Başlarken
 
 1. Repoyu klonla ve klasörü **Unity Hub > Add > Add project from disk** ile ekle (Unity 6000.3.x).

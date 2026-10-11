@@ -38,6 +38,7 @@ namespace ToyKingdom
         int reinforcementsLeft;
         int deployedSquads;
         int lostSquads;
+        readonly List<string> lostUnits = new List<string>();
         float endDelay = -1f;
         BattleResult pendingResult;
 
@@ -455,7 +456,7 @@ namespace ToyKingdom
             foreach (var s in PlayerSquads)
             {
                 if (s.Alive * 2 >= s.StartSize && s.Alive > 0) { SaveSystem.Data.AddArmy(s.Data.unitId, 1); returned++; }
-                else lostSquads++;
+                else { lostSquads++; lostUnits.Add(s.Data.unitId); }
                 s.Cleanup();
             }
 
@@ -479,6 +480,16 @@ namespace ToyKingdom
                     foreach (var m in sq.Members.ToArray())
                         if (m != null) m.TakeDamage(9999f, DamageType.Melee);
                 PlayConquest(result);
+            }
+
+            // rakip şehrine kaybedilen savaş: kaybedilen bölüklerin yarısı esir düşer, kral fidye ister
+            if (!victory && !string.IsNullOrEmpty(GameSession.SelectedRivalId) && lostUnits.Count > 0)
+            {
+                var data = SaveSystem.Data;
+                data.pendingCaptives.Clear();
+                for (int i = 0; i < lostUnits.Count; i += 2) data.pendingCaptives.Add(lostUnits[i]);
+                data.pendingCaptor = GameSession.SelectedRivalId;
+                data.pendingCaptiveCity = Castle.displayName;
             }
 
             SaveSystem.Save();

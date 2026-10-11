@@ -13,19 +13,41 @@ namespace ToyKingdom
     /// </summary>
     public static class RivalAI
     {
+        public enum KingTrait { Greedy, Proud }
+
         public struct Def
         {
             public string id, name, shortName;
             public char biome;
             public CastleColor towers;
             public Color color;
+            // hükümdar
+            public string king, kingTitle;
+            public KingTrait trait;
+            public string traitName, traitInfo;
+            /// <summary>Habersiz saldırı ve anlaşma bozma eğilimi (0-1).</summary>
+            public float treachery;
         }
 
         public static readonly Def[] Defs =
         {
-            new Def { id = "sand", name = "Kum Sultanlığı", shortName = "Sultanlık", biome = 'D', towers = CastleColor.Red, color = new Color(0.93f, 0.42f, 0.2f) },
-            new Def { id = "frost", name = "Buz Krallığı", shortName = "Buz Krallığı", biome = 'W', towers = CastleColor.Green, color = new Color(0.3f, 0.78f, 0.62f) },
+            new Def
+            {
+                id = "sand", name = "Kum Sultanlığı", shortName = "Sultanlık", biome = 'D', towers = CastleColor.Red, color = new Color(0.93f, 0.42f, 0.2f),
+                king = "Kara Davud", kingTitle = "Sultan", trait = KingTrait.Greedy, treachery = 0.2f,
+                traitName = "Açgözlü ve sinsi",
+                traitInfo = "Altına düşkün: saldırmadan önce haraç ister, hediyeyi sever. Ödedikçe iştahı büyür; bazen habersiz saldırır, anlaşmayı bozabilir."
+            },
+            new Def
+            {
+                id = "frost", name = "Buz Krallığı", shortName = "Buz Krallığı", biome = 'W', towers = CastleColor.Green, color = new Color(0.3f, 0.78f, 0.62f),
+                king = "Ayaz Hatun", kingTitle = "Kraliçe", trait = KingTrait.Proud, treachery = 0f,
+                traitName = "Gururlu ve onurlu",
+                traitInfo = "Savaşı önceden ilan eder, sözünü tutar. Pazarlıktan ve tehditten hoşlanmaz; sınırına yaklaşanı uyarır."
+            },
         };
+
+        public static string KingFull(string id) { var d = Get(id); return d.kingTitle + " " + d.king; }
 
         public static Def Get(string id)
         {
@@ -48,6 +70,8 @@ namespace ToyKingdom
         {
             float d = 15f + 10f * Mathf.Max(1, difficulty) + 15f * s.walls + 8f * s.barracks + GarrisonDefense * s.garrison;
             if (s.hasGovernor) d += 6f * s.governor.power;
+            if (s.policy == CityPolicy.Military) d *= 1.35f;
+            if (s.policy == CityPolicy.Trade) d *= 0.85f;
             return d;
         }
 
@@ -134,6 +158,25 @@ namespace ToyKingdom
                     int growMinutes = online ? minutes : Mathf.Min(minutes, 30);
                     r.power = Mathf.Min(MaxPower, r.power + growMinutes * (1f + 0.08f * income));
 
+                    // ilişkiler zamanla gergin dengeye (-10) döner
+                    r.relation += (-10f - r.relation) * Mathf.Min(1f, 0.02f * minutes);
+                    if (r.treaty == Treaty.Peace && !r.AtPeace)
+                    {
+                        r.treaty = Treaty.None;
+                        rep.messages.Add(def.name + " ile barış anlaşmasının süresi doldu");
+                    }
+
+                    // zayıflayan ya da dost rakip barış önerir
+                    if (online && !r.AtPeace && r.relation > -45f)
+                    {
+                        r.peaceOfferTimer -= minutes;
+                        if (r.peaceOfferTimer <= 0f)
+                        {
+                            r.peaceOfferTimer = 14f + UnityEngine.Random.Range(0f, 6f);
+                            if (r.power < 90f || r.relation > 20f) Court.PeaceOffer(data, r);
+                        }
+                    }
+
                     // genişleme
                     r.expandTimer -= minutes;
                     if (r.expandTimer <= 0f)
@@ -143,7 +186,7 @@ namespace ToyKingdom
                     }
 
                     // saldırı hazırlığı
-                    if (online && !r.Attacking)
+                    if (online && !r.Attacking && !r.awaitingAnswer)
                     {
                         r.attackTimer -= minutes;
                         if (r.attackTimer <= 0f) TryStartAttack(data, cities, r, def, rep);
@@ -204,6 +247,46 @@ namespace ToyKingdom
 
             float strength = r.power * 0.65f;
             if (strength < 40f) return;
+
+            // dost hükümdar saldırmaz; barıştaysa ancak sinsi bir kral anlaşmayı bozar
+            if (r.relation > 40f) { r.attackTimer = 8f; return; }
+            if (r.AtPeace)
+            {
+                if (UnityEngine.Random.value > def.treachery * 0.5f) { r.attackTimer = 5f; return; }
+                r.treaty = Treaty.None;
+                r.relation -= 30f;
+                rep.messages.Add(KingFull(r.id) + " barış anlaşmasını bozdu!");
+            }
+
+            var tn = Find(cities, target);
+            string tname = tn != null ? tn.Value.name : "şehrin";
+            r.attackTimer = 12f + UnityEngine.Random.Range(0f, 6f);
+
+            if (def.trait == KingTrait.Greedy && UnityEngine.Random.value > def.treachery)
+            {
+                // önce haraç ister: cevap gelene kadar ordu bekler
+                float defense = Defense(data.State(target), tn != null ? tn.Value.difficulty : 1);
+                int amount = Mathf.RoundToInt((60f + defense * 2.2f) * r.greed / 10f) * 10;
+                r.awaitingAnswer = true;
+                Court.TributeDemand(data, r, target, from, tname, amount, strength);
+                rep.messages.Add(KingFull(r.id) + " bir mektup gönderdi");
+                return;
+            }
+
+            StartAttack(r, target, from, strength);
+            rep.attacksStarted.Add(r.id);
+            if (def.trait == KingTrait.Proud)
+            {
+                Court.WarDeclaration(data, r, target, tname, strength);
+                rep.messages.Add(KingFull(r.id) + " savaş ilan etti: ordusu " + tname + " üzerine yürüyor!");
+            }
+            else rep.messages.Add("Habersiz saldırı! " + def.name + " ordusu " + tname + " üzerine yürüyor!");
+        }
+
+        /// <summary>Saldırıyı başlatır (ordu yola çıkar, MarchMinutes sonra varır).</summary>
+        public static void StartAttack(RivalState r, string target, string from, float strength)
+        {
+            r.awaitingAnswer = false;
             r.power -= strength * 0.5f; // ordunun bir kısmı sefere çıkar
             r.attackTarget = target;
             r.attackFrom = from;
@@ -211,10 +294,6 @@ namespace ToyKingdom
             long now = DateTime.UtcNow.Ticks;
             r.attackStartTicks = now;
             r.attackArriveTicks = now + (long)(MarchMinutes * TimeSpan.TicksPerMinute);
-            r.attackTimer = 12f + UnityEngine.Random.Range(0f, 6f);
-            var tn = Find(cities, target);
-            rep.attacksStarted.Add(r.id);
-            rep.messages.Add(def.name + " ordusu " + (tn != null ? tn.Value.name : "şehrine") + " üzerine yürüyor! Şehre dokun ve savunmayı güçlendir");
         }
 
         static void ResolveArrivals(SaveData data, IList<CityInfo> cities, Report rep)
@@ -237,6 +316,7 @@ namespace ToyKingdom
                 {
                     data.LoseCity(target, r.id);
                     r.power += r.attackPower * 0.3f; // sağ kalanlar geri döner
+                    Court.BuyBack(data, r, target, name, 200 + 70 * (ci != null ? ci.Value.difficulty : 1));
                     rep.captured.Add(target);
                     rep.messages.Add(name + " düştü! " + def.name + " şehri ele geçirdi. Geri almak için saldır");
                 }
