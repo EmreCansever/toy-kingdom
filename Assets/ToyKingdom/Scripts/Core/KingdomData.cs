@@ -119,6 +119,55 @@ namespace ToyKingdom
         }
     }
 
+    /// <summary>Kendi iki şehrimiz arasındaki ticaret yolu: güvenlik, devriye bölükleri ve kervan düzeni.</summary>
+    [Serializable]
+    public class RoadState
+    {
+        /// <summary>"a|b" (sıralı şehir kimlikleri).</summary>
+        public string key;
+        public string a, b;
+        /// <summary>Yol hâlâ iki ucunda bizim şehrimizle mi bağlı?</summary>
+        public bool active = true;
+        /// <summary>0-100. Düşükse eşkıyalar kervanları soyar, çevre şehirler huzursuzlanır.</summary>
+        public float security = 50f;
+        /// <summary>Yolda devriye gezen bölükler (ordudan ayrılmış).</summary>
+        public List<ArmyEntry> patrol = new List<ArmyEntry>();
+        public long nextCaravanTicks;
+        public bool nextFromA = true;
+        public bool warnedLow;
+        public int delivered, robbed, repelled;
+        public int earned;
+
+        public int PatrolCount()
+        {
+            int n = 0;
+            foreach (var e in patrol) n += e.count;
+            return n;
+        }
+
+        public int PatrolOf(string unitId)
+        {
+            var e = patrol.Find(x => x.unitId == unitId);
+            return e != null ? e.count : 0;
+        }
+    }
+
+    /// <summary>Yoldaki bir kervan. Akıbeti yola çıkarken belirlenir (0 vardı, 1 soyuldu, 2 devriye kurtardı).</summary>
+    [Serializable]
+    public class CaravanState
+    {
+        public int id;
+        public string roadKey;
+        public bool fromA;
+        public long startTicks, arriveTicks;
+        public int value;
+        public int fate;
+        /// <summary>Baskının yolun neresinde olduğu (0-1).</summary>
+        public float eventT;
+
+        public long EventTicks => startTicks + (long)((arriveTicks - startTicks) * (double)eventT);
+    }
+
     /// <summary>Rakip krallığın durumu. Kayıtta tutulur.</summary>
     [Serializable]
     public class RivalState

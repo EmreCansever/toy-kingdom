@@ -60,7 +60,7 @@ namespace ToyKingdom
             switch (b)
             {
                 case Building.Market: return "Gelir +%25 / seviye";
-                case Building.Barracks: return "+2 ordu kapasitesi, halkı yatıştırır";
+                case Building.Barracks: return "+3 ordu kapasitesi, halkı yatıştırır";
                 case Building.Walls: return "Kapı +%25 sağlam, şehir daha güvenli";
                 default: return "Halkı en çok yatıştıran yapı";
             }
@@ -161,6 +161,8 @@ namespace ToyKingdom
             r -= 0.4f * s.temple + 0.25f * s.barracks + 0.1f * s.walls;
             if (s.policy == CityPolicy.Trade) r += 0.25f;
             if (s.policy == CityPolicy.Peace) r -= 0.7f;
+            // yolların güvenliği: eşkıya baskını halkı korkutur, güvenli yollar refah getirir
+            r += Trade.UnrestEffect(SaveSystem.Data, s.cityId);
             return r;
         }
 
@@ -216,13 +218,16 @@ namespace ToyKingdom
                 {
                     StartRebellion(s, RebelState.Governor, c.difficulty);
                     rep.newRebels.Add(c.id);
+                    if (Trade.CitySecurity(data, c.id) < 30f) s.rebelPower += 1;
                     rep.messages.Add(c.name + ": vali " + s.governor.name + " sana isyan etti!");
                 }
                 else if (s.unrest >= 100f)
                 {
                     StartRebellion(s, RebelState.People, c.difficulty);
                     rep.newRebels.Add(c.id);
-                    rep.messages.Add(c.name + ": halk ayaklandı!");
+                    bool bandits = Trade.CitySecurity(data, c.id) < 30f;
+                    if (bandits) s.rebelPower += 2; // yollardaki eşkıyalar asilere katılır
+                    rep.messages.Add(c.name + ": halk ayaklandı!" + (bandits ? " Eşkıyalar da asilere katıldı" : ""));
                 }
                 else
                 {

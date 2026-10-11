@@ -35,6 +35,7 @@ namespace ToyKingdom
             var header = box.transform.Find("Border/Header");
             p.headerInfo = UIFactory.Text(header, "Info", "", 26f, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Right);
             UIFactory.Place(p.headerInfo.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-220f, 0f), new Vector2(700f, 60f));
+            p.headerInfo.enableAutoSizing = true; p.headerInfo.fontSizeMin = 16f; p.headerInfo.fontSizeMax = 26f;
             p.content = UIFactory.Rect("Content", box.transform);
             UIFactory.Stretch(p.content, 16f, 16f, 16f, 112f);
 
@@ -81,6 +82,12 @@ namespace ToyKingdom
 
             title.text = city.DisplayName;
             headerInfo.text = (home ? "Başkent  ·  " : "") + "+" + income + " altın / dakika";
+            bool roads = data.roads.Exists(r => r.active && (r.a == city.CityId || r.b == city.CityId));
+            if (roads)
+            {
+                float sec = Trade.CitySecurity(data, city.CityId);
+                headerInfo.text += "  ·  yollar: <color=#" + ColorUtility.ToHtmlStringRGB(Trade.SecurityColor(sec)) + ">" + Trade.SecurityName(sec).ToLowerInvariant() + " " + Mathf.RoundToInt(sec) + "</color>";
+            }
 
             if (!home)
             {
