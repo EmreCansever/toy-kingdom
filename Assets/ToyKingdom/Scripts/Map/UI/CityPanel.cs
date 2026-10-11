@@ -210,9 +210,9 @@ namespace ToyKingdom
             levy.onClick.AddListener(() =>
             {
                 SaveSystem.Data.AddArmy("infantry", 1);
-                s.unrest = Mathf.Min(100f, s.unrest + 15f);
-                s.levyReadyTicks = System.DateTime.UtcNow.Ticks + 6 * System.TimeSpan.TicksPerMinute;
-                Done(city.DisplayName + " halkından bir piyade bölüğü toplandı (huzursuzluk +15)");
+                s.unrest = Mathf.Min(100f, s.unrest + 20f);
+                s.levyReadyTicks = System.DateTime.UtcNow.Ticks + 10 * System.TimeSpan.TicksPerMinute;
+                Done(city.DisplayName + " halkından bir piyade bölüğü toplandı (huzursuzluk +20)");
             });
 
             var btn = Btn(row.transform, "Takviye gönder  (+" + Mathf.RoundToInt(RivalAI.GarrisonDefense) + ")", UIFactory.Purple,

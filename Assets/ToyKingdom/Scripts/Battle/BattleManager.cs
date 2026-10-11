@@ -69,8 +69,11 @@ namespace ToyKingdom
                 return;
             }
 
+            // kuşatma savunması: daha büyük kale, daha sert savunucular, mayınlar ve toplar
+            Castle = Siege.Harden(Castle);
             Field = gameObject.AddComponent<BattleField>();
             Field.Build(Castle);
+            Siege.Build(Field, Castle);
             if (Cam != null)
             {
                 Field.FitCamera(Cam, 0.18f);
@@ -333,6 +336,14 @@ namespace ToyKingdom
                 if (e != sq && (e.Center() - c).magnitude < 3.5f) e.ChangeMorale(enemy ? -10f : 6f);
         }
 
+        bool mineHint;
+        public void ReportMine()
+        {
+            if (mineHint) return;
+            mineHint = true;
+            Hint?.Invoke("Mayın! Kale önünde gizli mayınlar var: toprak tümseklerinden uzak dur");
+        }
+
         public void OnSquadRouted(Squad sq)
         {
             if (sq.Team == Team.Player) Hint?.Invoke(sq.Data.displayName + " bölüğü bozguna uğradı, geri çekiliyor!");
@@ -472,7 +483,7 @@ namespace ToyKingdom
             {
                 float timeRatio = TimeLimit > 0f ? TimeLeft / TimeLimit : 1f;
                 result.stars = 1 + (timeRatio > 0.35f ? 1 : 0) + (lostSquads == 0 ? 1 : 0);
-                result.goldEarned = Mathf.RoundToInt(Castle.goldReward * (0.5f + 0.25f * (result.stars - 1)));
+                result.goldEarned = Mathf.RoundToInt(Castle.goldReward * (0.5f + 0.25f * (result.stars - 1)) * 0.6f);
                 SaveSystem.Data.gold += result.goldEarned;
                 SaveSystem.Data.Conquer(Castle.cityId);
                 // düşman askerleri kaçar

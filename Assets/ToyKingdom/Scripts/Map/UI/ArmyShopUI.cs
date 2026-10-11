@@ -73,7 +73,7 @@ namespace ToyKingdom
         void Buy(UnitData data, int amount)
         {
             var save = SaveSystem.Data;
-            int price = data.goldPrice * amount;
+            int price = KingdomSim.UnitPrice(data) * amount;
             if (save.gold < price)
             {
                 ui.Toast("Yeterli altının yok");

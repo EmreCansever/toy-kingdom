@@ -41,8 +41,8 @@ namespace ToyKingdom
             root = new GameObject("Field").transform;
             root.SetParent(transform, false);
 
-            int w = Mathf.Clamp(castle.width, 4, 7);
-            int d = Mathf.Clamp(castle.depth, 4, 7);
+            int w = Mathf.Clamp(castle.width, 4, 9);
+            int d = Mathf.Clamp(castle.depth, 4, 9);
             // kale merkezi ekranda sağda (u - v = 10, u + v = 16)
             cu0 = 13 - w / 2; cu1 = cu0 + w - 1;
             cv0 = 3 - d / 2; cv1 = cv0 + d - 1;
@@ -172,7 +172,9 @@ namespace ToyKingdom
                     if (towerCells.Contains(cell))
                     {
                         int variant = rnd.Next(9);
-                        var t = PlaceSprite(art.Tower(c.color, variant), Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Tower");
+                        // iki kat: altta sur bloğu, üstünde kule (kale askerlerin yanında heybetli dursun)
+                        PlaceSprite(art.wallCross, Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "TowerBase");
+                        var t = PlaceSprite(art.Tower(c.color, variant), Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "Tower");
                         TowerSprites.Add(new KeyValuePair<SpriteRenderer, int>(t, variant));
                         var tower = t.gameObject.AddComponent<Tower>();
                         tower.Init(c.towerData, cell, art);
@@ -185,6 +187,9 @@ namespace ToyKingdom
                     if (isMainGate || isSecondGate)
                     {
                         var gs = PlaceSprite(isMainGate ? art.gateLeft : art.gateRight, Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Gate");
+                        // kapının üstünde de sur katı
+                        var over = isMainGate ? art.wallsAlongV : art.wallsAlongU;
+                        if (over != null && over.Length > 0) PlaceSprite(over[0], Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "GateTop");
                         var gate = gs.gameObject.AddComponent<CastleGate>();
                         Vector2 outward = isMainGate ? new Vector2(-1f, 0f) : new Vector2(0f, -1f);
                         var front = isMainGate ? new Vector2Int(u - 1, v) : new Vector2Int(u, v - 1);
@@ -200,6 +205,7 @@ namespace ToyKingdom
                     Sprite[] set = alongU ? art.wallsAlongU : art.wallsAlongV;
                     Sprite s = set != null && set.Length > 0 ? set[rnd.Next(set.Length)] : null;
                     PlaceSprite(s, Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Wall");
+                    PlaceSprite(set != null && set.Length > 0 ? set[rnd.Next(set.Length)] : null, Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "Wall2");
                     if (u == cu0 || v == cv0) frontWallCells.Add(cell);
                 }
             }
@@ -211,7 +217,9 @@ namespace ToyKingdom
             if (c.keep && u == ku && v == kv)
             {
                 PlaceSprite(art.wallCross, Iso.BlockBase(u, v), Iso.BlockOrder(u, v, 1), "Keep");
-                var kt = PlaceSprite(art.Tower(c.color, 4), Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "KeepTower");
+                PlaceSprite(art.wallCross, Iso.BlockBase(u, v, 1), Iso.BlockOrder(u, v, 2), "Keep2");
+                PlaceSprite(art.wallCross, Iso.BlockBase(u, v, 2), Iso.BlockOrder(u, v, 3), "Keep3");
+                var kt = PlaceSprite(art.Tower(c.color, 4), Iso.BlockBase(u, v, 3), Iso.BlockOrder(u, v, 4), "KeepTower");
                 TowerSprites.Add(new KeyValuePair<SpriteRenderer, int>(kt, 4));
                 return;
             }
@@ -351,7 +359,7 @@ namespace ToyKingdom
         }
 
         /// <summary>Surların üst yürüme yolunun zeminden yüksekliği.</summary>
-        public const float WallTopElevation = 0.53f;
+        public const float WallTopElevation = 0.53f * 2f;
 
         /// <summary>
         /// Kale önündeki savunma bölgesinde birbirinden uzak, dağınık nöbet noktaları üretir.
@@ -445,7 +453,7 @@ namespace ToyKingdom
         /// <summary>Başlangıç görünümü: batı şeridi ile kale birlikte görünür. Oyuncu sonra kaydırıp yakınlaştırabilir.</summary>
         public void FitCamera(Camera cam, float bottomUI = 0.22f)
         {
-            float size = 4.8f;
+            float size = 4.3f;
             cam.orthographicSize = size;
             float x = Mathf.Lerp(Playable.xMin, CastleCenter.x, 0.55f);
             float y = CastleCenter.y - size * bottomUI * 0.8f;

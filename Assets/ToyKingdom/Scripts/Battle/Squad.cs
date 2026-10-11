@@ -465,7 +465,7 @@ namespace ToyKingdom
             int cols = Mathf.CeilToInt(Mathf.Sqrt(count));
             int rows = Mathf.CeilToInt(count / (float)cols);
             int r = index / cols, c = index % cols;
-            const float spacing = 0.36f;
+            const float spacing = 0.3f;
             float x = (c - (cols - 1) * 0.5f) * spacing;
             float y = -(r - (rows - 1) * 0.5f) * spacing;
             Vector2 fwd = heading.sqrMagnitude > 0.01f ? heading.normalized : Vector2.up;

@@ -15,7 +15,7 @@ namespace ToyKingdom
         public static readonly List<Soldier> All = new List<Soldier>();
 
         static readonly Color EnemyTint = new Color(1f, 0.52f, 0.46f);
-        const float Radius = 0.17f;
+        const float Radius = 0.14f;
         const float ArrowSpeed = 7.5f;
 
         public UnitData Data { get; private set; }
@@ -59,7 +59,7 @@ namespace ToyKingdom
             var art = GameArt.Instance;
             var go = new GameObject(team == Team.Player ? "P_" + data.unitId : "E_" + data.unitId);
 
-            float scale = 0.95f * Mathf.Max(0.3f, data.scale);
+            float scale = 0.62f * Mathf.Max(0.3f, data.scale);
 
             var shadowSr = new GameObject("Shadow").AddComponent<SpriteRenderer>();
             shadowSr.transform.SetParent(go.transform, false);

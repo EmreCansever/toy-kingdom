@@ -22,6 +22,7 @@ namespace ToyKingdom
         void Start()
         {
             UIFactory.EnsureEventSystem();
+            maxOfflineHours = Mathf.Min(maxOfflineHours, 2f); // yokken en fazla 2 saatlik gelir
             cities = FindObjectsByType<MapCity>(FindObjectsSortMode.None);
             ui = gameObject.AddComponent<MapUI>();
             ui.Build(this);
@@ -355,10 +356,14 @@ namespace ToyKingdom
             var db = UnitDatabase.Instance;
             var inf = db != null ? db.Get("infantry") : null;
             var kn = db != null ? db.Get("knight") : null;
-            if (city.IsRebel) return KingdomSim.RebelCastle(city.castle, city.State, inf, kn);
-            var rival = city.RivalId != null ? SaveSystem.Data.Rival(city.RivalId) : null;
-            if (rival != null) return RivalAI.RivalCastle(city.castle, rival, city.State, inf, kn);
-            return city.castle;
+            CastleData c = city.castle;
+            if (city.IsRebel) c = KingdomSim.RebelCastle(city.castle, city.State, inf, kn);
+            else
+            {
+                var rival = city.RivalId != null ? SaveSystem.Data.Rival(city.RivalId) : null;
+                if (rival != null) c = RivalAI.RivalCastle(city.castle, rival, city.State, inf, kn);
+            }
+            return Siege.Harden(c);
         }
 
         /// <summary>Geçen her tam dakika için krallık simülasyonunu ilerletir (gelir, huzursuzluk, sadakat, isyan).</summary>

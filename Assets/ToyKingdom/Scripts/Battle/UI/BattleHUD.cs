@@ -35,7 +35,10 @@ namespace ToyKingdom
             foreach (var c in cards)
                 if (first == null && SaveSystem.Data.GetArmyCount(c.Data.unitId) > 0) first = c.Data;
             if (first != null) bm.SelectUnit(first);
-            ShowHint("Bir bölük seç, işaretli bölgeden kaleye doğru parmağınla rota çiz", 6f);
+            int cannons = Siege.CannonCount(bm.Castle), mines = Siege.MineCount(bm.Castle);
+            if (cannons > 0 || mines > 0)
+                ShowHint("Dikkat: kulelerde " + cannons + " top var, kale önünde gizli mayınlar olabilir. Bölüklerini dağınık gönder!", 7f);
+            else ShowHint("Bir bölük seç, işaretli bölgeden kaleye doğru parmağınla rota çiz", 6f);
         }
 
         void OnDestroy()

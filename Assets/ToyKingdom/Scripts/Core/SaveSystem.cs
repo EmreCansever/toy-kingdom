@@ -140,12 +140,12 @@ namespace ToyKingdom
         }
 
         /// <summary>
-        /// En fazla kaç bölük beslenebilir: başkent 8, her şehir +2, her Kışla seviyesi +2.
+        /// En fazla kaç bölük beslenebilir: başkent 6, her şehir +1, her Kışla seviyesi +2.
         /// </summary>
         public int ArmyCapacity()
         {
-            int cap = 8;
-            foreach (var id in conqueredCities) if (!IsRebel(id)) cap += 2;
+            int cap = 6;
+            foreach (var id in conqueredCities) if (!IsRebel(id)) cap += 1;
             foreach (var c in cities) if (c.rebel == RebelState.None && (c.cityId == "home" || conqueredCities.Contains(c.cityId))) cap += 2 * c.barracks;
             return cap;
         }

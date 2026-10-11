@@ -16,7 +16,7 @@ namespace ToyKingdom
         /// <summary>Kule tepesinin altındaki zemin noktası (tırmananlar buraya yürür).</summary>
         public Vector3 TopGround => Iso.Surface(cell.x, cell.y);
         /// <summary>Kule tepesinin zeminden yüksekliği.</summary>
-        public const float TopElevation = 0.7f;
+        public const float TopElevation = 0.7f + Iso.WallLevel;
 
         public event Action<Tower> Destroyed;
 
@@ -34,7 +34,7 @@ namespace ToyKingdom
         {
             data = towerData;
             cell = towerCell;
-            firePoint = Iso.BlockBase(cell.x, cell.y) + Vector3.up * 1.1f;
+            firePoint = Iso.BlockBase(cell.x, cell.y, 1) + Vector3.up * 1.1f;
             MaxHealth = Health = data != null ? Mathf.Max(1f, data.maxHealth) : 150f;
             sr = GetComponent<SpriteRenderer>();
             origin = transform.position;

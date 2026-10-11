@@ -131,6 +131,8 @@ namespace ToyKingdom
                     tags.Add(RivalAI.Get(rivalId).name + (rs != null && rs.capitalId == city.CityId ? " başkenti" : "") + (rs != null ? " (güç " + Mathf.RoundToInt(rs.power) + ")" : ""));
                     if (rs != null && rs.AtPeace) tags.Add("BARIŞ VAR: saldırırsan anlaşmayı bozarsın");
                 }
+                if (Siege.CannonCount(c) > 0) tags.Add(Siege.CannonCount(c) + " top");
+                if (Siege.MineCount(c) > 0) tags.Add("Gizli mayınlar");
                 if (c.RallyDefense) tags.Add("Hızlı savunma");
                 if (c.BoilingOil) tags.Add("Kızgın yağ");
                 if (c.Courtyard) tags.Add("Son direniş: " + c.FinalStandSquads + " bölük");
@@ -149,7 +151,7 @@ namespace ToyKingdom
                 SetStat(3, c.wallArchers + (c.reinforcementCount > 0 ? " + " + c.reinforcementCount : ""),
                     c.reinforcementCount > 0 ? "Sur okçusu + takviye" : "Sur okçusu");
                 rewardValue.text = c.goldReward.ToString("N0");
-                incomeValue.text = rebel ? "Geri al" : "+" + c.passiveIncomePerMinute;
+                incomeValue.text = rebel ? "Geri al" : "+" + Mathf.Max(1, Mathf.RoundToInt(c.passiveIncomePerMinute * KingdomSim.IncomeScale));
                 incomeLabel.text = rebel ? "Şehir yeniden senin olur" : "Gelir (altın / dakika)";
                 for (int i = 0; i < pips.childCount; i++)
                     pips.GetChild(i).GetComponent<Image>().color = i < c.difficulty ? Color.white : new Color(1f, 1f, 1f, 0.28f);

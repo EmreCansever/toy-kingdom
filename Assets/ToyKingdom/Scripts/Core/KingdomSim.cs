@@ -11,7 +11,12 @@ namespace ToyKingdom
     public static class KingdomSim
     {
         public const int MaxLevel = 3;
-        public const int HomeBaseIncome = 4;
+        public const int HomeBaseIncome = 5;
+        /// <summary>Genel gelir çarpanı (ekonomi dengesi).</summary>
+        public const float IncomeScale = 0.6f;
+
+        /// <summary>Bir bölüğün dükkân fiyatı.</summary>
+        public static int UnitPrice(UnitData u) => u == null ? 0 : Mathf.RoundToInt(u.goldPrice * 2.2f / 10f) * 10;
 
         // ------------------------------------------------------------------ tanımlar
 
@@ -120,7 +125,7 @@ namespace ToyKingdom
                 if (s.hasGovernor && s.governor.trait == GovernorTrait.Merchant) m *= 1.25f;
                 if (s.hasGovernor && s.governor.trait == GovernorTrait.Ambitious) m *= 1.15f;
             }
-            return Mathf.Max(1, Mathf.RoundToInt(baseIncome * m));
+            return Mathf.Max(1, Mathf.RoundToInt(baseIncome * m * IncomeScale));
         }
 
         public static float PolicyIncome(CityPolicy p) => p == CityPolicy.Trade ? 1.3f : p == CityPolicy.Military ? 0.85f : p == CityPolicy.Peace ? 0.75f : 1f;
@@ -133,12 +138,12 @@ namespace ToyKingdom
             p == CityPolicy.Military ? "Savunma +%35, gelir -%15" :
             p == CityPolicy.Peace ? "Huzursuzluk hızla azalır, gelir -%25" : "Özel bir öncelik yok";
 
-        /// <summary>Dakikalık bakım gideri: her bölük (ordu ve takviye) 0,5, her vali gücü kadar maaş alır.</summary>
+        /// <summary>Dakikalık bakım gideri: her bölük (ordu ve takviye) 1 altın, her vali gücü kadar maaş alır.</summary>
         public static float Upkeep(SaveData data)
         {
-            float u = 0.5f * data.UsedCapacity();
+            float u = 1f * data.UsedCapacity();
             foreach (var c in data.cities)
-                if (c.owner == "player" && c.hasGovernor && c.rebel == RebelState.None) u += 0.6f * c.governor.power;
+                if (c.owner == "player" && c.hasGovernor && c.rebel == RebelState.None) u += 1f * c.governor.power;
             return u;
         }
 

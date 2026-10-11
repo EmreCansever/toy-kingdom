@@ -72,12 +72,12 @@ namespace ToyKingdom
         /// <summary>Kapı önünde kümelenenlerin üstüne kızgın yağ dökülür.</summary>
         public bool BoilingOil => difficulty >= 3;
         /// <summary>Kapı kırılınca avlu savaşı başlar: kapı önü tutulmalı.</summary>
-        public bool Courtyard => difficulty >= 3;
+        public bool Courtyard => difficulty >= 2;
         /// <summary>Takviyeler oyuncunun okçularına akın eder.</summary>
         public bool Sortie => difficulty >= 4 && reinforcement != null;
         /// <summary>Avlu savaşında son direniş için çıkan bölük sayısı.</summary>
-        public int FinalStandSquads => Mathf.Clamp(difficulty - 2, 0, 3);
+        public int FinalStandSquads => Mathf.Clamp(difficulty - 1, 0, 4);
         /// <summary>Kapı önünün kaç saniye tutulması gerektiği.</summary>
-        public float CaptureTime => 5f + difficulty;
+        public float CaptureTime => 6f + 1.5f * difficulty;
     }
 }

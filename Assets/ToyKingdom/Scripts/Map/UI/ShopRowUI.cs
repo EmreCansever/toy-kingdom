@@ -42,7 +42,7 @@ namespace ToyKingdom
             // sağ sütun: elde/fiyat ve satın alma düğmeleri
             row.owned = Fit(UIFactory.Text(t, "Owned", "", 24f, UIFactory.BrownDark, TextAlignmentOptions.Center, true), 16f);
             UIFactory.Place(row.owned.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-14f, -8f), new Vector2(282f, 40f));
-            row.price = unit.goldPrice;
+            row.price = KingdomSim.UnitPrice(unit);
 
             row.buy1 = UIFactory.Button(t, "Buy1", "Al", UIFactory.Green, 32f);
             UIFactory.Place((RectTransform)row.buy1.transform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-160f, 12f), new Vector2(136f, 80f));
@@ -70,8 +70,8 @@ namespace ToyKingdom
             owned.text = "Elde: " + SaveSystem.Data.GetArmyCount(data.unitId) + "  ·  " + price + " altın";
             var d = SaveSystem.Data;
             int room = d.ArmyCapacity() - d.UsedCapacity();
-            buy1.interactable = gold >= data.goldPrice && room >= 1;
-            buy3.interactable = gold >= data.goldPrice * 3 && room >= 3;
+            buy1.interactable = gold >= price && room >= 1;
+            buy3.interactable = gold >= price * 3 && room >= 3;
         }
     }
 }
