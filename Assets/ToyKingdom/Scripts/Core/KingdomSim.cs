@@ -292,6 +292,7 @@ namespace ToyKingdom
                     drift += t == TaxLevel.High ? -0.05f : t == TaxLevel.Low ? 0.03f : 0f;
                 }
                 if (data.gold < 0) drift -= 0.5f; // maaş ödenemeyen hükümdar
+                drift += Reputation.Decay(data.reputation); // şöhret korunmazsa unutulur
                 if (drift != 0f) Reputation.Change(data, drift * minutes, null);
             }
 
