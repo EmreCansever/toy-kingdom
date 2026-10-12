@@ -14,6 +14,13 @@ namespace ToyKingdom
         public const int HomeBaseIncome = 5;
         /// <summary>Genel gelir çarpanı (ekonomi dengesi).</summary>
         public const float IncomeScale = 0.6f;
+        /// <summary>Eşik aşıldıktan sonra isyana kadar tanınan süre (dakika).</summary>
+        public const float RevoltGrace = 3f;
+
+        /// <summary>Ziyafet: parayla anında huzursuzluk -20 (bekleme süreli).</summary>
+        public static int FeastCost(int difficulty) => 50 + 25 * Mathf.Max(1, difficulty);
+        public const float FeastRelief = 20f;
+        public const float FeastCooldownMinutes = 6f;
 
         /// <summary>Bir bölüğün dükkân fiyatı.</summary>
         public static int UnitPrice(UnitData u) => u == null ? 0 : Mathf.RoundToInt(u.goldPrice * 2.2f / 10f) * 10;
@@ -187,6 +194,8 @@ namespace ToyKingdom
             public int upkeep;
             public readonly List<string> messages = new List<string>();
             public readonly List<string> newRebels = new List<string>();
+            /// <summary>İsyan geri sayımı başlayan şehirler (kamera oraya döner).</summary>
+            public readonly List<string> urgent = new List<string>();
         }
 
         /// <summary>
@@ -214,14 +223,42 @@ namespace ToyKingdom
                     continue;
                 }
 
-                if (s.hasGovernor && s.governor.loyalty <= 0f)
+                // eşik aşılınca hemen ayaklanma yok: önce uyarı ve RevoltGrace dakika süre
+                bool counting = s.revoltTimer >= 0f;
+                bool govDanger = s.hasGovernor && s.governor.loyalty <= (counting ? 5f : 0f);
+                bool popDanger = s.unrest >= (counting ? 92f : 100f);
+                if (!govDanger && !popDanger)
+                {
+                    if (counting)
+                    {
+                        s.revoltTimer = -1f;
+                        rep.messages.Add(c.name + ": isyan tehlikesi geçti");
+                    }
+                }
+                else if (!counting)
+                {
+                    s.revoltTimer = RevoltGrace;
+                    rep.urgent.Add(c.id);
+                    rep.messages.Add(govDanger
+                        ? c.name + " valisi " + s.governor.name + " isyan hazırlığında! " + (int)RevoltGrace + " dakika içinde hediye gönder ya da azlet"
+                        : c.name + " ayaklanmak üzere! " + (int)RevoltGrace + " dakika içinde ziyafet ver ya da vergiyi düşür");
+                    continue;
+                }
+                else
+                {
+                    s.revoltTimer -= minutes;
+                    if (s.revoltTimer > 0f) continue;
+                    s.revoltTimer = -1f;
+                }
+
+                if (govDanger)
                 {
                     StartRebellion(s, RebelState.Governor, c.difficulty);
                     rep.newRebels.Add(c.id);
                     if (Trade.CitySecurity(data, c.id) < 30f) s.rebelPower += 1;
                     rep.messages.Add(c.name + ": vali " + s.governor.name + " sana isyan etti!");
                 }
-                else if (s.unrest >= 100f)
+                else if (popDanger)
                 {
                     StartRebellion(s, RebelState.People, c.difficulty);
                     rep.newRebels.Add(c.id);
@@ -272,6 +309,7 @@ namespace ToyKingdom
         static void StartRebellion(CityState s, RebelState kind, int difficulty)
         {
             s.rebel = kind;
+            s.revoltTimer = -1f;
             if (kind == RebelState.Governor)
                 s.rebelPower = s.governor.power + (s.governor.trait == GovernorTrait.Cruel ? 1 : 0);
             else

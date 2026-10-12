@@ -289,6 +289,15 @@ namespace ToyKingdom
                         var c = Find(id);
                         if (c != null) { c.PlayRebellion(); rig.FocusOn(c.doorPoint); }
                     }
+                    foreach (var id in rep.urgent)
+                    {
+                        var c = Find(id);
+                        if (c == null) continue;
+                        rig.FocusOn(c.doorPoint);
+                        FX.Shake(c.transform, 0.06f, 0.5f);
+                        FX.Banner("İSYAN EŞİĞİ", UIFactory.Red, 1.4f, c.DisplayName + " için " + (int)KingdomSim.RevoltGrace + " dakikan var");
+                        break;
+                    }
                     foreach (var m in rep.messages) ui.Toast(m);
                     RefreshAll();
                 }
@@ -301,6 +310,8 @@ namespace ToyKingdom
                 countdownTimer = 0f;
                 foreach (var r in SaveSystem.Data.rivals)
                     if (r.Attacking) { var t = Find(r.attackTarget); if (t != null) t.RefreshVisual(false); }
+                foreach (var c in cities)
+                    if (!c.isHomeCity && c.IsConquered && c.State.revoltTimer >= 0f) c.RefreshVisual(false);
             }
 
             rig.inputEnabled = !ui.IsModalOpen;

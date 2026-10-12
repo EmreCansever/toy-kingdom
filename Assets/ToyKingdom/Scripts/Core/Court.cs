@@ -193,11 +193,11 @@ namespace ToyKingdom
                 case 0:
                 {
                     var l = New(data, LetterKind.Famine, "court", "Kıtlık: " + city.name,
-                        "Efendim, " + city.name + " ambarları boşaldı. Halk ekmek kuyruğunda bekliyor ve sabrı tükeniyor.", 3f);
+                        "Efendim, " + city.name + " ambarları boşaldı. Halk ekmek kuyruğunda bekliyor ve sabrı tükeniyor.", 5f);
                     l.cityId = city.id; l.cityName = city.name;
                     Opt(l, "Tahıl gönder  (150 altın)", "Huzursuzluk -20.", 150);
                     Opt(l, "Vergiyi düşür", "Şehrin vergisi düşük olur: gelir azalır, halk yatışır.");
-                    Opt(l, "Görmezden gel", "Huzursuzluk +25. İsyan riski!");
+                    Opt(l, "Görmezden gel", "Huzursuzluk +15. İsyan riski!");
                     l.defaultOption = 2;
                     break;
                 }
@@ -206,7 +206,7 @@ namespace ToyKingdom
                     var g = governed[UnityEngine.Random.Range(0, governed.Count)];
                     var st = data.State(g.id);
                     var l = New(data, LetterKind.Corruption, "court", "Yolsuzluk ihbarı",
-                        "Efendim, " + g.name + " valisi " + st.governor.name + " hazineden çalıyormuş. Kanıtımız yok, yalnızca fısıltılar var.", 3f);
+                        "Efendim, " + g.name + " valisi " + st.governor.name + " hazineden çalıyormuş. Kanıtımız yok, yalnızca fısıltılar var.", 5f);
                     l.cityId = g.id; l.cityName = g.name;
                     Opt(l, "Soruştur  (80 altın)", "Suçluysa (%60) vali azledilir ve çaldığı 250 altın geri gelir; değilse sadakati çok düşer.", 80);
                     Opt(l, "Valiyi azarla", "Sadakat -12. Yarı ihtimalle hırsızlık sürer (gelir -%20, 10 dk).");
@@ -226,11 +226,11 @@ namespace ToyKingdom
                 case 3:
                 {
                     var l = New(data, LetterKind.Plague, "court", "Salgın: " + city.name,
-                        "Efendim, " + city.name + " sokaklarında salgın baş gösterdi. Hemen önlem almazsak şehir çöker.", 3f);
+                        "Efendim, " + city.name + " sokaklarında salgın baş gösterdi. Hemen önlem almazsak şehir çöker.", 5f);
                     l.cityId = city.id; l.cityName = city.name;
                     Opt(l, "Hekim gönder  (220 altın)", "Salgın durur.", 220);
                     Opt(l, "Karantina", "Şehir 4 dakika hiç gelir getirmez, salgın söner.");
-                    Opt(l, "Görmezden gel", "Gelir 10 dakika yarıya iner, huzursuzluk +15.");
+                    Opt(l, "Görmezden gel", "Gelir 10 dakika yarıya iner, huzursuzluk +10.");
                     l.defaultOption = 2;
                     break;
                 }
@@ -255,11 +255,19 @@ namespace ToyKingdom
 
             // süresi dolan mektuplar: varsayılan seçenek
             foreach (var l in data.letters.ToArray())
+            {
+                // oyun kapalıyken (ya da savaştayken) cevap süresi işlemez: dönünce en az 2 dakika kalır
+                if (!online && l.NeedsAnswer && l.expiresTicks > 0)
+                {
+                    l.expiresTicks = Math.Max(l.expiresTicks, now + 2 * TimeSpan.TicksPerMinute);
+                    continue;
+                }
                 if (l.NeedsAnswer && l.expiresTicks > 0 && now >= l.expiresTicks)
                 {
                     string res = Resolve(data, cities, l, l.defaultOption < 0 ? l.options.Count - 1 : l.defaultOption, true);
                     if (!string.IsNullOrEmpty(res)) pending.messages.Add("Cevap verilmedi: " + res);
                 }
+            }
 
             // kervanlar
             for (int i = data.caravanTicks.Count - 1; i >= 0; i--)
@@ -475,7 +483,7 @@ namespace ToyKingdom
                     if (st == null || st.owner != "player") { res = ""; break; }
                     if (option == 0) { st.unrest = Mathf.Max(0f, st.unrest - 20f); res = l.cityName + " halkı doydu"; }
                     else if (option == 1) { st.tax = TaxLevel.Low; st.unrest = Mathf.Max(0f, st.unrest - 5f); res = l.cityName + " vergisi düşürüldü"; }
-                    else { st.unrest = Mathf.Min(100f, st.unrest + 25f); res = l.cityName + " halkı aç ve öfkeli (huzursuzluk +25)"; }
+                    else { st.unrest = Mathf.Min(100f, st.unrest + 15f); res = l.cityName + " halkı aç ve öfkeli (huzursuzluk +15)"; }
                     break;
 
                 case LetterKind.Corruption:
@@ -519,7 +527,7 @@ namespace ToyKingdom
                     if (st == null || st.owner != "player") { res = ""; break; }
                     if (option == 0) res = "Hekimler salgını durdurdu";
                     else if (option == 1) { SetIncomeMod(st, 0f, 4f); res = l.cityName + " karantinada (4 dk gelir yok)"; }
-                    else { SetIncomeMod(st, 0.5f, 10f); st.unrest = Mathf.Min(100f, st.unrest + 15f); res = "Salgın " + l.cityName + " şehrini kasıp kavuruyor"; }
+                    else { SetIncomeMod(st, 0.5f, 10f); st.unrest = Mathf.Min(100f, st.unrest + 10f); res = "Salgın " + l.cityName + " şehrini kasıp kavuruyor"; }
                     break;
 
                 case LetterKind.Festival:

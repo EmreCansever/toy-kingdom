@@ -95,6 +95,10 @@ namespace ToyKingdom
         public int candidateSeed;
         // uyarıların tekrar etmemesi için
         public bool warnedUnrest, warnedLoyalty;
+        /// <summary>İsyana kalan (çevrimiçi) dakika; -1: tehlike yok. Eşik aşılınca hemen ayaklanmaz, oyuncuya süre tanınır.</summary>
+        public float revoltTimer = -1f;
+        /// <summary>Bir sonraki ziyafetin verilebileceği zaman (UTC ticks).</summary>
+        public long feastReadyTicks;
 
         public int Level(Building b)
         {

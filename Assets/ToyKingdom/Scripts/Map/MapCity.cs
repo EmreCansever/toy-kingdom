@@ -147,6 +147,11 @@ namespace ToyKingdom
                     st.governor.loyalty < 25f ? "  ·  Vali şüpheli" : "";
                 StatusText = "+" + Income + " altın/dk" + warn;
                 Status = warn.Length > 0 ? CityStatus.Warning : isHomeCity ? CityStatus.Home : CityStatus.Owned;
+                if (!isHomeCity && st.revoltTimer >= 0f)
+                {
+                    StatusText = "İSYAN EŞİĞİNDE  ·  " + Mathf.CeilToInt(st.revoltTimer) + " dk";
+                    Status = CityStatus.Threat;
+                }
                 var atk = IncomingAttack;
                 if (atk != null)
                 {

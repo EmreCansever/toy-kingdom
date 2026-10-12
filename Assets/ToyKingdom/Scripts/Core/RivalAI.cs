@@ -61,7 +61,7 @@ namespace ToyKingdom
         public const float MarchMinutes = 3f;
         /// <summary>Oyuncu en az bu kadar şehir sahibi olmadan ve bu kadar dakika oynamadan saldırı gelmez.</summary>
         const int AttackMinCities = 4;
-        const float AttackMinPlayMinutes = 20f;
+        const float AttackMinPlayMinutes = 30f;
         const float MaxPower = 300f;
         public const float GarrisonDefense = 14f;
 

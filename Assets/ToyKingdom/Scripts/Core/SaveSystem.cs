@@ -127,7 +127,7 @@ namespace ToyKingdom
             if (!conqueredCities.Contains(cityId))
             {
                 conqueredCities.Add(cityId);
-                s.unrest = 45f; // yeni fethedilen halk tedirgin
+                s.unrest = 35f; // yeni fethedilen halk tedirgin
             }
             else if (s.rebel != RebelState.None)
             {

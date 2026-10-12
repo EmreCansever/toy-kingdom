@@ -95,9 +95,13 @@ namespace ToyKingdom
                 var row = UIFactory.Rounded(content, "Unrest", UIFactory.ParchmentDark, 18f);
                 UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(14f, -6f), new Vector2(1470f, 74f));
                 Label(row.transform, "Halkın huzursuzluğu", 28f, UIFactory.BrownDark, new Vector2(24f, -16f), new Vector2(330f, 44f), TextAlignmentOptions.Left);
-                Bar(row.transform, s.unrest / 100f, s.unrest >= 70f ? Bad : s.unrest >= 40f ? UIFactory.Gold : Good, new Vector2(370f, -22f), new Vector2(760f, 30f));
-                Label(row.transform, Mathf.RoundToInt(s.unrest) + "  " + Trend(rate, true), 28f, s.unrest >= 70f ? Bad : UIFactory.BrownDark,
-                    new Vector2(1150f, -16f), new Vector2(300f, 44f), TextAlignmentOptions.Left);
+                Bar(row.transform, s.unrest / 100f, s.unrest >= 70f ? Bad : s.unrest >= 40f ? UIFactory.Gold : Good, new Vector2(370f, -22f), new Vector2(560f, 30f));
+                string unrestText = Mathf.RoundToInt(s.unrest) + "  " + Trend(rate, true);
+                if (s.revoltTimer >= 0f) unrestText = "İsyana " + Mathf.CeilToInt(s.revoltTimer) + " dk!";
+                var ut = Label(row.transform, unrestText, 28f, s.unrest >= 70f || s.revoltTimer >= 0f ? Bad : UIFactory.BrownDark,
+                    new Vector2(948f, -16f), new Vector2(228f, 44f), TextAlignmentOptions.Left);
+                ut.enableAutoSizing = true; ut.fontSizeMin = 18f; ut.fontSizeMax = 28f;
+                FeastButton(row.transform, s);
                 GovernorColumn(s);
                 TaxRow(s);
                 DefenseRow(s);
@@ -232,6 +236,26 @@ namespace ToyKingdom
                 SaveSystem.Data.AddArmy(u, -1);
                 s.garrison++;
                 Done("Bir bölük " + city.DisplayName + " surlarına yerleşti");
+            });
+        }
+
+        /// <summary>Ziyafet: parayla anında huzursuzluk düşürür (bekleme süreli). İsyan eşiğindeki şehri kurtarmanın hızlı yolu.</summary>
+        void FeastButton(Transform row, CityState s)
+        {
+            int cost = KingdomSim.FeastCost(city.castle != null ? city.castle.difficulty : 1);
+            long now = DateTime.UtcNow.Ticks;
+            bool ready = now >= s.feastReadyTicks;
+            string label = ready ? "Ziyafet ver  (" + cost + ")" : "Ziyafet  " + Mathf.CeilToInt((s.feastReadyTicks - now) / (float)TimeSpan.TicksPerMinute) + " dk";
+            var b = Btn(row, label, s.revoltTimer >= 0f ? UIFactory.Red : UIFactory.Green, new Vector2(-12f, 0f), new Vector2(270f, 60f), 24f, true);
+            b.interactable = ready && s.unrest > 1f;
+            b.onClick.AddListener(() =>
+            {
+                var data = SaveSystem.Data;
+                if (data.gold < cost) { toast?.Invoke("Yeterli altın yok"); return; }
+                data.gold -= cost;
+                s.unrest = Mathf.Max(0f, s.unrest - KingdomSim.FeastRelief);
+                s.feastReadyTicks = DateTime.UtcNow.Ticks + (long)(KingdomSim.FeastCooldownMinutes * TimeSpan.TicksPerMinute);
+                Done(city.DisplayName + " halkı ziyafetle yatıştı (huzursuzluk -" + (int)KingdomSim.FeastRelief + ")");
             });
         }
 

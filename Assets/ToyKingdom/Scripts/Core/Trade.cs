@@ -96,12 +96,12 @@ namespace ToyKingdom
             infos.TryGetValue(r.b, out var ib);
             var sa = d.State(r.a);
             var sb = d.State(r.b);
-            float t = 35f + 25f * Mathf.Min(PatrolStrength(r), 2.6f);
+            float t = 45f + 22f * Mathf.Min(PatrolStrength(r), 2.6f);
             t += 4f * (sa.walls + sb.walls);
             if (sa.policy == CityPolicy.Military || sb.policy == CityPolicy.Military) t += 8f;
             float unrest = (CityUnrest(d, r.a, ia.home) + CityUnrest(d, r.b, ib.home)) * 0.5f;
             t -= 0.3f * (unrest - 40f);
-            if (Border(d, ia, infos) || Border(d, ib, infos)) t -= 12f;
+            if (Border(d, ia, infos) || Border(d, ib, infos)) t -= 8f;
             return Mathf.Clamp(t, 0f, 100f);
         }
 
@@ -167,7 +167,7 @@ namespace ToyKingdom
             bool any = false;
             foreach (var r in d.roads) if (r.active && (r.a == cityId || r.b == cityId)) { any = true; break; }
             if (!any) return 0f;
-            return (45f - CitySecurity(d, cityId)) * 0.02f;
+            return (40f - CitySecurity(d, cityId)) * 0.015f;
         }
 
         static float Length(string key) => RoadLengths.TryGetValue(key, out float l) ? l : 14f;
@@ -258,14 +258,14 @@ namespace ToyKingdom
                     if (online)
                     {
                         // eşkıya yatağına dönen yolun çevresi yağmalanır
-                        if (r.security < 15f && UnityEngine.Random.value < 0.12f * Mathf.Min(minutes, 3))
+                        if (r.security < 10f && UnityEngine.Random.value < 0.1f * Mathf.Min(minutes, 3))
                         {
                             string id = UnityEngine.Random.value < 0.5f ? r.a : r.b;
                             if (byId.TryGetValue(id, out var ci))
                             {
                                 int loss = Mathf.Min(Mathf.Max(0, d.gold), 10 + UnityEngine.Random.Range(0, 21));
                                 d.gold -= loss;
-                                if (!ci.home) d.State(id).unrest = Mathf.Min(100f, d.State(id).unrest + 5f);
+                                if (!ci.home) d.State(id).unrest = Mathf.Min(100f, d.State(id).unrest + 3f);
                                 pending.messages.Add("Eşkıyalar " + ci.name + " köylerini yağmaladı! -" + loss + " altın");
                             }
                         }
@@ -319,8 +319,8 @@ namespace ToyKingdom
                 {
                     r.robbed++;
                     r.security = Mathf.Max(0f, r.security - 6f);
-                    if (!ia.home) d.State(r.a).unrest = Mathf.Min(100f, d.State(r.a).unrest + 3f);
-                    if (!ib.home) d.State(r.b).unrest = Mathf.Min(100f, d.State(r.b).unrest + 3f);
+                    if (!ia.home) d.State(r.a).unrest = Mathf.Min(100f, d.State(r.a).unrest + 1.5f);
+                    if (!ib.home) d.State(r.b).unrest = Mathf.Min(100f, d.State(r.b).unrest + 1.5f);
                     pending.messages.Add("Eşkıyalar " + Name(r, byId) + " yolunda kervanı soydu! (" + c.value + " altınlık mal)");
                     continue;
                 }
