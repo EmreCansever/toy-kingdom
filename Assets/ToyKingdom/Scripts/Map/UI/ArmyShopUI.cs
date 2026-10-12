@@ -76,12 +76,12 @@ namespace ToyKingdom
             int price = KingdomSim.UnitPrice(data) * amount;
             if (save.gold < price)
             {
-                ui.Toast("Yeterli altının yok");
+                ui.Hint("Yeterli altının yok");
                 return;
             }
             if (save.UsedCapacity() + amount > save.ArmyCapacity())
             {
-                ui.Toast("Ordu kapasitesi dolu. Şehir fethet ya da Kışla kur");
+                ui.Hint("Ordu kapasitesi dolu. Şehir fethet ya da Kışla kur");
                 return;
             }
             save.gold -= price;

@@ -20,10 +20,12 @@ namespace ToyKingdom
         public class Report
         {
             public readonly List<string> messages = new List<string>();
+            /// <summary>Önemsiz haberler (küçük bildirim, günlüğe yazılır).</summary>
+            public readonly List<string> info = new List<string>();
             /// <summary>Kervanın vardığı şehir ve getirdiği altın.</summary>
             public readonly List<KeyValuePair<string, int>> gains = new List<KeyValuePair<string, int>>();
             public bool roadsChanged;
-            public bool Any => messages.Count > 0 || gains.Count > 0 || roadsChanged;
+            public bool Any => messages.Count > 0 || info.Count > 0 || gains.Count > 0 || roadsChanged;
         }
 
         static Report pending = new Report();
@@ -212,7 +214,7 @@ namespace ToyKingdom
                 {
                     if (r.PatrolCount() > 0)
                     {
-                        pending.messages.Add(Name(r, byId) + " yolu koptu. Devriye orduya döndü");
+                        pending.info.Add(Name(r, byId) + " yolu koptu. Devriye orduya döndü");
                         ReturnPatrol(d, r);
                     }
                     d.caravans.RemoveAll(c => c.roadKey == r.key);
@@ -279,7 +281,7 @@ namespace ToyKingdom
                 if (offlineGold > 0)
                 {
                     d.gold += offlineGold;
-                    pending.messages.Add("Yokken kervanlar " + offlineGold + " altın getirdi");
+                    pending.info.Add("Yokken kervanlar " + offlineGold + " altın getirdi");
                 }
             }
 
@@ -343,7 +345,7 @@ namespace ToyKingdom
                         var u = UnitDatabase.Instance != null ? UnitDatabase.Instance.Get(e.unitId) : null;
                         msg += ", ama bir " + (u != null ? u.displayName : "devriye") + " bölüğü düştü";
                     }
-                    pending.messages.Add(msg);
+                    if (msg.Contains("düştü")) pending.messages.Add(msg); else pending.info.Add(msg);
                 }
             }
         }

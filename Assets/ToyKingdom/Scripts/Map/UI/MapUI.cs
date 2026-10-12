@@ -24,10 +24,9 @@ namespace ToyKingdom
         TMP_Text letterBadge;
         GameObject letterBadgeRoot;
         Coroutine toastRoutine;
-        readonly System.Collections.Generic.Queue<string> toasts = new System.Collections.Generic.Queue<string>();
 
         public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) ||
-                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen);
+                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || (logPanel != null && logPanel.IsOpen);
 
         public void Build(MapController controller)
         {
@@ -94,6 +93,20 @@ namespace ToyKingdom
             UIFactory.Place((RectTransform)tradeBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -460f), new Vector2(240f, 84f));
             tradePanel = TradePanel.Create(t, map.InfoDict, () => map.RefreshAll(), Toast);
             tradeBtn.onClick.AddListener(() => tradePanel.Open());
+            var logBtn = UIFactory.Button(t, "LogButton", "Günlük", UIFactory.Hex("4A5568"), 32f);
+            UIFactory.Place((RectTransform)logBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -556f), new Vector2(240f, 84f));
+            var lb = UIFactory.Rounded(logBtn.transform, "Badge", UIFactory.Red, 20f);
+            UIFactory.Place(lb.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-12f, -6f), new Vector2(42f, 42f));
+            lb.raycastTarget = false;
+            logBadge = UIFactory.Text(lb.transform, "N", "0", 22f, Color.white, TextAlignmentOptions.Center, true);
+            UIFactory.Stretch(logBadge.rectTransform);
+            logBadgeRoot = lb.gameObject;
+            logBadgeRoot.SetActive(false);
+            logPanel = LogPanel.Create(t);
+            logBtn.onClick.AddListener(OpenLog);
+
+            feed = UIFactory.Rect("Feed", t);
+            UIFactory.Place(feed, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(1200f, 180f));
             toastBox.transform.SetAsLastSibling();
 
             letters = LettersUI.Create(t, (l, i) => map.AnswerLetter(l, i), Toast);
@@ -130,7 +143,7 @@ namespace ToyKingdom
         {
             if (letters == null) return;
             // başka bir pencere açıksa zorla açma: rozet yeterli
-            if ((attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || letters.IsOpen)
+            if ((attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || (logPanel != null && logPanel.IsOpen) || letters.IsOpen)
             {
                 RefreshLetters();
                 return;
@@ -194,28 +207,138 @@ namespace ToyKingdom
             }
         }
 
-        /// <summary>Bildirimler sırayla gösterilir; aynı mesaj sırada varsa tekrar eklenmez.</summary>
-        public void Toast(string message)
+        // ------------------------------------------------------------------ bildirimler
+
+        /// <summary>Bilgi: küçük, altta belirip kaybolur. Önemli: üstte sırayla. Kritik: kırmızı, sıranın önüne geçer, daha uzun kalır.</summary>
+        public enum Level { Info, Important, Critical }
+
+        class Note { public string text; public Level level; }
+        readonly System.Collections.Generic.List<Note> notes = new System.Collections.Generic.List<Note>();
+        RectTransform feed;
+        readonly System.Collections.Generic.List<GameObject> feedItems = new System.Collections.Generic.List<GameObject>();
+        LogPanel logPanel;
+        TMP_Text logBadge;
+        GameObject logBadgeRoot;
+        int unseen;
+
+        /// <summary>Krallık haberi: önemine göre gösterilir ve günlüğe yazılır.</summary>
+        public void Toast(string message) => Toast(message, Classify(message));
+
+        public void Toast(string message, Level level) => Show(message, level, true);
+
+        /// <summary>Oyuncunun kendi eylemine kısa geri bildirim ("altın yetmiyor" gibi): günlüğe yazılmaz.</summary>
+        public void Hint(string message) => Show(message, Level.Important, false);
+
+        static readonly string[] NoLog = { "Yeterli altın", "Orduda bu", "Ordun yok", "Oraya giden", "Ordu kapasitesi" };
+
+        void Show(string message, Level level, bool log)
         {
-            if (string.IsNullOrEmpty(message) || toasts.Contains(message)) return;
-            toasts.Enqueue(message);
+            if (string.IsNullOrEmpty(message)) return;
+            if (log)
+                foreach (var p in NoLog) if (message.StartsWith(p)) { log = false; break; }
+            if (log)
+            {
+                SaveSystem.Data.AddLog(message, (int)level);
+                if (level != Level.Info) { unseen++; RefreshLogBadge(); }
+                if (logPanel != null && logPanel.IsOpen) logPanel.Rebuild();
+            }
+            if (level == Level.Info) { Feed(message); return; }
+            if (notes.Exists(n => n.text == message)) return;
+            var note = new Note { text = message, level = level };
+            if (level == Level.Critical)
+            {
+                // kritik haber sıradakilerin önüne geçer (gösterilmekte olanı kesmez)
+                int at = toastRoutine != null ? 1 : 0;
+                while (at < notes.Count && notes[at].level == Level.Critical) at++;
+                notes.Insert(Mathf.Min(at, notes.Count), note);
+            }
+            else notes.Add(note);
             if (toastRoutine == null) toastRoutine = StartCoroutine(ToastRoutine());
+        }
+
+        /// <summary>Haberin önemi: isyan, saldırı, şehir kaybı ve borç kritiktir.</summary>
+        static Level Classify(string m)
+        {
+            string l = m.ToLowerInvariant();
+            if (l.Contains("geçti") || l.Contains("püskürt")) return Level.Important;
+            foreach (var k in new[] { "isyan", "ayaklan", "düştü", "saldırı", "yürüyor", "savaş ilan", "borçta", "hazine boş" })
+                if (l.Contains(k)) return Level.Critical;
+            return Level.Important;
         }
 
         IEnumerator ToastRoutine()
         {
-            while (toasts.Count > 0)
+            var bg = toastBox.GetComponent<Image>();
+            while (notes.Count > 0)
             {
-                toastText.text = toasts.Peek();
+                var n = notes[0];
+                bool critical = n.level == Level.Critical;
+                toastText.text = n.text;
+                bg.color = critical ? new Color(0.64f, 0.15f, 0.12f, 0.95f) : UIFactory.Glass;
                 toastBox.transform.SetAsLastSibling(); // pencerelerin üstünde görünsün
                 toastBox.SetActive(true);
-                FX.Punch(toastBox.transform, 0.06f, 0.25f);
-                yield return new WaitForSeconds(toasts.Count > 1 ? 2.2f : 3f);
-                toasts.Dequeue();
+                FX.Punch(toastBox.transform, critical ? 0.1f : 0.06f, 0.25f);
+                yield return new WaitForSeconds(critical ? 4f : notes.Count > 1 ? 2.2f : 3f);
+                notes.Remove(n);
             }
-            toastBox.GetComponent<Image>().raycastTarget = false;
+            bg.raycastTarget = false;
             toastBox.SetActive(false);
             toastRoutine = null;
+        }
+
+        /// <summary>Altta, ortada küçük haber şeridi (en fazla üç satır, kendiliğinden kaybolur).</summary>
+        void Feed(string message)
+        {
+            if (feed == null) return;
+            var chip = UIFactory.Chip(feed, "Info", new Vector2(600f, 48f), 24f);
+            chip.raycastTarget = false;
+            chip.color = new Color(0.09f, 0.11f, 0.17f, 0.72f);
+            var t = UIFactory.Text(chip.transform, "T", message, 23f, new Color(1f, 1f, 1f, 0.92f), TextAlignmentOptions.Center);
+            UIFactory.Stretch(t.rectTransform, 22f, 0f, 22f, 0f);
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            float w = Mathf.Clamp(t.GetPreferredValues(message).x + 48f, 200f, 1100f);
+            chip.rectTransform.anchorMin = chip.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            chip.rectTransform.pivot = new Vector2(0.5f, 0f);
+            chip.rectTransform.sizeDelta = new Vector2(w, 48f);
+            feedItems.Add(chip.gameObject);
+            while (feedItems.Count > 3) { if (feedItems[0] != null) Destroy(feedItems[0]); feedItems.RemoveAt(0); }
+            LayoutFeed();
+            StartCoroutine(FadeFeed(chip.gameObject, chip, t));
+        }
+
+        void LayoutFeed()
+        {
+            feedItems.RemoveAll(g => g == null);
+            for (int i = 0; i < feedItems.Count; i++)
+                ((RectTransform)feedItems[i].transform).anchoredPosition = new Vector2(0f, (feedItems.Count - 1 - i) * 56f);
+        }
+
+        IEnumerator FadeFeed(GameObject go, Image bg, TMP_Text t)
+        {
+            yield return new WaitForSeconds(4f);
+            float a = 1f;
+            while (a > 0f && go != null)
+            {
+                a -= Time.deltaTime * 2f;
+                bg.color = new Color(bg.color.r, bg.color.g, bg.color.b, 0.72f * a);
+                t.alpha = a;
+                yield return null;
+            }
+            if (go != null) { feedItems.Remove(go); Destroy(go); LayoutFeed(); }
+        }
+
+        void RefreshLogBadge()
+        {
+            if (logBadgeRoot == null) return;
+            logBadgeRoot.SetActive(unseen > 0);
+            logBadge.text = unseen > 9 ? "9+" : unseen.ToString();
+        }
+
+        void OpenLog()
+        {
+            unseen = 0;
+            RefreshLogBadge();
+            logPanel.Open();
         }
     }
 }

@@ -58,6 +58,18 @@ namespace ToyKingdom
 
         public RoadState Road(string key) => roads.Find(r => r.key == key);
 
+        // ------------------------------------------------------------------ günlük
+        /// <summary>Krallıkta olan önemli olayların kaydı (en yenisi sonda).</summary>
+        public List<LogEntry> log = new List<LogEntry>();
+        public const int MaxLog = 80;
+
+        public void AddLog(string text, int level)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            log.Add(new LogEntry { ticks = DateTime.UtcNow.Ticks, text = text, level = level });
+            if (log.Count > MaxLog) log.RemoveRange(0, log.Count - MaxLog);
+        }
+
         public int UnreadLetters()
         {
             int n = 0;

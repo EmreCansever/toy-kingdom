@@ -84,7 +84,7 @@ namespace ToyKingdom
                 else ui.Toast(r.cityName + " savunmayı tuttu");
                 GameSession.LastResult = null;
             }
-            else if (offlineReport.gold > 0) ui.Toast("Yokken krallığın " + offlineReport.gold + " altın kazandı");
+            else if (offlineReport.gold > 0) ui.Toast("Yokken krallığın " + offlineReport.gold + " altın kazandı", MapUI.Level.Info);
             foreach (var m in offlineReport.messages) ui.Toast(m);
             if (!string.IsNullOrEmpty(SaveSystem.Data.pendingMessage))
             {
@@ -106,6 +106,7 @@ namespace ToyKingdom
             var rep = Trade.Take();
             if (!rep.Any) return;
             foreach (var m in rep.messages) ui.Toast(m);
+            foreach (var m in rep.info) ui.Toast(m, MapUI.Level.Info);
             foreach (var g in rep.gains) if (trade != null) trade.ShowGain(g.Key, g.Value);
             if (rep.messages.Count > 0) SaveSystem.Save();
             ui.RefreshTop();
@@ -146,6 +147,7 @@ namespace ToyKingdom
         public string AnswerLetter(Letter l, int option)
         {
             string res = Court.Resolve(SaveSystem.Data, Infos(), l, option);
+            if (l.resolved && !string.IsNullOrEmpty(res)) SaveSystem.Data.AddLog(l.title + ": " + res, 1);
             SaveSystem.Save();
             HandleCourt(true);
             ui.RefreshTop();
@@ -177,6 +179,7 @@ namespace ToyKingdom
             var rep = Court.Take();
             if (!rep.Any) { ui.RefreshLetters(); return; }
             foreach (var m in rep.messages) ui.Toast(m);
+            foreach (var l in rep.newLetters) SaveSystem.Data.AddLog("Mektup geldi: " + l.title, l.NeedsAnswer ? 1 : 0);
             foreach (var id in rep.cityChanged)
             {
                 var c = Find(id);
@@ -345,7 +348,7 @@ namespace ToyKingdom
             var route = FindRoute(hero.CurrentCity, city);
             if (route == null)
             {
-                ui.Toast("Oraya giden bir yol yok");
+                ui.Hint("Oraya giden bir yol yok");
                 return;
             }
             rig.FocusOn(city.doorPoint);
@@ -402,7 +405,7 @@ namespace ToyKingdom
         {
             if (SaveSystem.Data.TotalArmy() == 0)
             {
-                ui.Toast("Ordun yok! Önce Ordu menüsünden bölük al");
+                ui.Hint("Ordun yok! Önce Ordu menüsünden bölük al");
                 return;
             }
             GameSession.SelectedCastle = BattleCastle(city);

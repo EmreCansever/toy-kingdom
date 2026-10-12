@@ -156,6 +156,15 @@ namespace ToyKingdom
         }
     }
 
+    /// <summary>Olay günlüğü kaydı. level: 0 bilgi, 1 önemli, 2 kritik.</summary>
+    [Serializable]
+    public class LogEntry
+    {
+        public long ticks;
+        public string text;
+        public int level;
+    }
+
     /// <summary>Yoldaki bir kervan. Akıbeti yola çıkarken belirlenir (0 vardı, 1 soyuldu, 2 devriye kurtardı).</summary>
     [Serializable]
     public class CaravanState
