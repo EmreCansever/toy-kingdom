@@ -82,3 +82,11 @@ Yeni şehir: `Tools/worldgen.py` içindeki `CITIES` / `LINKS` listelerini düzen
 
 Her paketin lisans metni kendi klasöründe (`License.txt`) bulunur. Mini Crusader lisansı gereği yukarıdaki isim
 oyunun "Emeği geçenler" ekranında da yer almalıdır.
+
+### Ses ve müzik (hepsi CC0)
+
+- **Müzik:** RandomMind — Medieval: The Old Tower Inn, Medieval: Battle, Medieval Victory Theme, Medieval: King's Feast (OpenGameArt)
+- **Kenney** — RPG Audio, Interface Sounds (kenney.nl)
+- **StarNinjas** — 20 Sword Sound Effects (OpenGameArt)
+- **Thimras** — Cannon Fire (OpenGameArt)
+- **artisticdude** — Battle Sound Effects (OpenGameArt, CC0 seçeneği)

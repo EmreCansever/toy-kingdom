@@ -151,7 +151,7 @@ namespace ToyKingdom
             // ayarlar ve duraklatma
             var setBtn = UIFactory.Button(t, "SettingsButton", "Ayarlar", UIFactory.Hex("6B7280"), 32f);
             UIFactory.Place((RectTransform)setBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -652f), new Vector2(240f, 84f));
-            settings = SettingsPanel.Create(t, () => map.NewGame(), RefreshQuest);
+            settings = SettingsPanel.Create(t, () => map.NewGame(), () => { RefreshQuest(); Sfx.ApplySettings(); });
             setBtn.onClick.AddListener(settings.Open);
 
             var pauseBtn = UIFactory.Button(t, "PauseButton", "II", UIFactory.Hex("4A5568"), 36f);
@@ -391,6 +391,7 @@ namespace ToyKingdom
             {
                 var n = notes[0];
                 bool critical = n.level == Level.Critical;
+                if (critical) Sfx.Alert();
                 toastText.text = n.text;
                 bg.color = critical ? new Color(0.64f, 0.15f, 0.12f, 0.95f) : UIFactory.Glass;
                 toastBox.transform.SetAsLastSibling(); // pencerelerin üstünde görünsün

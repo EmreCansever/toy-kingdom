@@ -133,6 +133,7 @@ namespace ToyKingdom
                 Projectile.AtSoldier(firePoint, t, data.damage, data.projectileSpeed, data.arcHeight);
             }
             cooldown = data.fireInterval;
+            if (Sfx.Ready("bow", 0.15f)) Sfx.Play("sfx_bow", 0.28f, 0.12f, 0f, 1.1f);
         }
     }
 }

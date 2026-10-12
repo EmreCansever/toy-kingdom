@@ -340,6 +340,7 @@ namespace ToyKingdom
                 {
                     if (!Pay(cost)) return;
                     s.SetLevel(building, lvl + 1);
+                    Sfx.Play("sfx_build", 0.8f);
                     Done(KingdomSim.BuildingName(building) + " seviye " + (lvl + 1) + " oldu");
                 });
             }

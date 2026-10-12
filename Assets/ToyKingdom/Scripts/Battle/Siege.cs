@@ -153,6 +153,7 @@ namespace ToyKingdom
         /// <summary>Patlama: parlama halkası, kıvılcım ve duman.</summary>
         public static void Explosion(Vector3 at, float radius)
         {
+            Sfx.Play("sfx_cannon", 0.75f, 0.08f, 0.1f, 0.7f);
             FX.Sparkles(at + Vector3.up * 0.15f, new Color(1f, 0.55f, 0.15f), 22, 1.1f);
             FX.Sparkles(at + Vector3.up * 0.3f, new Color(0.3f, 0.28f, 0.26f), 12, 0.7f);
             var art = GameArt.Instance;
@@ -294,6 +295,7 @@ namespace ToyKingdom
             if (best == null) { cooldown = 0.5f; return; }
             cooldown = Interval;
             Cannonball.Fire(transform.position + Vector3.up * 0.15f, best.Ground, damage);
+            Sfx.Play("sfx_cannon", 0.9f, 0.06f, 0.2f);
             FX.Sparkles(transform.position + Vector3.up * 0.2f, new Color(0.9f, 0.9f, 0.85f), 8, 0.4f);
             FX.Punch(transform, 0.18f, 0.2f);
             if (sr != null) sr.flipX = best.Ground.x > transform.position.x;

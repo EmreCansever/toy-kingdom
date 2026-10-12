@@ -114,6 +114,7 @@ namespace ToyKingdom
 
         public void Show(Letter l)
         {
+            Sfx.Play("sfx_page", 0.7f, 0.05f, 0.3f);
             current = l;
             l.read = true;
             inboxRoot.SetActive(false);

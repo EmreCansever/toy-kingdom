@@ -72,8 +72,10 @@ namespace ToyKingdom
             }
             HealthChanged?.Invoke();
             Damaged?.Invoke(this, amount);
+            Sfx.Play("sfx_gatehit", 0.55f, 0.1f, 0.18f);
             if (IsDestroyed)
             {
+                Sfx.Play("sfx_gatebreak", 1f, 0f, 0.5f, 0.85f);
                 if (sr != null) sr.color = new Color(0.45f, 0.4f, 0.4f);
                 if (bar != null) bar.SetActive(false);
                 Destroyed?.Invoke(this);

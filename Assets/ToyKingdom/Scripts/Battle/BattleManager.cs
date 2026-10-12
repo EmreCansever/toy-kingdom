@@ -103,6 +103,7 @@ namespace ToyKingdom
         {
             gameObject.AddComponent<BattleHUD>();
             gameObject.AddComponent<PathDrawer>();
+            Sfx.Music("music_battle");
         }
 
         void OnDestroy()
@@ -257,6 +258,7 @@ namespace ToyKingdom
             SaveSystem.Data.AddArmy(data.unitId, -1);
 
             var sq = new Squad(Team.Player, data, Field);
+            Sfx.Play("sfx_deploy", 0.7f);
             sq.AggroRange = 1.6f;
             sq.SpawnMembers(path[0], data.squadSize);
             sq.SetPath(path, Field.SpriteMaterial);
@@ -461,6 +463,8 @@ namespace ToyKingdom
         {
             if (State != BattleState.Playing) return;
             State = victory ? BattleState.Won : BattleState.Lost;
+            if (victory) { Sfx.Music("music_victory", false, "music_map"); Sfx.Coins(true); }
+            else { Sfx.StopMusic(); Sfx.Alert(); }
 
             // Yarısından fazlası hayatta kalan bölükler orduya geri döner
             int returned = 0;

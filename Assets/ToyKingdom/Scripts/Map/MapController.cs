@@ -25,6 +25,7 @@ namespace ToyKingdom
             UIFactory.EnsureEventSystem();
             maxOfflineHours = Mathf.Min(maxOfflineHours, 2f); // yokken en fazla 2 saatlik gelir
             cities = FindObjectsByType<MapCity>(FindObjectsSortMode.None);
+            Sfx.Music("music_map");
             ui = gameObject.AddComponent<MapUI>();
             ui.Build(this);
 
@@ -138,6 +139,7 @@ namespace ToyKingdom
             if (done != null)
             {
                 FX.Banner("GÖREV TAMAM", UIFactory.Gold, 1.2f, done.Replace("Görev tamamlandı: ", ""));
+                Sfx.Coins(true);
                 ui.Toast(done);
                 SaveSystem.Save();
                 HandleCourt(true);
@@ -168,6 +170,7 @@ namespace ToyKingdom
             foreach (var m in rep.messages) ui.Toast(m);
             foreach (var m in rep.info) ui.Toast(m, MapUI.Level.Info);
             foreach (var g in rep.gains) if (trade != null) trade.ShowGain(g.Key, g.Value);
+            if (rep.gains.Count > 0) Sfx.Coins();
             if (rep.messages.Count > 0) SaveSystem.Save();
             ui.RefreshTop();
         }
@@ -242,6 +245,7 @@ namespace ToyKingdom
             if (!rep.Any) { ui.RefreshLetters(); return; }
             foreach (var m in rep.messages) ui.Toast(m);
             foreach (var l in rep.newLetters) SaveSystem.Data.AddLog("Mektup geldi: " + l.title, l.NeedsAnswer ? 1 : 0);
+            if (rep.newLetters.Count > 0) Sfx.Play("sfx_letter", 0.8f, 0.03f, 1f);
             foreach (var id in rep.cityChanged)
             {
                 var c = Find(id);

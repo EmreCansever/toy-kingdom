@@ -446,6 +446,9 @@ namespace ToyKingdom
             if (!IsAlive) return;
             Vector3 from = transform.position + Vector3.up * 0.55f;
 
+            if (pendingRanged) { if (Sfx.Ready("bow", 0.12f)) Sfx.Play("sfx_bow", 0.35f, 0.1f, 0f); }
+            else if (Sfx.Ready("melee", 0.07f)) { if (pendingSoldier != null) Sfx.PlayAny("sfx_clash", 1, 10, 0.45f, 0f); else Sfx.PlayAny("sfx_swing", 2, 4, 0.4f, 0f); }
+
             if (pendingSoldier != null && pendingSoldier.IsAlive)
             {
                 if (pendingRanged)

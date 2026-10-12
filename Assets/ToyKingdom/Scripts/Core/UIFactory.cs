@@ -453,7 +453,8 @@ namespace ToyKingdom
 
         public void OnPointerDown(PointerEventData e)
         {
-            if (button != null && button.interactable) SetPressed(true);
+            if (button != null && button.interactable) { SetPressed(true); Sfx.Click(); }
+            else if (button != null) Sfx.Error();
         }
 
         public void OnPointerUp(PointerEventData e) => SetPressed(false);
