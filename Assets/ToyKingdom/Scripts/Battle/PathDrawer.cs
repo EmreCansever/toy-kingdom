@@ -51,7 +51,13 @@ namespace ToyKingdom
 
             // bölge dışına dokunmak: ipucu (sürüklemek kamerayı kaydırır)
             if (bm.Rig != null && bm.Rig.TryConsumeTap(out Vector3 tapWorld) && !bm.Field.InDeployZone(tapWorld))
-                Say("Bölükleri kenarlardaki işaretli bölgelerden gönderebilirsin. Sürükleyerek haritayı kaydır");
+            {
+                // bir bölüğe dokunmak onu seçer (emir vermek için)
+                var sq = bm.SquadAt(tapWorld);
+                if (sq != null) bm.SelectSquad(sq);
+                else if (bm.SelectedSquad != null) bm.SelectSquad(null);
+                else Say("Bölükleri kenarlardaki işaretli bölgelerden gönder. Yoldaki bir bölüğe dokunarak emir verebilirsin");
+            }
 
             if (PointerInput.Down && !PointerInput.PressStartedOverUI)
             {

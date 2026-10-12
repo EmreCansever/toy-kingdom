@@ -44,6 +44,58 @@ namespace ToyKingdom
         /// <summary>0-100. Düşerse hasar azalır, 18'in altında bölük bozguna uğrar.</summary>
         public float Morale { get; private set; } = 100f;
         public bool Routed => Mode == SquadMode.Rout || Mode == SquadMode.Rallied;
+
+        // ------------------------------------------------------------------ oyuncu emirleri
+        /// <summary>"Dur" emri: bölük olduğu yerde durur, yalnızca yakına geleni karşılar.</summary>
+        public bool Halted { get; private set; }
+        /// <summary>Kendi isteğiyle geri çekilen bölük (bozgun değil).</summary>
+        public bool Withdrawing { get; private set; }
+        public bool CanCommand => Team == Team.Player && Members.Count > 0 && !Routed;
+
+        /// <summary>Dur / devam. Kapıda ya da kulede olsa bile durup bulunduğu yeri tutar.</summary>
+        public void SetHalt(bool on)
+        {
+            if (!CanCommand) return;
+            if (on && Mode != SquadMode.March)
+            {
+                // saldırıdan geri çek: bulunduğu yerde bekle; devam deyince yeniden hedefe yürür
+                RemoveLadder();
+                ClimbTarget = null;
+                Gate = null;
+                path.Clear();
+                path.Add(Center());
+                pathSegment = 0;
+                pathDistance = 0f;
+                Mode = SquadMode.March;
+            }
+            Halted = on;
+            if (on) Anchor = Center();
+        }
+
+        /// <summary>Hücum: rotanın kalanını bırakıp doğrudan kapıya / kuleye koşar, moral kazanır.</summary>
+        public void Charge()
+        {
+            if (!CanCommand) return;
+            Halted = false;
+            ChangeMorale(12f);
+            if (Mode == SquadMode.March) { pathSegment = Mathf.Max(0, path.Count - 1); BeginClimbOrAssault(); }
+        }
+
+        /// <summary>Geri çekil: bozgun olmadan en yakın toplanma alanına döner; yarısından fazlası sağ dönerse orduya katılır.</summary>
+        public void Withdraw()
+        {
+            if (!CanCommand) return;
+            DestroyLine();
+            RemoveLadder();
+            ClimbTarget = null;
+            Gate = null;
+            Halted = false;
+            Withdrawing = true;
+            Mode = SquadMode.Rout;
+            Vector3 c = Center();
+            Anchor = field.NearestDeployPoint(c);
+            Heading = ((Vector2)(Anchor - c)).normalized;
+        }
         /// <summary>Morale göre hasar çarpanı.</summary>
         public float MoraleDamage => Morale >= 70f ? 1.1f : Morale < 35f ? 0.8f : 1f;
         bool wipeReported;
@@ -227,8 +279,8 @@ namespace ToyKingdom
 
         void AdvanceAlongPath(float dt)
         {
-            // yakın dövüş varsa dur, askerler geride kaldıysa bekle
-            if (Engaged) return;
+            // dur emri, yakın dövüş ya da geride kalan askerler: bekle
+            if (Halted || Engaged) return;
             float lag = AverageSlotError();
             float speed = Data.moveSpeed * (lag > 0.7f ? 0.25f : lag > 0.4f ? 0.7f : 1f);
             float step = speed * dt;

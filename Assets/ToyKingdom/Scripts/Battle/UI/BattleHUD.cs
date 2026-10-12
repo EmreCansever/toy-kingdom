@@ -21,6 +21,10 @@ namespace ToyKingdom
         TMP_Text resultDetail;
         Image resultHeader;
         readonly List<UnitCardUI> cards = new List<UnitCardUI>();
+        // bölük emirleri
+        GameObject orderBar;
+        TMP_Text orderTitle, haltLabel;
+        SpriteRenderer selRing;
 
         void Start()
         {
@@ -30,6 +34,7 @@ namespace ToyKingdom
             bm.SelectedUnitChanged += OnSelected;
             bm.BattleEnded += ShowResult;
             bm.Hint += ShowHint;
+            bm.SquadSelected += OnSquadSelected;
 
             UnitData first = null;
             foreach (var c in cards)
@@ -38,7 +43,7 @@ namespace ToyKingdom
             int cannons = Siege.CannonCount(bm.Castle), mines = Siege.MineCount(bm.Castle);
             if (cannons > 0 || mines > 0)
                 ShowHint("Dikkat: kulelerde " + cannons + " top var, kale önünde gizli mayınlar olabilir. Bölüklerini dağınık gönder!", 7f);
-            else ShowHint("Bir bölük seç, işaretli bölgeden kaleye doğru parmağınla rota çiz", 6f);
+            else ShowHint("Bir bölük seç, işaretli bölgeden rota çiz. Yoldaki bölüğe dokunarak emir ver", 6f);
         }
 
         void OnDestroy()
@@ -47,6 +52,7 @@ namespace ToyKingdom
             bm.SelectedUnitChanged -= OnSelected;
             bm.BattleEnded -= ShowResult;
             bm.Hint -= ShowHint;
+            bm.SquadSelected -= OnSquadSelected;
         }
 
         void Build()
@@ -98,6 +104,24 @@ namespace ToyKingdom
             UIFactory.Stretch(commandText.rectTransform);
             if (UIFactory.LabelShadow != null) commandText.fontSharedMaterial = UIFactory.LabelShadow;
 
+            // seçili bölüğe emirler (sağ altta, komuta puanının üstünde)
+            var bar = UIFactory.Chip(t, "Orders", new Vector2(700f, 116f), 26f);
+            UIFactory.Place(bar.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 150f), new Vector2(700f, 116f));
+            orderTitle = UIFactory.Text(bar.transform, "Title", "", 22f, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Left, true);
+            UIFactory.Place(orderTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(20f, -4f), new Vector2(660f, 30f));
+            var halt = UIFactory.Button(bar.transform, "Halt", "Dur", UIFactory.Hex("4A5568"), 28f);
+            UIFactory.Place((RectTransform)halt.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(16f, 10f), new Vector2(210f, 72f));
+            haltLabel = halt.GetComponentInChildren<TMP_Text>();
+            halt.onClick.AddListener(() => { var q = bm.SelectedSquad; if (q == null) return; q.SetHalt(!q.Halted); ShowHint(q.Halted ? "Bölük olduğu yeri tutuyor" : "Bölük ilerliyor", 2f); RefreshOrders(); });
+            var withdraw = UIFactory.Button(bar.transform, "Withdraw", "Geri çekil", UIFactory.Hex("8C8577"), 26f);
+            UIFactory.Place((RectTransform)withdraw.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(244f, 10f), new Vector2(210f, 72f));
+            withdraw.onClick.AddListener(() => { var q = bm.SelectedSquad; if (q == null) return; q.Withdraw(); ShowHint("Bölük toplanma alanına çekiliyor", 2f); bm.SelectSquad(null); });
+            var charge = UIFactory.Button(bar.transform, "Charge", "Hücum!", UIFactory.Red, 30f);
+            UIFactory.Place((RectTransform)charge.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(472f, 10f), new Vector2(212f, 72f));
+            charge.onClick.AddListener(() => { var q = bm.SelectedSquad; if (q == null) return; q.Charge(); Sfx.Play("sfx_deploy", 0.9f, 0.05f, 0.2f, 0.8f); ShowHint("Hücum! Bölük doğrudan hedefe koşuyor", 2f); RefreshOrders(); });
+            orderBar = bar.gameObject;
+            orderBar.SetActive(false);
+
             // ipucu
             hintText = UIFactory.Text(t, "Hint", "", 32f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Place(hintText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -130f), new Vector2(1300f, 60f));
@@ -121,6 +145,43 @@ namespace ToyKingdom
             resultPanel.SetActive(false);
         }
 
+        void OnSquadSelected(Squad q)
+        {
+            if (orderBar == null) return;
+            orderBar.SetActive(q != null);
+            RefreshOrders();
+        }
+
+        void RefreshOrders()
+        {
+            var q = bm.SelectedSquad;
+            if (q == null) return;
+            orderTitle.text = q.Data.displayName + " bölüğü  ·  " + q.Alive + "/" + q.StartSize + " asker  ·  moral " + Mathf.RoundToInt(q.Morale);
+            haltLabel.text = q.Halted ? "Devam" : "Dur";
+        }
+
+        /// <summary>Seçili bölüğün altında halka.</summary>
+        void UpdateRing()
+        {
+            var q = bm.SelectedSquad;
+            if (q != null && (!q.CanCommand || bm.State != BattleState.Playing)) { bm.SelectSquad(null); q = null; }
+            if (q == null) { if (selRing != null) selRing.gameObject.SetActive(false); return; }
+            if (selRing == null)
+            {
+                var art = GameArt.Instance;
+                if (art == null || art.circle == null) return;
+                selRing = new GameObject("SelectRing").AddComponent<SpriteRenderer>();
+                selRing.sprite = art.circle;
+                selRing.sortingOrder = -14990;
+            }
+            selRing.gameObject.SetActive(true);
+            selRing.transform.position = q.Center() + Vector3.down * 0.05f;
+            float p = 1f + 0.06f * Mathf.Sin(Time.time * 6f);
+            selRing.transform.localScale = new Vector3(1.8f, 1.05f, 1f) * p;
+            selRing.color = new Color(1f, 0.85f, 0.3f, 0.35f);
+            if (Time.frameCount % 15 == 0) RefreshOrders();
+        }
+
         void OnSelected(UnitData u)
         {
             foreach (var c in cards) c.SetSelected(c.Data == u);
@@ -138,6 +199,7 @@ namespace ToyKingdom
         void Update()
         {
             if (bm == null) return;
+            UpdateRing();
             if (bm.Command != null)
             {
                 commandText.text = Mathf.FloorToInt(bm.Command.Current) + "/" + bm.Command.Max;

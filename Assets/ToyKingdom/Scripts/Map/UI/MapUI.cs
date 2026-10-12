@@ -90,6 +90,14 @@ namespace ToyKingdom
             qb.transition = Selectable.Transition.None;
             qb.onClick.AddListener(() => { questCollapsed = !questCollapsed; RefreshQuest(); });
 
+            // sol alt: yakınlaştır / uzaklaştır (parmakla iki parmak da olur)
+            var zin = UIFactory.Button(t, "ZoomIn", "+", UIFactory.Hex("4A5568"), 44f);
+            UIFactory.Place((RectTransform)zin.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 104f), new Vector2(88f, 84f));
+            zin.onClick.AddListener(() => map.rig.ZoomBy(-0.9f));
+            var zout = UIFactory.Button(t, "ZoomOut", "–", UIFactory.Hex("4A5568"), 44f);
+            UIFactory.Place((RectTransform)zout.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(124f, 104f), new Vector2(88f, 84f));
+            zout.onClick.AddListener(() => map.rig.ZoomBy(0.9f));
+
             // sol alt: krallık
             var kBox = UIFactory.Chip(t, "Kingdom", new Vector2(360f, 64f));
             UIFactory.Place(kBox.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 22f), new Vector2(360f, 64f));

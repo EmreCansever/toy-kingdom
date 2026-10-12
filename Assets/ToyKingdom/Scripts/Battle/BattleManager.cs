@@ -33,6 +33,33 @@ namespace ToyKingdom
         public event Action ArmyChanged;
         public event Action<BattleResult> BattleEnded;
         public event Action<string> Hint;
+        /// <summary>Emir verilecek seçili bölük değişti.</summary>
+        public event Action<Squad> SquadSelected;
+        public Squad SelectedSquad { get; private set; }
+
+        public void SelectSquad(Squad sq)
+        {
+            if (sq != null && !sq.CanCommand) sq = null;
+            SelectedSquad = sq;
+            SquadSelected?.Invoke(sq);
+        }
+
+        /// <summary>Dokunulan noktaya en yakın, emir verilebilir oyuncu bölüğü.</summary>
+        public Squad SquadAt(Vector3 world, float radius = 1.1f)
+        {
+            Squad best = null;
+            float bd = radius;
+            foreach (var s in PlayerSquads)
+            {
+                if (!s.CanCommand) continue;
+                foreach (var m in s.Members)
+                {
+                    float d = Vector2.Distance(m.Ground, world);
+                    if (d < bd) { bd = d; best = s; }
+                }
+            }
+            return best;
+        }
 
         float reinforcementTimer;
         int reinforcementsLeft;

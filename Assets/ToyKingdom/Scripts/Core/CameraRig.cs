@@ -59,9 +59,25 @@ namespace ToyKingdom
             else focusTarget = world;
         }
 
+        float zoomTarget = -1f;
+
+        /// <summary>Yakınlaştır (eksi) / uzaklaştır (artı): ekrandaki düğmeler için, yumuşak geçişle.</summary>
+        public void ZoomBy(float delta)
+        {
+            if (Cam == null) return;
+            float from = zoomTarget > 0f ? zoomTarget : Cam.orthographicSize;
+            zoomTarget = Mathf.Clamp(from + delta, minSize, maxSize);
+        }
+
         void Update()
         {
             tapReady = false;
+            if (zoomTarget > 0f && Cam != null)
+            {
+                Cam.orthographicSize = Mathf.Lerp(Cam.orthographicSize, zoomTarget, Time.unscaledDeltaTime * 10f);
+                if (Mathf.Abs(Cam.orthographicSize - zoomTarget) < 0.01f) { Cam.orthographicSize = zoomTarget; zoomTarget = -1f; }
+                Clamp();
+            }
             PointerInput.Refresh();
             if (!inputEnabled) { dragging = false; pressValid = false; return; }
 
@@ -70,6 +86,7 @@ namespace ToyKingdom
             if (Mathf.Abs(PointerInput.Scroll) > 0.01f) zoom = -PointerInput.Scroll * 0.5f;
             if (zoom != 0f)
             {
+                zoomTarget = -1f;
                 Cam.orthographicSize = Mathf.Clamp(Cam.orthographicSize + zoom, minSize, maxSize);
                 dragging = true; // yakınlaştırırken dokunuş sayma
             }
