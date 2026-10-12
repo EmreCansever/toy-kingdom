@@ -27,12 +27,13 @@ namespace ToyKingdom
         LettersUI letters;
         DiplomacyPanel diplomacy;
         TradePanel tradePanel;
+        EndPanel endPanel;
         TMP_Text letterBadge;
         GameObject letterBadgeRoot;
         Coroutine toastRoutine;
 
         public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) ||
-                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || (logPanel != null && logPanel.IsOpen);
+                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || (logPanel != null && logPanel.IsOpen) || (endPanel != null && endPanel.IsOpen);
 
         public void Build(MapController controller)
         {
@@ -140,6 +141,8 @@ namespace ToyKingdom
             logPanel = LogPanel.Create(t);
             logBtn.onClick.AddListener(OpenLog);
 
+            endPanel = EndPanel.Create(t, () => endNewGame?.Invoke(), () => endContinue?.Invoke());
+
             feed = UIFactory.Rect("Feed", t);
             UIFactory.Place(feed, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(1200f, 180f));
             toastBox.transform.SetAsLastSibling();
@@ -180,8 +183,21 @@ namespace ToyKingdom
             if (questCard == null) return;
             var d = SaveSystem.Data;
             var s = Tutorial.Current(d);
-            questCard.gameObject.SetActive(s != null);
-            if (s == null) { pulseTarget = null; return; }
+            if (s == null)
+            {
+                // öğretici bitti: büyük hedef
+                pulseTarget = null;
+                bool goal = d.gameOver == Endgame.None;
+                questCard.gameObject.SetActive(goal);
+                if (!goal) return;
+                questTitle.text = "Hedef  ·  Rakip krallıkları diz çöktür (" + Endgame.Fallen(d) + "/" + d.rivals.Count + ")";
+                questBody.text = "Bir krallığın başkentini fethedersen krallık dağılır ve kalan şehirleri sana geçer.\n<color=#FF9A8A>Başkentini ve tahtını koru: hazine " +
+                                 Endgame.DebtLimit + " altının altında ya da itibarın dipte kalırsa saray darbesi olur.</color>";
+                questBody.gameObject.SetActive(!questCollapsed);
+                questCard.rectTransform.sizeDelta = new Vector2(560f, questCollapsed ? 58f : 160f);
+                return;
+            }
+            questCard.gameObject.SetActive(true);
             questTitle.text = "Görev " + (d.tutorialStep + 1) + "/" + Tutorial.Steps.Length + "  ·  " + s.title + (questCollapsed ? "" : "");
             questBody.text = s.how + "\n<color=#FFD36E>Ödül: " + s.reward + " altın</color>";
             questBody.gameObject.SetActive(!questCollapsed);
@@ -192,6 +208,14 @@ namespace ToyKingdom
         }
 
         Transform pulseTarget;
+        Action endNewGame, endContinue;
+
+        public void ShowEnd(int owned, int total, Action newGame, Action keepPlaying)
+        {
+            endNewGame = newGame;
+            endContinue = keepPlaying;
+            endPanel.Show(SaveSystem.Data, owned, total);
+        }
 
         void Update()
         {
@@ -326,7 +350,7 @@ namespace ToyKingdom
         {
             string l = m.ToLowerInvariant();
             if (l.Contains("geçti") || l.Contains("püskürt")) return Level.Important;
-            foreach (var k in new[] { "isyan", "ayaklan", "düştü", "saldırı", "yürüyor", "savaş ilan", "borçta", "hazine boş" })
+            foreach (var k in new[] { "isyan", "ayaklan", "düştü", "saldırı", "yürüyor", "savaş ilan", "borçta", "hazine boş", "darbe" })
                 if (l.Contains(k)) return Level.Critical;
             return Level.Important;
         }

@@ -99,7 +99,36 @@ namespace ToyKingdom
             HandleTrade();
             HandleReputation();
             HandleTutorial();
+            HandleEndgame();
+            if (SaveSystem.Data.gameOver == Endgame.Won || SaveSystem.Data.gameOver == Endgame.Lost) ShowEnd();
             SyncArmies();
+        }
+
+        string endMsg;
+        bool endedNow;
+
+        /// <summary>Darbe uyarıları ve oyun sonu ekranı.</summary>
+        void HandleEndgame()
+        {
+            if (endMsg != null) { ui.Toast(endMsg); endMsg = null; }
+            if (!endedNow) return;
+            endedNow = false;
+            SaveSystem.Save();
+            ShowEnd();
+        }
+
+        void ShowEnd() => ui.ShowEnd(OwnedCount(), CityCount, NewGame, () =>
+        {
+            SaveSystem.Data.gameOver = Endgame.WonContinuing;
+            SaveSystem.Save();
+        });
+
+        /// <summary>Kaydı silip haritayı baştan kurar.</summary>
+        void NewGame()
+        {
+            SaveSystem.ResetSave();
+            GameSession.LastResult = null;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
         /// <summary>Vezirin görevleri: tamamlanan görevin ödülü ve sıradaki görev.</summary>
@@ -320,6 +349,7 @@ namespace ToyKingdom
                 HandleTrade();
                 HandleReputation();
                 HandleTutorial();
+                HandleEndgame();
                 if (rep.gold > 0 || rep.messages.Count > 0)
                 {
                     foreach (var id in rep.newRebels)
@@ -473,6 +503,7 @@ namespace ToyKingdom
         {
             var data = SaveSystem.Data;
             long now = DateTime.UtcNow.Ticks;
+            if (data.gameOver == Endgame.Lost) { data.lastIncomeTicks = now; return new KingdomSim.TickReport(); } // taht kaybedildi: zaman durdu
             if (data.lastIncomeTicks <= 0 || data.lastIncomeTicks > now) data.lastIncomeTicks = now;
             long minutes = (now - data.lastIncomeTicks) / TimeSpan.TicksPerMinute;
             if (minutes <= 0)
@@ -482,6 +513,8 @@ namespace ToyKingdom
                 RivalAI.Advance(data, inf, 0, online, lastRivalReport);
                 Court.Tick(data, inf, 0, online);
                 Trade.Tick(data, inf, 0, online);
+                if (Endgame.Tick(data, 0, online, out string m0)) endedNow = true;
+                if (m0 != null) endMsg = m0;
                 if (lastRivalReport.Any) SaveSystem.Save();
                 return new KingdomSim.TickReport();
             }
@@ -494,6 +527,8 @@ namespace ToyKingdom
             RivalAI.Advance(data, infos, run, online, lastRivalReport);
             Court.Tick(data, infos, run, online);
             Trade.Tick(data, infos, run, online);
+            if (Endgame.Tick(data, run, online, out string m1)) endedNow = true;
+            if (m1 != null) endMsg = m1;
             data.lastIncomeTicks = minutes > cap ? now : data.lastIncomeTicks + minutes * TimeSpan.TicksPerMinute;
             SaveSystem.Save();
             return rep;

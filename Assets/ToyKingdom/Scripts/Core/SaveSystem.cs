@@ -17,6 +17,14 @@ namespace ToyKingdom
     {
         public int version = 5;
         public int gold = 600;
+        // ------------------------------------------------------------------ oyun sonu
+        /// <summary>0 sürüyor, 1 zafer, 2 yenilgi, 3 zaferden sonra devam.</summary>
+        public int gameOver;
+        public string endReason = "";
+        /// <summary>Darbe krizinde geçen (çevrimiçi) dakika.</summary>
+        public float crisisMinutes;
+        public bool capitalLost;
+
         /// <summary>Vezirin görevlerinde kaçıncı adımdayız.</summary>
         public int tutorialStep;
         /// <summary>Oyuncunun yaptığı ama durumdan anlaşılmayan eylemler (görevler için).</summary>

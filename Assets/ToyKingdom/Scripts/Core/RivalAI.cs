@@ -64,6 +64,8 @@ namespace ToyKingdom
         const float AttackMinPlayMinutes = 30f;
         const float MaxPower = 300f;
         public const float GarrisonDefense = 14f;
+        /// <summary>Başkentin savunmasında kullanılan zorluk.</summary>
+        const int CapitalDifficulty = 3;
 
         /// <summary>Oyuncu şehrinin rakip saldırısına karşı savunma gücü.</summary>
         public static float Defense(CityState s, int difficulty)
@@ -244,7 +246,9 @@ namespace ToyKingdom
             r.attackTimer = 3f; // koşullar uymazsa birkaç dakika sonra yeniden bakar
             int playerCities = 0;
             foreach (var id in data.conqueredCities) if (!data.IsRebel(id)) playerCities++;
-            if (playerCities + 1 < AttackMinCities || data.playMinutes < AttackMinPlayMinutes) return;
+            // tek başına kalan başkent kuşatılabilir: son kale düşerse taç da düşer
+            bool capitalSiege = playerCities == 0 && data.playMinutes >= AttackMinPlayMinutes;
+            if (!capitalSiege && (playerCities + 1 < AttackMinCities || data.playMinutes < AttackMinPlayMinutes)) return;
             // aynı anda yalnızca bir rakip saldırır
             foreach (var o in data.rivals) if (o != r && o.Attacking) return;
 
@@ -258,8 +262,9 @@ namespace ToyKingdom
                 foreach (var n in ci.Value.neighbors ?? new string[0])
                 {
                     var t = Find(cities, n);
-                    if (t == null || t.Value.home || !data.IsConquered(n)) continue;
-                    float def0 = Defense(data.State(n), t.Value.difficulty);
+                    if (t == null) continue;
+                    if (t.Value.home ? !capitalSiege : !data.IsConquered(n)) continue;
+                    float def0 = Defense(data.State(n), t.Value.home ? CapitalDifficulty : t.Value.difficulty);
                     if (def0 < bestRatio) { bestRatio = def0; target = n; from = id; }
                 }
             }
@@ -329,10 +334,17 @@ namespace ToyKingdom
                 r.attackTarget = "";
                 r.attackFrom = "";
 
-                if (!data.IsConquered(target)) continue; // şehir bu arada el değiştirdi
+                bool capital = ci != null && ci.Value.home;
+                if (!capital && !data.IsConquered(target)) continue; // şehir bu arada el değiştirdi
                 var s = data.State(target);
-                float defense = Defense(s, ci != null ? ci.Value.difficulty : 1);
-                if (r.attackPower > defense)
+                float defense = Defense(s, capital ? CapitalDifficulty : ci != null ? ci.Value.difficulty : 1);
+                if (capital && r.attackPower > defense)
+                {
+                    data.capitalLost = true;
+                    rep.captured.Add(target);
+                    rep.messages.Add("Başkent düştü! " + def.name + " ordusu sarayına girdi");
+                }
+                else if (r.attackPower > defense)
                 {
                     data.LoseCity(target, r.id);
                     Reputation.Change(data, -6f, name + " düşmana kaptırıldı");
