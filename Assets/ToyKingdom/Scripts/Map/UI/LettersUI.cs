@@ -121,8 +121,8 @@ namespace ToyKingdom
             popupRoot.SetActive(true);
             if (popupBody != null) Destroy(popupBody.gameObject);
 
-            float h = l.NeedsAnswer ? 330f + 108f * l.options.Count + 210f : 640f;
-            h = Mathf.Max(h, 600f);
+            float h = l.NeedsAnswer ? 560f + 108f * l.options.Count + 110f : 820f;
+            h = Mathf.Min(Mathf.Max(h, 700f), 1040f);
             var frame = UIFactory.Frame(popupRoot.transform, "Paper", new Vector2(1180f, h));
             UIFactory.Place(frame.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1180f, h));
             frame.transform.Find("Border/Inner").GetComponent<Image>().color = Paper;
@@ -149,10 +149,27 @@ namespace ToyKingdom
             timer = UIFactory.Text(b, "Timer", "", 26f, UIFactory.Brown, TextAlignmentOptions.Right, true);
             UIFactory.Place(timer.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-40f, -44f), new Vector2(320f, 36f));
 
-            var body = UIFactory.Text(b, "Body", l.body, 28f, UIFactory.Ink, TextAlignmentOptions.TopLeft);
-            UIFactory.Place(body.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(50f, -200f), new Vector2(1080f, 220f));
-            body.enableAutoSizing = true; body.fontSizeMin = 20f; body.fontSizeMax = 28f;
+            // ince süs çizgisi ve mum mühür
+            var line = UIFactory.Panel(b, "Rule", UIFactory.Hex("B9925A"));
+            UIFactory.Place(line.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(50f, -184f), new Vector2(1080f, 3f));
+            line.raycastTarget = false;
+            var wax = UIFactory.Panel(b, "Wax", UIFactory.Darken(SealColor(l), 0.8f), GameArt.Instance != null ? GameArt.Instance.circle : null);
+            if (l.NeedsAnswer) UIFactory.Place(wax.rectTransform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-110f, -122f), new Vector2(96f, 96f));
+            else UIFactory.Place(wax.rectTransform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-110f, 200f), new Vector2(118f, 118f));
+            wax.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -12f);
+            wax.raycastTarget = false;
+            var waxIn = UIFactory.Panel(wax.transform, "In", SealColor(l), GameArt.Instance != null ? GameArt.Instance.circle : null);
+            UIFactory.Stretch(waxIn.rectTransform, 12f);
+            waxIn.raycastTarget = false;
+            var waxT = UIFactory.Text(waxIn.transform, "L", LetterStyle.SealLetter(l.from), 54f, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center, true);
+            UIFactory.Stretch(waxT.rectTransform);
+
+            float bodyH = l.NeedsAnswer ? 340f : 470f;
+            var body = UIFactory.Text(b, "Body", l.body, 27f, UIFactory.Hex("3B2A1A"), TextAlignmentOptions.TopLeft);
+            UIFactory.Place(body.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(50f, -200f), new Vector2(l.NeedsAnswer ? 1080f : 940f, bodyH));
+            body.enableAutoSizing = true; body.fontSizeMin = 17f; body.fontSizeMax = 27f;
             body.fontStyle = FontStyles.Italic;
+            body.lineSpacing = 2f;
 
             if (l.NeedsAnswer)
             {
@@ -160,7 +177,7 @@ namespace ToyKingdom
                 for (int i = 0; i < l.options.Count; i++)
                 {
                     var o = l.options[i];
-                    float y = -440f - i * 108f;
+                    float y = -560f - i * 108f;
                     Color col = i == 0 ? UIFactory.Blue : i == l.options.Count - 1 ? UIFactory.Hex("8C8577") : UIFactory.Gold;
                     var btn = UIFactory.Button(b, "Opt" + i, o.label, col, 28f);
                     UIFactory.Place((RectTransform)btn.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(50f, y), new Vector2(470f, 92f));
@@ -183,7 +200,8 @@ namespace ToyKingdom
                 {
                     string chosen = l.chosen >= 0 && l.chosen < l.options.Count ? "Cevabın: " + l.options[l.chosen].label + "\n" : "";
                     var res = UIFactory.Text(b, "Result", chosen + "<b>" + l.result + "</b>", 28f, UIFactory.BrownDark, TextAlignmentOptions.TopLeft);
-                    UIFactory.Place(res.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(50f, 150f), new Vector2(1080f, 120f));
+                    UIFactory.Place(res.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(50f, 140f), new Vector2(900f, 120f));
+                    res.enableAutoSizing = true; res.fontSizeMin = 18f; res.fontSizeMax = 28f;
                 }
                 var ok = UIFactory.Button(b, "Ok", "Tamam", UIFactory.Blue, 32f);
                 UIFactory.Place((RectTransform)ok.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-150f, 40f), new Vector2(260f, 90f));

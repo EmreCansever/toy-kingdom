@@ -75,8 +75,9 @@ namespace ToyKingdom
             {
                 d.SetFlag(FlagIntro);
                 Court.Reply(d, "court", "Hoş geldiniz, efendim",
-                    "Tahtınız kutlu olsun! Krallığımız küçük ama hırsımız büyük. Size yol göstereceğim: sol taraftaki görevleri sırayla yerine getirin, " +
-                    "her biri hazineye altın kazandırır.\n\nUnutmayın: halk aç kalırsa ayaklanır, vali hırslanırsa ihanet eder, komşu krallar ise zayıflığınızı kollar.");
+                    "Tahtınız kutlu, ömrünüz uzun olsun! Ataların kılıcı artık sizin belinizde, tacı sizin başınızdadır. Krallığımız küçüktür; ama hırsımız dağlardan yüce.\n\n" +
+                    "Bu yaşlı kulunuz size yol gösterecek: sol taraftaki görevleri sırayla yerine getirin, her biri hazineye altın kazandıracaktır.\n\n" +
+                    "Lakin unutmayın: aç kalan halk ayaklanır, hırslanan vali ihanet eder, güneyin sultanı ile kuzeyin kraliçesi ise zayıf düştüğünüz günü kollar.");
             }
             var s = Current(d);
             if (s == null || !s.done(d)) return null;

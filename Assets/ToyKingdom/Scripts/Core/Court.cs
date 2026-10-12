@@ -56,6 +56,8 @@ namespace ToyKingdom
             return l;
         }
 
+        static string Pick(params string[] options) => options[UnityEngine.Random.Range(0, options.Length)];
+
         static void Opt(Letter l, string label, string hint, int cost = 0) =>
             l.options.Add(new LetterOption { label = label, hint = hint, cost = cost });
 
@@ -85,9 +87,14 @@ namespace ToyKingdom
         public static void TributeDemand(SaveData data, RivalState r, string target, string from, string cityName, int amount, float strength)
         {
             var def = RivalAI.Get(r.id);
-            var l = New(data, LetterKind.TributeDemand, r.id, "Haraç talebi",
-                "Ey komşu hükümdar,\n\n" + cityName + " surlarının gölgesi askerlerimin iştahını kabartıyor. " +
-                Gold(amount) + " gönderirsen ordum başka yöne bakar. Göndermezsen kumlar kanla sulanır.\n\n" + RivalAI.KingFull(r.id), 2f);
+            string g = Gold(amount);
+            var l = New(data, LetterKind.TributeDemand, r.id, "Haraç talebi", LetterStyle.Compose(r.id, Pick(
+                "Kervanlarımın getirdiği haberlere göre " + cityName + " ambarları dolu, surları ise ince. Ordum kumda kavrulmaktan bıktı; serin bir şehirde dinlenmek ister.\n\n" +
+                "Komşuluk hakkı için " + g + " gönder, sancaklarım başka ufuklara yönelsin. Göndermezsen " + cityName + " kapılarını kervan değil, kılıç çalar.",
+                "Develerim susadı, askerlerim aç. Senin " + cityName + " şehrin ise bereketli, derler. Bu adaletsizliği bir kese altınla düzeltebiliriz: " + g + ".\n\n" +
+                "Kum saatim döndü. Son tanesi düştüğünde ordum yola çıkar; o vakit pazarlık değil, yağma konuşulur.",
+                "Bilirsin, ben kan dökmeyi değil, altın saymayı severim. " + cityName + " için sana bir iyilik teklif ediyorum: " + g + " öde, şehrin rahat uyusun.\n\n" +
+                "Reddedersen, o şehrin damlarına kum yerine ok yağar. Seçim senin, hükümdar.")), 2f);
             l.cityId = target; l.cityName = cityName; l.amount = amount; l.extra = from; l.power = strength;
             Opt(l, "Öde  (" + Gold(amount) + ")", "Saldırı iptal, ilişki +8. Ama " + def.kingTitle + " bir dahakine daha fazlasını ister.", amount);
             Opt(l, "Pazarlık et  (" + Gold(amount / 2) + ")", "Kabul edebilir; reddederse öfkelenip daha güçlü saldırır.", amount / 2);
@@ -98,9 +105,13 @@ namespace ToyKingdom
         public static void WarDeclaration(SaveData data, RivalState r, string target, string cityName, float strength)
         {
             int price = Mathf.RoundToInt(strength * 4f / 10f) * 10;
-            var l = New(data, LetterKind.WarDeclaration, r.id, "Savaş ilanı",
-                "Ayaz Hatun kimseden izin almaz.\n\nOrdum " + cityName + " üzerine yürüyor. Şerefli bir hükümdarsan surlarında karşıla. " +
-                "Yok eğer korkuyorsan, hazinen konuşsun.\n\n" + RivalAI.KingFull(r.id), RivalAI.MarchMinutes);
+            var l = New(data, LetterKind.WarDeclaration, r.id, "Savaş ilanı", LetterStyle.Compose(r.id, Pick(
+                "Kuzeyin buzlu rüzgârları adına bildiririm: ordum " + cityName + " üzerine yürüyor. Arkadan vurmak bize yakışmaz; bu yüzden sana önceden haber veriyorum.\n\n" +
+                "Şerefin varsa surlarına çık ve bizi karşıla. Yoksa hazinenin ağzını aç; belki altının sesi kılıçlarımızın sesini bastırır.",
+                "Kar ve demirle büyüdük, eğilmeyi bilmeyiz. " + cityName + " artık hedefimizdir; borular çalındı, sancaklar açıldı.\n\n" +
+                "Bir hükümdar gibi karşıla bizi. Ya da bir tüccar gibi pazarlık et. Sana hangisi yakışıyorsa onu seç.",
+                "Bu mektubu getiren atlı, ordumdan yalnızca birkaç gün öndedir. Hedefimiz " + cityName + ".\n\n" +
+                "Kuzeyin kanunu açıktır: savaş önceden ilan edilir, düşman yüz yüze vurulur. Surlarında bekle, hükümdar.")), RivalAI.MarchMinutes);
             l.cityId = target; l.cityName = cityName; l.amount = price; l.power = strength;
             Opt(l, "Geri çekilmeleri için öde  (" + Gold(price) + ")", "Kraliçe gururunu kolay satmaz: yaklaşık %55 ihtimalle kabul eder.", price);
             Opt(l, "Meydan oku", "Halkın gururlanır (tüm şehirlerde huzursuzluk -5). İlişki -5. Savunmana güven.");
@@ -112,9 +123,11 @@ namespace ToyKingdom
             if (HasOpen(data, LetterKind.PeaceOffer, r.id)) return;
             var def = RivalAI.Get(r.id);
             string body = def.trait == RivalAI.KingTrait.Greedy
-                ? "Savaş ticarete zarar veriyor, kervanlarım boş dönüyor. On beş dakikalık bir barışa ne dersin?"
-                : "Kılıçlarımızı bir süre kınında tutalım. Sözüm sözdür: barış süresince sana dokunmam.";
-            var l = New(data, LetterKind.PeaceOffer, r.id, "Barış teklifi", body + "\n\n" + RivalAI.KingFull(r.id), 3f);
+                ? Pick("Savaş kervan yollarını kapatır, kapalı yol da hazineyi kurutur. Ben hesabını bilen adamım: kılıçlarımızı bir süre kınında tutalım, kervanlarımız serbestçe gidip gelsin.\n\nKabul edersen elimi uzatıyorum. Etmezsen kumlar yine kızışır.",
+                       "Çarşılarımda ipek satılmıyor, çünkü herkes kılıç alıyor. Bu iş ikimize de yaramaz.\n\nGel, bir süreliğine barışalım. Altın kazanmak, kan dökmekten tatlıdır.")
+                : Pick("Çok kan döktük; karlar kızıla boyandı. Yorgun askerlerime bir nefes, senin halkına bir huzur bağışlayalım.\n\nBir süre sürecek bir barış öneriyorum. Sözüm buz gibi serttir ama asla kırılmaz.",
+                       "Sana saygı duyuyorum, hükümdar; iyi dövüştün. Şimdi kılıçlar dinlensin, yaralar sarılsın.\n\nBarışı kabul edersen, anlaşma bitene dek tek bir askerim sınırını geçmeyecek.");
+            var l = New(data, LetterKind.PeaceOffer, r.id, "Barış teklifi", LetterStyle.Compose(r.id, body), 3f);
             Opt(l, "Kabul et", "15 dakika barış: birbirinize saldırmazsınız. İlişki +10.");
             Opt(l, "Haraç karşılığında kabul et", "Barış için onlardan altın iste. Güçlüysen kabul ederler; değilse ilişki bozulur.");
             Opt(l, "Reddet", "İlişki -5.");
@@ -123,9 +136,11 @@ namespace ToyKingdom
 
         public static void BuyBack(SaveData data, RivalState r, string cityId, string cityName, int price)
         {
-            var l = New(data, LetterKind.BuyBack, r.id, cityName + " hakkında",
-                cityName + " artık bizim bayrağımızı taşıyor. Ama altın her kapıyı açar: " + Gold(price) +
-                " gönderirsen şehri sana geri veririm.\n\n" + RivalAI.KingFull(r.id), 3f);
+            var l = New(data, LetterKind.BuyBack, r.id, cityName + " hakkında", LetterStyle.Compose(r.id, r.id == "sand"
+                ? cityName + " artık sancağımı dalgalandırıyor; halkı da dilimizi öğrenmeye başladı. Ama ben inatçı bir adam değilim, pazarlık ehliyim.\n\n" +
+                  Gold(price) + " karşılığında şehrin anahtarlarını sana iade ederim. Teklifim kumdaki ayak izi gibidir: rüzgâr çıkmadan değerlendir."
+                : cityName + " burçlarında artık bizim bayrağımız dalgalanıyor. Savaşta alınanı savaşta geri vermek âdettir; ama halkın çile çekmesin diye sana bir yol açıyorum.\n\n" +
+                  Gold(price) + " öde, şehrin anahtarları sana dönsün."), 3f);
             l.cityId = cityId; l.cityName = cityName; l.amount = price;
             Opt(l, "Şehri satın al  (" + Gold(price) + ")", "Şehir geri döner (vali ve takviyesiz). İlişki +5.", price);
             Opt(l, "Reddet", "Şehri savaşarak geri almalısın.");
@@ -135,9 +150,11 @@ namespace ToyKingdom
         public static void Ransom(SaveData data, RivalState r, List<string> captives, string cityName)
         {
             int price = 70 * captives.Count;
-            var l = New(data, LetterKind.Ransom, r.id, "Esirler",
-                cityName + " önlerinde " + captives.Count + " bölüğünü esir aldık. Bölük başı 70 altın fidye istiyorum; " +
-                "ödemezsen hepsi zindanda çürür.\n\n" + RivalAI.KingFull(r.id), 3f);
+            var l = New(data, LetterKind.Ransom, r.id, "Esirler", LetterStyle.Compose(r.id, r.id == "sand"
+                ? cityName + " önünde düşen yiğitlerinden " + captives.Count + " bölük zindanlarımda. Hepsi sağ, ama zindan ekmeği pahalıdır.\n\n" +
+                  "Bölük başına 70 altın, toplam " + Gold(price) + ". Öde, askerlerin evlerine dönsün. Ödemezsen kum fırtınası izlerini siler."
+                : cityName + " önünde teslim olan " + captives.Count + " bölüğünün askerleri esirimdir. Onlara onurlu davranıyoruz, çünkü cesurca dövüştüler.\n\n" +
+                  "Fidyeleri " + Gold(price) + ". Yiğitlerini geri istersen hazinenin kapısını aç; istemezsen kuzeyin madenlerinde kazma sallarlar."), 3f);
             l.cityName = cityName; l.amount = price; l.extra = string.Join(",", captives);
             Opt(l, "Fidyeyi öde  (" + Gold(price) + ")", captives.Count + " bölük ordusuna geri döner.", price);
             Opt(l, "Reddet", "Esirler kaybolur. Ordunun morali için kötü bir haber.");
@@ -148,8 +165,9 @@ namespace ToyKingdom
         public static void BorderThreat(SaveData data, RivalState r, string cityName)
         {
             if (HasOpen(data, LetterKind.Threat, r.id)) return;
-            var l = New(data, LetterKind.Threat, r.id, "Uyarı",
-                cityName + " artık sınırımda duruyor. Bir adım daha atarsan buzlar senin için erimeyecek. Haddini bil.\n\n" + RivalAI.KingFull(r.id), 3f);
+            var l = New(data, LetterKind.Threat, r.id, "Uyarı", LetterStyle.Compose(r.id,
+                "Duydum ki sancağın artık " + cityName + " burçlarında dalgalanıyormuş. O şehir benim sınır taşımın dibindedir.\n\n" +
+                "Bir adım daha atarsan kuzeyin bütün kışı senin üzerine iner. Haddini bil, sınırını koru; yoksa ben korurum."), 3f);
             l.cityName = cityName;
             Opt(l, "Özür dile", "İlişki +8. Ama halkın seni zayıf bulur (huzursuzluk +4).");
             Opt(l, "Meydan oku", "İlişki -12. Halkın gururlanır (huzursuzluk -4).");
@@ -158,7 +176,7 @@ namespace ToyKingdom
 
         public static void Reply(SaveData data, string rivalId, string title, string body)
         {
-            New(data, LetterKind.Reply, rivalId, title, body + "\n\n" + (rivalId == "court" ? Vizier : RivalAI.KingFull(rivalId)), 0f);
+            New(data, LetterKind.Reply, rivalId, title, LetterStyle.Compose(rivalId, body), 0f);
         }
 
         static bool HasOpen(SaveData data, LetterKind kind, string from)
@@ -195,7 +213,8 @@ namespace ToyKingdom
                 case 0:
                 {
                     var l = New(data, LetterKind.Famine, "court", "Kıtlık: " + city.name,
-                        "Efendim, " + city.name + " ambarları boşaldı. Halk ekmek kuyruğunda bekliyor ve sabrı tükeniyor.", 5f);
+                        LetterStyle.Compose("court", city.name + " ambarlarından gelen haber acıdır: buğday bitti, değirmenler sustu. Analar çocuklarına suda ekmek kırıntısı kaynatıyor; " +
+                        "pazarda bir somun için bıçaklar çekildi.\n\nHalk saray kapısında \"Hükümdarımız bizi unuttu mu?\" diye feryat ediyor. Vaktinde yetişmezsek açlık öfkeye, öfke isyana döner."), 5f);
                     l.cityId = city.id; l.cityName = city.name;
                     Opt(l, "Tahıl gönder  (150 altın)", "Huzursuzluk -20.", 150);
                     Opt(l, "Vergiyi düşür", "Şehrin vergisi düşük olur: gelir azalır, halk yatışır.");
@@ -208,7 +227,9 @@ namespace ToyKingdom
                     var g = governed[UnityEngine.Random.Range(0, governed.Count)];
                     var st = data.State(g.id);
                     var l = New(data, LetterKind.Corruption, "court", "Yolsuzluk ihbarı",
-                        "Efendim, " + g.name + " valisi " + st.governor.name + " hazineden çalıyormuş. Kanıtımız yok, yalnızca fısıltılar var.", 5f);
+                        LetterStyle.Compose("court", g.name + " valisi " + st.governor.name + " hakkında kulağıma fısıltılar geliyor. Hazineye akması gereken vergilerin bir kısmının " +
+                        "onun konağına aktığı, hanımının boynunda yeni incilerin parladığı söyleniyor.\n\nElimizde kesin delil yok; yalnızca dedikodu ve şüphe var. " +
+                        "Soruşturma açmak hem masraflıdır hem de masumsa valiyi gücendirir."), 5f);
                     l.cityId = g.id; l.cityName = g.name;
                     Opt(l, "Soruştur  (80 altın)", "Suçluysa (%60) vali azledilir ve çaldığı 250 altın geri gelir; değilse sadakati çok düşer.", 80);
                     Opt(l, "Valiyi azarla", "Sadakat -12. Yarı ihtimalle hırsızlık sürer (gelir -%20, 10 dk).");
@@ -219,7 +240,8 @@ namespace ToyKingdom
                 case 2:
                 {
                     var l = New(data, LetterKind.Caravan, "court", "Tüccar kervanı",
-                        "Efendim, doğuya gidecek bir kervan sermaye arıyor. 200 altın yatırırsak 8 dakika sonra 400 altın dönebilir. Ama yollar haydut dolu.", 2f);
+                        LetterStyle.Compose("court", "Doğudan gelen bir tüccar heyeti huzurunuza çıkmak için kapıda bekliyor. İpek, baharat ve tuz yüklü bir kervan hazırlamışlar; sermaye arıyorlar.\n\n" +
+                        "200 altın yatırırsak kısa zamanda iki katını getireceklerine sakallarının üstüne yemin ediyorlar. Lakin yollar haydut dolu; nice kervan çölde kaybolup gitmiştir."), 2f);
                     Opt(l, "Yatırım yap  (200 altın)", "%70 ihtimalle 8 dakika sonra 400 altın; %30 ihtimalle hepsi kaybolur.", 200);
                     Opt(l, "Geç", "Bir şey olmaz.");
                     l.defaultOption = 1;
@@ -228,7 +250,8 @@ namespace ToyKingdom
                 case 3:
                 {
                     var l = New(data, LetterKind.Plague, "court", "Salgın: " + city.name,
-                        "Efendim, " + city.name + " sokaklarında salgın baş gösterdi. Hemen önlem almazsak şehir çöker.", 5f);
+                        LetterStyle.Compose("court", city.name + " sokaklarında kara bir hastalık yayılıyor. Önce ateş, sonra öksürük, sonra sessizlik. Kapılara tebeşirle işaret konuyor, " +
+                        "ölüler gece yarısı arabalarla şehir dışına taşınıyor.\n\nHekim göndermezsek salgın şehri kemirecek; kapıları kapatırsak ticaret durur. Karar sizindir."), 5f);
                     l.cityId = city.id; l.cityName = city.name;
                     Opt(l, "Hekim gönder  (220 altın)", "Salgın durur.", 220);
                     Opt(l, "Karantina", "Şehir 4 dakika hiç gelir getirmez, salgın söner.");
@@ -239,7 +262,8 @@ namespace ToyKingdom
                 default:
                 {
                     var l = New(data, LetterKind.Festival, "court", "Halk şenlik istiyor",
-                        "Efendim, halk zaferlerinizi kutlamak için şenlik istiyor. Küçük bir şölen gönülleri kazanır.", 2f);
+                        LetterStyle.Compose("court", "Zaferlerinizin şanı köy köy dolaşıyor; ozanlar meydanlarda destanınızı çalıp söylüyor. Halk bu sevinci bir şölenle kutlamak için izninizi bekliyor.\n\n" +
+                        "Kuzu çevirmeleri, cambazlar, davul zurna... Küçük bir masraf, büyük bir gönül kazancıdır."), 2f);
                     Opt(l, "Şenlik düzenle  (150 altın)", "Tüm şehirlerde huzursuzluk -10.", 150);
                     Opt(l, "Geç", "Halk biraz küser (huzursuzluk +3).");
                     l.defaultOption = 1;
@@ -282,9 +306,9 @@ namespace ToyKingdom
                 if (UnityEngine.Random.value < 0.7f)
                 {
                     data.gold += amount;
-                    Reply(data, "court", "Kervan döndü", "Efendim, kervan sağ salim döndü ve hazineye " + Gold(amount) + " getirdi.");
+                    Reply(data, "court", "Kervan döndü", "Müjdeler olsun! Doğuya giden kervan sağ salim döndü. Develer ipek ve baharat yerine altın keseleriyle geldi: hazineye " + Gold(amount) + " girdi.");
                 }
-                else Reply(data, "court", "Kervan kayıp", "Efendim, kervan çölde haydutlara yakalandı. Yatırımımız kayboldu.");
+                else Reply(data, "court", "Kervan kayıp", "Acı bir haber vermek zorundayım. Kervan çölün ortasında haydutlara yakalanmış; develer dağılmış, mallar yağmalanmış. Yatırdığımız altın kum olup gitti.");
             }
 
             // kaybedilen savaşın esirleri
@@ -301,8 +325,8 @@ namespace ToyKingdom
             {
                 data.inDebt = true;
                 New(data, LetterKind.Debt, "court", "Hazine boş!",
-                    "Efendim, hazine borçta. Askerlerin maaşı ödenemiyor: bölükler kaçmaya, halk homurdanmaya başladı. " +
-                    "Ordu küçültün, vergiyi artırın ya da valilerin maaşını düşürün.\n\n" + Vizier, 0f);
+                    LetterStyle.Compose("court", "Hazine sandıkları boşaldı. Askerlerin maaşı ödenemiyor; kışlalarda homurdanmalar başladı, bazı bölükler gece karanlığında firar ediyor.\n\n" +
+                    "Orduyu küçültmek, vergiyi artırmak ya da valilerin maaşlarını kısmak gerekebilir. Aksi hâlde saray kapısına aç askerler dayanır."), 0f);
             }
             else if (data.gold >= 0) data.inDebt = false;
 
@@ -579,8 +603,8 @@ namespace ToyKingdom
             float gain = def.trait == RivalAI.KingTrait.Greedy ? 16f : 9f;
             r.relation = Mathf.Min(100f, r.relation + gain);
             Reply(data, r.id, "Hediyene cevap", def.trait == RivalAI.KingTrait.Greedy
-                ? "Altının parıltısı gözlerimi okşadı. Komşuluğumuz tatlanıyor."
-                : "Hediyeni aldım. Krallığım cömertliği unutmaz, ama gurur altınla satın alınmaz.");
+                ? "Gönderdiğin sandığı açtırdım; altının parıltısı gözlerimi okşadı. Komşuluğumuz bal gibi tatlanıyor. Böyle devam edersen kervanlarım da kılıçlarım da sana dostça bakar."
+                : "Hediyeni aldım ve elçine soframda yer verdim. Krallığım cömertliği unutmaz; ama bil ki gurur altınla satın alınmaz.");
             return def.name + " ile ilişki +" + Mathf.RoundToInt(gain);
         }
 
@@ -597,12 +621,12 @@ namespace ToyKingdom
                 MakePeace(r, 15f);
                 if (r.Attacking) { r.power += r.attackPower * 0.5f; r.attackTarget = ""; r.attackFrom = ""; }
                 r.relation += 5f;
-                Reply(data, r.id, "Barış", "Elçini dinledim. On beş dakika boyunca kılıçlarımız kınında kalacak.");
+                Reply(data, r.id, "Barış", "Elçini dinledim; sözleri yerindeydi. Anlaşma süresince kılıçlarımız kınında, sancaklarımız sarılı kalacak. Ahdimi bozan ben olmayacağım.");
                 Reputation.Change(data, 2f, "Barış imzaladın");
                 return def.name + " barışı kabul etti (15 dk)";
             }
             r.relation -= 5f;
-            Reply(data, r.id, "Barış reddedildi", "Elçin boş elle dönüyor. Barışı ben istediğimde konuşuruz.");
+            Reply(data, r.id, "Barış reddedildi", "Elçin boş elle dönüyor. Barışın vakti ve şartları benim soframa aittir, senin elçinin heybesine değil. İstediğimde konuşuruz.");
             return def.name + " barışı reddetti";
         }
 
@@ -618,13 +642,13 @@ namespace ToyKingdom
                 data.gold += pay;
                 r.power = Mathf.Max(10f, r.power - pay * 0.1f);
                 r.relation -= 15f;
-                Reply(data, r.id, "Haraç", "Gücüne boyun eğiyorum... şimdilik. " + Gold(pay) + " gönderdim. Bu günü unutmayacağım.");
+                Reply(data, r.id, "Haraç", "Gücüne boyun eğiyorum... şimdilik. Hazinemden " + Gold(pay) + " çıkarıp elçinin atına yükledim. Bu günü unutmayacağım; tarih de unutmayacak.");
                 Reputation.Change(data, 3f, def.name + " sana haraç ödedi");
                 return def.name + " " + Gold(pay) + " haraç ödedi";
             }
             r.relation -= 25f;
             r.attackTimer = Mathf.Min(r.attackTimer, 1f);
-            Reply(data, r.id, "Küstahlık", "Benden haraç mı istiyorsun? Cevabımı ordum getirecek.");
+            Reply(data, r.id, "Küstahlık", "Benden haraç mı istiyorsun? Elçinin sakalını kestirip geri gönderiyorum. Cevabımı mürekkeple değil, ordumla yazacağım.");
             return def.name + " haracı reddetti ve öfkelendi!";
         }
 
@@ -642,8 +666,8 @@ namespace ToyKingdom
                 foreach (var o in data.rivals) if (o != r) o.relation -= 10f;
             }
             Reply(data, r.id, "Savaş", broke
-                ? "Yeminini bozdun. Bundan sonra senin sözün rüzgârda toz."
-                : "Demek savaş istiyorsun. Öyle olsun.");
+                ? "Yeminini bozdun. Kutsal ahdi ayaklar altına aldın. Bundan sonra senin sözün rüzgârda savrulan tozdur; ne ben inanırım ne de başka bir taç sahibi."
+                : "Demek savaş istiyorsun. Öyle olsun. Davullar çalsın, demirciler kılıç dövsün; sınırında görüşeceğiz.");
             return broke ? def.name + " ile barış bozuldu! Halkın huzursuz (+12)" : def.name + " ile savaştasın";
         }
     }
