@@ -212,6 +212,8 @@ namespace ToyKingdom
         /// <summary>Haraç mektubu gönderildi, cevap bekleniyor (saldırı askıda).</summary>
         public bool awaitingAnswer;
         public float peaceOfferTimer = 12f;
+        /// <summary>Büyüyen orduna karşı uyarı mektubu gönderdi mi?</summary>
+        public bool warnedArmy;
         public long lastLetterTicks;
 
         public bool AtPeace => treaty == Treaty.Peace && DateTime.UtcNow.Ticks < treatyUntilTicks;

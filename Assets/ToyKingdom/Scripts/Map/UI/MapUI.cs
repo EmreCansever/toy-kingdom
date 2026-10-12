@@ -14,6 +14,10 @@ namespace ToyKingdom
         TMP_Text kingdomText;
         TMP_Text incomeText;
         TMP_Text repText;
+        Image questCard;
+        TMP_Text questTitle, questBody;
+        bool questCollapsed;
+        Transform canvasT;
         Image repDot;
         TMP_Text toastText;
         GameObject toastBox;
@@ -36,6 +40,7 @@ namespace ToyKingdom
             var canvas = UIFactory.Canvas("MapUI", 10);
             var t = canvas.transform;
             canvasRoot = t;
+            canvasT = t;
 
             // sol üst: altın
             var goldBox = UIFactory.Chip(t, "Gold", new Vector2(300f, 84f));
@@ -63,6 +68,21 @@ namespace ToyKingdom
             var repBtn = rep.gameObject.AddComponent<Button>();
             repBtn.transition = Selectable.Transition.None;
             repBtn.onClick.AddListener(() => Hint("İtibar " + Mathf.RoundToInt(SaveSystem.Data.reputation) + ": " + Reputation.Effects()));
+
+            // sol: vezirin görevi (dokununca küçülür/büyür)
+            questCard = UIFactory.Chip(t, "Quest", new Vector2(560f, 160f), 22f);
+            questCard.rectTransform.anchorMin = questCard.rectTransform.anchorMax = new Vector2(0f, 1f);
+            questCard.rectTransform.pivot = new Vector2(0f, 1f);
+            questCard.rectTransform.anchoredPosition = new Vector2(24f, -218f);
+            questTitle = UIFactory.Text(questCard.transform, "Title", "", 26f, UIFactory.Hex("FFD36E"), TextAlignmentOptions.TopLeft, true);
+            UIFactory.Place(questTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -12f), new Vector2(516f, 36f));
+            questTitle.textWrappingMode = TextWrappingModes.NoWrap;
+            questBody = UIFactory.Text(questCard.transform, "Body", "", 21f, new Color(1f, 1f, 1f, 0.88f), TextAlignmentOptions.TopLeft);
+            UIFactory.Place(questBody.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -50f), new Vector2(516f, 100f));
+            questBody.enableAutoSizing = true; questBody.fontSizeMin = 15f; questBody.fontSizeMax = 21f;
+            var qb = questCard.gameObject.AddComponent<Button>();
+            qb.transition = Selectable.Transition.None;
+            qb.onClick.AddListener(() => { questCollapsed = !questCollapsed; RefreshQuest(); });
 
             // sol alt: krallık
             var kBox = UIFactory.Chip(t, "Kingdom", new Vector2(360f, 64f));
@@ -152,6 +172,30 @@ namespace ToyKingdom
             }
             RefreshRivals();
             if (kingdomText != null && map != null) kingdomText.text = "Krallık  " + map.OwnedCount() + " / " + map.CityCount + " şehir";
+        }
+
+        /// <summary>Vezirin görev kartını günceller; görevin anlattığı düğme hafifçe nabız atar.</summary>
+        public void RefreshQuest()
+        {
+            if (questCard == null) return;
+            var d = SaveSystem.Data;
+            var s = Tutorial.Current(d);
+            questCard.gameObject.SetActive(s != null);
+            if (s == null) { pulseTarget = null; return; }
+            questTitle.text = "Görev " + (d.tutorialStep + 1) + "/" + Tutorial.Steps.Length + "  ·  " + s.title + (questCollapsed ? "" : "");
+            questBody.text = s.how + "\n<color=#FFD36E>Ödül: " + s.reward + " altın</color>";
+            questBody.gameObject.SetActive(!questCollapsed);
+            questCard.rectTransform.sizeDelta = new Vector2(560f, questCollapsed ? 58f : 160f);
+            var target = s.highlight != null && canvasT != null ? canvasT.Find(s.highlight) : null;
+            if (pulseTarget != target && pulseTarget != null) pulseTarget.localScale = Vector3.one;
+            pulseTarget = target;
+        }
+
+        Transform pulseTarget;
+
+        void Update()
+        {
+            if (pulseTarget != null) pulseTarget.localScale = Vector3.one * (1f + 0.05f * (0.5f + 0.5f * Mathf.Sin(Time.time * 5f)));
         }
 
         public void ShowAttack(MapCity city, CastleData castle, bool canAttack, Action onAttack) => attack.Show(city, castle, canAttack, onAttack);

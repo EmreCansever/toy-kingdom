@@ -104,8 +104,11 @@ namespace ToyKingdom
             Txt(t, status, 26f, UIFactory.BrownDark, true, new Vector2(26f, -302f), new Vector2(700f, 40f));
             int cities = RivalAI.OwnedBy(data, r.id).Count;
             int mine = Court.PlayerStrength(data);
-            Txt(t, cities + " şehir  ·  ordu gücü " + Mathf.RoundToInt(r.power) + (mine > r.power ? "  ·  <color=#3E9E4F>senden zayıf</color>" : "  ·  <color=#B8382F>senden güçlü</color>"),
+            float threat = RivalAI.Threat(data, r);
+            var st = Txt(t, cities + " şehir  ·  ordu gücü " + Mathf.RoundToInt(r.power) + (mine > r.power ? "  ·  <color=#3E9E4F>senden zayıf</color>" : "  ·  <color=#B8382F>senden güçlü</color>") +
+                (threat > 0.25f ? "  ·  <color=#B86E00>ordundan " + (threat > 0.6f ? "korkuyor, silahlanıyor" : "tedirgin") + "</color>" : ""),
                 24f, UIFactory.Brown, false, new Vector2(26f, -346f), new Vector2(700f, 36f));
+            st.enableAutoSizing = true; st.fontSizeMin = 16f; st.fontSizeMax = 24f;
 
             // eylemler
             AddAction("Hediye gönder  (" + Court.GiftCost + ")", "İlişki artar. Açgözlü krallar daha çok sever.", UIFactory.Green, "gift", r, 0, data.gold >= Court.GiftCost);

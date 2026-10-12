@@ -17,6 +17,12 @@ namespace ToyKingdom
     {
         public int version = 5;
         public int gold = 600;
+        /// <summary>Vezirin görevlerinde kaçıncı adımdayız.</summary>
+        public int tutorialStep;
+        /// <summary>Oyuncunun yaptığı ama durumdan anlaşılmayan eylemler (görevler için).</summary>
+        public List<string> flags = new List<string>();
+        public bool HasFlag(string f) => flags.Contains(f);
+        public void SetFlag(string f) { if (!flags.Contains(f)) flags.Add(f); }
         /// <summary>Hükümdarın itibarı (0-100).</summary>
         public float reputation = 50f;
         public List<string> conqueredCities = new List<string>();

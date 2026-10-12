@@ -98,7 +98,22 @@ namespace ToyKingdom
             HandleCourt(false);
             HandleTrade();
             HandleReputation();
+            HandleTutorial();
             SyncArmies();
+        }
+
+        /// <summary>Vezirin görevleri: tamamlanan görevin ödülü ve sıradaki görev.</summary>
+        void HandleTutorial()
+        {
+            string done = Tutorial.Check(SaveSystem.Data);
+            if (done != null)
+            {
+                FX.Banner("GÖREV TAMAM", UIFactory.Gold, 1.2f, done.Replace("Görev tamamlandı: ", ""));
+                ui.Toast(done);
+                SaveSystem.Save();
+                HandleCourt(true);
+            }
+            ui.RefreshQuest();
         }
 
         /// <summary>İtibar değişimlerini haber olarak gösterir (küçükler alt şeritte, büyükler üstte).</summary>
@@ -164,7 +179,7 @@ namespace ToyKingdom
         {
             string res = Court.Resolve(SaveSystem.Data, Infos(), l, option);
             HandleReputation();
-            if (l.resolved && !string.IsNullOrEmpty(res)) SaveSystem.Data.AddLog(l.title + ": " + res, 1);
+            if (l.resolved && !string.IsNullOrEmpty(res)) { SaveSystem.Data.AddLog(l.title + ": " + res, 1); SaveSystem.Data.SetFlag(Tutorial.FlagAnswered); }
             SaveSystem.Save();
             HandleCourt(true);
             ui.RefreshTop();
@@ -178,8 +193,8 @@ namespace ToyKingdom
             string res;
             switch (action)
             {
-                case "gift": res = Court.SendGift(data, r); break;
-                case "peace": res = Court.ProposePeace(data, r); break;
+                case "gift": res = Court.SendGift(data, r); data.SetFlag(Tutorial.FlagDiplomacy); break;
+                case "peace": res = Court.ProposePeace(data, r); data.SetFlag(Tutorial.FlagDiplomacy); break;
                 case "tribute": res = Court.DemandTribute(data, r); break;
                 default: res = Court.DeclareWar(data, r); break;
             }
@@ -304,6 +319,7 @@ namespace ToyKingdom
                 HandleCourt(true);
                 HandleTrade();
                 HandleReputation();
+                HandleTutorial();
                 if (rep.gold > 0 || rep.messages.Count > 0)
                 {
                     foreach (var id in rep.newRebels)

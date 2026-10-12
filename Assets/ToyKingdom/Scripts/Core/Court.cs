@@ -68,7 +68,9 @@ namespace ToyKingdom
         {
             int g = 0;
             foreach (var c in data.cities) if (c.owner == "player") g += c.garrison;
-            return 12 * data.TotalArmy() + 8 * g;
+            int p = 0;
+            foreach (var r in data.roads) p += r.PatrolCount();
+            return 12 * data.TotalArmy() + 8 * g + 6 * p;
         }
 
         static void AllUnrest(SaveData data, float amount)
@@ -154,7 +156,7 @@ namespace ToyKingdom
             l.defaultOption = 1;
         }
 
-        static void Reply(SaveData data, string rivalId, string title, string body)
+        public static void Reply(SaveData data, string rivalId, string title, string body)
         {
             New(data, LetterKind.Reply, rivalId, title, body + "\n\n" + (rivalId == "court" ? Vizier : RivalAI.KingFull(rivalId)), 0f);
         }

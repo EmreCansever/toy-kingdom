@@ -86,6 +86,7 @@ namespace ToyKingdom
             }
             save.gold -= price;
             save.AddArmy(data.unitId, amount);
+            save.SetFlag(Tutorial.FlagBought);
             SaveSystem.Save();
             RefreshAll();
             ui.RefreshTop();

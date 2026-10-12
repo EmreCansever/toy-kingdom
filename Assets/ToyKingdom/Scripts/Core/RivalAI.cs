@@ -156,11 +156,23 @@ namespace ToyKingdom
                     foreach (var id in owned) { var ci = Find(cities, id); if (ci != null) income += ci.Value.baseIncome; }
                     // çevrimdışıyken rakipler en fazla yarım saatlik güç toplar: dönüşte oyuncu ezilmiş bulmasın
                     int growMinutes = online ? minutes : Mathf.Min(minutes, 30);
-                    r.power = Mathf.Min(MaxPower, r.power + growMinutes * (1f + 0.08f * income));
+                    // büyüyen ordun komşu kralları tedirgin eder: silahlanırlar ve sana soğurlar
+                    float threat = Threat(data, r);
+                    r.power = Mathf.Min(MaxPower, r.power + growMinutes * (1f + 0.08f * income) * (1f + 0.6f * threat));
 
                     // ilişkiler zamanla gergin dengeye (-10) döner
-                    float baseline = Reputation.RelationBaseline(); // itibarlı hükümdara krallar daha ılımlı
+                    float baseline = Reputation.RelationBaseline() - 20f * threat; // itibarlı hükümdara ılımlı, güçlü orduya soğuk
                     r.relation += (baseline - r.relation) * Mathf.Min(1f, 0.02f * minutes);
+                    if (online && threat > 0.5f && !r.warnedArmy)
+                    {
+                        r.warnedArmy = true;
+                        Court.Reply(data, r.id, "Ordun bizi tedirgin ediyor", def.trait == KingTrait.Proud
+                            ? "Sınırlarımıza yığdığın askerleri görüyoruz. Krallığım korkmaz, ama hazırlıksız da yakalanmaz. Kılıçlarımızı biliyoruz."
+                            : "Ordun her gün büyüyor... Komşuna bunca asker neden gerek, merak ediyorum. Ben de boş durmayacağım.");
+                        rep.messages.Add(def.name + " büyüyen ordundan tedirgin: silahlanıyor");
+                    }
+                    if (threat < 0.25f) r.warnedArmy = false;
+
                     if (r.treaty == Treaty.Peace && !r.AtPeace)
                     {
                         r.treaty = Treaty.None;
@@ -195,6 +207,13 @@ namespace ToyKingdom
                 }
             }
             ResolveArrivals(data, cities, rep);
+        }
+
+        /// <summary>Oyuncunun ordusunun bu rakip için tehdit düzeyi (0-1): ordu gücü rakibinkini aştıkça artar.</summary>
+        public static float Threat(SaveData data, RivalState r)
+        {
+            float mine = Court.PlayerStrength(data);
+            return Mathf.Clamp01((mine - r.power) / Mathf.Max(60f, r.power));
         }
 
         static void TryExpand(SaveData data, IList<CityInfo> cities, RivalState r, Def def, Report rep)
