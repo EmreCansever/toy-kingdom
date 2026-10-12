@@ -191,7 +191,7 @@ namespace ToyKingdom
                 questCard.gameObject.SetActive(goal);
                 if (!goal) return;
                 questTitle.text = "Hedef  ·  Rakip krallıkları diz çöktür (" + Endgame.Fallen(d) + "/" + d.rivals.Count + ")";
-                questBody.text = "Bir krallığın başkentini fethedersen krallık dağılır ve kalan şehirleri sana geçer.\n<color=#FF9A8A>Başkentini ve tahtını koru: hazine " +
+                questBody.text = "Başkenti düşen kral sarayını taşır ve zayıflar; son şehrini de alırsan öteki krala sığınır ve orduları birleşir.\n<color=#FF9A8A>Başkentini ve tahtını koru: hazine " +
                                  Endgame.DebtLimit + " altının altında ya da itibarın dipte kalırsa saray darbesi olur.</color>";
                 questBody.gameObject.SetActive(!questCollapsed);
                 questCard.rectTransform.sizeDelta = new Vector2(560f, questCollapsed ? 58f : 160f);

@@ -8,7 +8,7 @@ namespace ToyKingdom
     /// Rakip krallıklar: Kum Sultanlığı (çöl) ve Buz Krallığı (kış).
     /// Dakikada bir güç toplarlar, komşu tarafsız şehirleri ele geçirirler ve zamanla oyuncunun şehirlerine
     /// önceden haber verilen saldırılar düzenlerler. Saldırılar savaş oynatmadan, şehrin savunma gücüyle çözülür;
-    /// oyuncu sur, kışla, güçlü vali ve takviye bölükleriyle hazırlanır. Rakip başkenti düşerse krallık dağılır.
+    /// oyuncu sur, kışla, güçlü vali ve takviye bölükleriyle hazırlanır. Rakip başkenti düşerse kral sarayını taşır; son şehri de düşerse öteki krala sığınır.
     /// Kural seti küçük tutuldu: oyuncuyu sıkmayacak kadar hareketli, ama haksız hissettirmeyecek kadar öngörülebilir.
     /// </summary>
     public static class RivalAI
@@ -85,6 +85,7 @@ namespace ToyKingdom
         /// <summary>İlk açılışta: her bölgenin en zor şehri başkent olur, ona en yakın bir komşu da baştan rakibindir.</summary>
         public static void Setup(SaveData data, IList<CityInfo> cities)
         {
+            knownCities = cities;
             if (data.rivals.Count > 0) return;
             foreach (var def in Defs)
             {
@@ -364,26 +365,70 @@ namespace ToyKingdom
             }
         }
 
-        /// <summary>Oyuncu bir rakip şehri fethetti: rakip güç kaybeder; başkentse krallık dağılır ve kalan şehirleri sana geçer.</summary>
+        /// <summary>
+        /// Oyuncu bir rakip şehri fethetti. Sıradan şehir: rakip biraz güç kaybeder.
+        /// Başkent: ordusu ağır yara alır, kral sarayını en güçlü kalesine taşır.
+        /// Son şehri de düşerse kral öteki hükümdarın sarayına sığınır ve iki ordu birleşir;
+        /// sığınacak kimse kalmamışsa krallık tarihe karışır.
+        /// </summary>
         public static string OnPlayerConquered(SaveData data, string cityId, string formerOwner)
         {
             var r = data.Rival(formerOwner);
-            if (r == null) return null;
+            if (r == null || !r.alive) return null;
             var def = Get(r.id);
-            r.power *= 0.8f;
-            if (r.capitalId != cityId) return null;
+            var remaining = OwnedBy(data, r.id); // fethedilen şehir artık listede değil
+            bool capital = r.capitalId == cityId;
 
-            r.alive = false;
-            r.attackTarget = "";
-            foreach (var id in OwnedBy(data, r.id))
+            if (remaining.Count == 0)
             {
-                data.Conquer(id, false);
-                data.State(id).unrest = 60f;
+                r.alive = false;
+                r.attackTarget = "";
+                r.awaitingAnswer = false;
+                var host = data.rivals.Find(o => o != r && o.alive);
+                if (host != null)
+                {
+                    var hostDef = Get(host.id);
+                    host.power = Mathf.Min(MaxPower * 1.3f, host.power + r.power * 0.6f + 40f);
+                    host.relation -= 20f;
+                    host.attackTimer = Mathf.Min(host.attackTimer, 4f);
+                    Court.Reply(data, host.id, KingFull(r.id) + " sarayımda",
+                        KingFull(r.id) + " tacını kurtarıp sarayıma sığındı. Onun askerleri artık benim sancağımın altında. " +
+                        "Bir krallığı yıktın ama ikimizi birden yenemezsin.");
+                    Reputation.Change(data, 8f, def.name + " yıkıldı");
+                    return def.name + " yıkıldı! " + KingFull(r.id) + ", " + hostDef.name + " sarayına sığındı: iki ordu birleşti";
+                }
+                Reputation.Change(data, 10f, "Son rakip krallık da yıkıldı");
+                return def.name + " tarihe karıştı! " + KingFull(r.id) + " kaçacak yer bulamadı";
             }
-            data.pendingConquestAnim = cityId;
-            Reputation.Change(data, 8f, def.name + " diz çöktürüldü");
-            return def.name + " diz çöktü! Kalan şehirleri artık senin";
+
+            if (!capital)
+            {
+                r.power *= 0.8f;
+                return null;
+            }
+
+            // başkent düştü: kral daha güçlü bir kaleye çekilir
+            r.power *= 0.45f;
+            r.relation -= 10f;
+            r.attackTarget = "";
+            string best = remaining[0];
+            int bestDiff = -1;
+            foreach (var id in remaining)
+            {
+                var ci = Find(knownCities, id);
+                int dif = ci != null ? ci.Value.difficulty : 0;
+                if (dif > bestDiff) { bestDiff = dif; best = id; }
+            }
+            r.capitalId = best;
+            var nc = Find(knownCities, best);
+            string newName = nc != null ? nc.Value.name : "başka bir kale";
+            Court.Reply(data, r.id, "Taç hâlâ başımda",
+                "Sarayımı aldın, ama tacımı alamadın. Sarayım artık " + newName + " surlarının ardında. Ordularım yaralı, ama intikam sabırlıdır.");
+            Reputation.Change(data, 6f, def.name + " başkentini düşürdün");
+            return def.name + " başkenti düştü! Kral sarayını " + newName + " şehrine taşıdı, ordusu ağır yara aldı";
         }
+
+        static IList<CityInfo> knownCities = new List<CityInfo>();
 
         // ------------------------------------------------------------------ savaş
 
@@ -403,7 +448,7 @@ namespace ToyKingdom
             if (capital && eliteUnit != null) c.garrison.Add(new GarrisonEntry { unit = eliteUnit, squads = 1 });
             c.gateHealth = original.gateHealth * (1f + 0.25f * s.walls);
             c.description = def.name + " şehri. " + (capital
-                ? "Başkent düşerse krallık dağılır ve kalan şehirleri sana geçer."
+                ? "Başkent düşerse ordusu ağır yara alır ve kral sarayını başka kaleye taşır."
                 : "Rakibin gücü savunucularını sertleştiriyor.");
             if (capital) c.goldReward = Mathf.RoundToInt(original.goldReward * 1.5f);
             return c;
