@@ -97,7 +97,23 @@ namespace ToyKingdom
             lastRivalReport = new RivalAI.Report();
             HandleCourt(false);
             HandleTrade();
+            HandleReputation();
             SyncArmies();
+        }
+
+        /// <summary>İtibar değişimlerini haber olarak gösterir (küçükler alt şeritte, büyükler üstte).</summary>
+        void HandleReputation()
+        {
+            var list = Reputation.Take();
+            if (list.Count == 0) return;
+            foreach (var kv in list)
+            {
+                string sign = kv.Key > 0f ? "+" : "";
+                string text = Mathf.Abs(kv.Key) >= 10f && kv.Value.StartsWith("Artık") ? kv.Value : "İtibar " + sign + Mathf.RoundToInt(kv.Key) + ": " + kv.Value;
+                ui.Toast(text, Mathf.Abs(kv.Key) >= 5f ? MapUI.Level.Important : MapUI.Level.Info);
+            }
+            SaveSystem.Save();
+            ui.RefreshTop();
         }
 
         /// <summary>Ticaretten gelenler: kervan kazançları ve eşkıya haberleri.</summary>
@@ -147,6 +163,7 @@ namespace ToyKingdom
         public string AnswerLetter(Letter l, int option)
         {
             string res = Court.Resolve(SaveSystem.Data, Infos(), l, option);
+            HandleReputation();
             if (l.resolved && !string.IsNullOrEmpty(res)) SaveSystem.Data.AddLog(l.title + ": " + res, 1);
             SaveSystem.Save();
             HandleCourt(true);
@@ -169,6 +186,7 @@ namespace ToyKingdom
             ui.Toast(res);
             SaveSystem.Save();
             HandleCourt(true);
+            HandleReputation();
             ui.RefreshTop();
             return res;
         }
@@ -285,6 +303,7 @@ namespace ToyKingdom
                 lastRivalReport = new RivalAI.Report();
                 HandleCourt(true);
                 HandleTrade();
+                HandleReputation();
                 if (rep.gold > 0 || rep.messages.Count > 0)
                 {
                     foreach (var id in rep.newRebels)
@@ -466,6 +485,7 @@ namespace ToyKingdom
 
         public void RefreshAll()
         {
+            if (ui != null) HandleReputation();
             foreach (var c in cities) c.RefreshVisual(CanAttack(c));
             if (ui != null) ui.RefreshTop();
         }

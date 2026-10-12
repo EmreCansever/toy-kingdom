@@ -159,7 +159,8 @@ namespace ToyKingdom
                     r.power = Mathf.Min(MaxPower, r.power + growMinutes * (1f + 0.08f * income));
 
                     // ilişkiler zamanla gergin dengeye (-10) döner
-                    r.relation += (-10f - r.relation) * Mathf.Min(1f, 0.02f * minutes);
+                    float baseline = Reputation.RelationBaseline(); // itibarlı hükümdara krallar daha ılımlı
+                    r.relation += (baseline - r.relation) * Mathf.Min(1f, 0.02f * minutes);
                     if (r.treaty == Treaty.Peace && !r.AtPeace)
                     {
                         r.treaty = Treaty.None;
@@ -315,6 +316,7 @@ namespace ToyKingdom
                 if (r.attackPower > defense)
                 {
                     data.LoseCity(target, r.id);
+                    Reputation.Change(data, -6f, name + " düşmana kaptırıldı");
                     r.power += r.attackPower * 0.3f; // sağ kalanlar geri döner
                     Court.BuyBack(data, r, target, name, 200 + 70 * (ci != null ? ci.Value.difficulty : 1));
                     rep.captured.Add(target);
@@ -323,6 +325,7 @@ namespace ToyKingdom
                 else
                 {
                     if (s.garrison > 0) s.garrison--;
+                    Reputation.Change(data, 3f, name + " saldırıyı püskürttü");
                     rep.defended.Add(target);
                     rep.messages.Add(name + " saldırıyı püskürttü! " + def.name + " geri çekildi");
                 }
@@ -343,10 +346,11 @@ namespace ToyKingdom
             r.attackTarget = "";
             foreach (var id in OwnedBy(data, r.id))
             {
-                data.Conquer(id);
+                data.Conquer(id, false);
                 data.State(id).unrest = 60f;
             }
             data.pendingConquestAnim = cityId;
+            Reputation.Change(data, 8f, def.name + " diz çöktürüldü");
             return def.name + " diz çöktü! Kalan şehirleri artık senin";
         }
 

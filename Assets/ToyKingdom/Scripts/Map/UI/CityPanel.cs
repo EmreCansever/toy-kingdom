@@ -163,6 +163,7 @@ namespace ToyKingdom
             {
                 if (!Pay(giftCost)) return;
                 gov.loyalty = Mathf.Min(100f, gov.loyalty + 15f);
+                if (s.revoltTimer >= 0f) Reputation.Change(SaveSystem.Data, -4f, "İsyana hazırlanan valiye rüşvet verdin");
                 Done(gov.name + " hediyeni memnuniyetle kabul etti");
             });
 
@@ -186,6 +187,7 @@ namespace ToyKingdom
                 s.hasGovernor = false;
                 s.candidateSeed++;
                 s.unrest = Mathf.Min(100f, s.unrest + 10f);
+                Reputation.Change(SaveSystem.Data, s.revoltTimer >= 0f ? 1f : -2f, s.revoltTimer >= 0f ? "Hain valiyi zamanında azlettin" : "Valini sebepsiz azlettin");
                 Done(gov.name + " görevden alındı");
             });
         }
@@ -253,6 +255,7 @@ namespace ToyKingdom
                 var data = SaveSystem.Data;
                 if (data.gold < cost) { toast?.Invoke("Yeterli altın yok"); return; }
                 data.gold -= cost;
+                if (s.revoltTimer >= 0f) Reputation.Change(data, -4f, "Ayaklanmayı son anda ziyafetle satın aldın");
                 s.unrest = Mathf.Max(0f, s.unrest - KingdomSim.FeastRelief);
                 s.feastReadyTicks = DateTime.UtcNow.Ticks + (long)(KingdomSim.FeastCooldownMinutes * TimeSpan.TicksPerMinute);
                 Done(city.DisplayName + " halkı ziyafetle yatıştı (huzursuzluk -" + (int)KingdomSim.FeastRelief + ")");

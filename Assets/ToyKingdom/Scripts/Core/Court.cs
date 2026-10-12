@@ -265,6 +265,7 @@ namespace ToyKingdom
                 if (l.NeedsAnswer && l.expiresTicks > 0 && now >= l.expiresTicks)
                 {
                     string res = Resolve(data, cities, l, l.defaultOption < 0 ? l.options.Count - 1 : l.defaultOption, true);
+                    Reputation.Change(data, -2f, "Mektup cevapsız kaldı: " + l.title);
                     if (!string.IsNullOrEmpty(res)) pending.messages.Add("Cevap verilmedi: " + res);
                 }
             }
@@ -347,6 +348,7 @@ namespace ToyKingdom
                         r.greed *= 1.25f;
                         r.attackTimer = 10f + UnityEngine.Random.Range(0f, 5f);
                         res = RivalAI.KingFull(r.id) + " haracı aldı, ordusu geri döndü";
+                        Reputation.Change(data, -5f, "Haraç ödedin");
                         // sinsi kral bazen parayı alıp yine saldırır
                         if (UnityEngine.Random.value < RivalAI.Get(r.id).treachery)
                         {
@@ -358,7 +360,7 @@ namespace ToyKingdom
                     }
                     else if (option == 1)
                     {
-                        float chance = 0.35f + r.relation / 200f;
+                        float chance = 0.35f + r.relation / 200f + Reputation.DiplomacyBonus();
                         if (UnityEngine.Random.value < chance)
                         {
                             r.awaitingAnswer = false;
@@ -366,6 +368,7 @@ namespace ToyKingdom
                             r.greed *= 1.1f;
                             r.attackTimer = 10f + UnityEngine.Random.Range(0f, 5f);
                             res = "Pazarlık tuttu: " + RivalAI.KingFull(r.id) + " yarı fiyata razı oldu";
+                            Reputation.Change(data, -3f, "Yarı fiyatına da olsa haraç ödedin");
                         }
                         else
                         {
@@ -389,13 +392,14 @@ namespace ToyKingdom
                     if (r == null) { res = ""; break; }
                     if (option == 0)
                     {
-                        if (UnityEngine.Random.value < 0.55f + r.relation / 300f)
+                        if (UnityEngine.Random.value < 0.55f + r.relation / 300f + Reputation.DiplomacyBonus())
                         {
                             r.attackTarget = "";
                             r.attackFrom = "";
                             r.power += r.attackPower * 0.5f;
                             r.relation += 4f;
                             res = RivalAI.KingFull(r.id) + " altını kabul etti, ordusu geri çekildi";
+                            Reputation.Change(data, -3f, "Savaştan altınla kurtuldun");
                         }
                         else
                         {
@@ -409,6 +413,7 @@ namespace ToyKingdom
                         r.relation -= 5f;
                         AllUnrest(data, -5f);
                         res = "Meydan okudun. Halkın gururlandı; şimdi " + l.cityName + " surları konuşsun";
+                        Reputation.Change(data, 2f, "Savaş ilanına meydan okudun");
                     }
                     break;
 
@@ -419,6 +424,7 @@ namespace ToyKingdom
                         MakePeace(r, 15f);
                         r.relation += 10f;
                         res = RivalAI.Get(r.id).name + " ile 15 dakikalık barış imzalandı";
+                        Reputation.Change(data, 2f, "Barış imzaladın");
                     }
                     else if (option == 1)
                     {
@@ -447,13 +453,14 @@ namespace ToyKingdom
                 case LetterKind.BuyBack:
                     if (option == 0 && r != null && data.RivalOwner(l.cityId) == r.id)
                     {
-                        data.Conquer(l.cityId);
+                        data.Conquer(l.cityId, false);
                         data.State(l.cityId).unrest = 50f;
                         data.pendingConquestAnim = "";
                         r.relation += 5f;
                         r.power += 20f;
                         pending.cityChanged.Add(l.cityId);
                         res = l.cityName + " geri satın alındı";
+                        Reputation.Change(data, -2f, "Şehrini altınla geri aldın");
                     }
                     else if (option == 0)
                     {
@@ -469,21 +476,22 @@ namespace ToyKingdom
                         foreach (var u in (l.extra ?? "").Split(',')) if (!string.IsNullOrEmpty(u)) data.AddArmy(u, 1);
                         if (r != null) { r.relation += 3f; r.power += 10f; }
                         res = "Fidye ödendi, esirler orduna döndü";
+                        Reputation.Change(data, 2f, "Askerlerini esaretten kurtardın");
                     }
-                    else res = "Esirler kayboldu";
+                    else { res = "Esirler kayboldu"; Reputation.Change(data, -3f, "Askerlerini esarette bıraktın"); }
                     break;
 
                 case LetterKind.Threat:
                     if (r == null) { res = ""; break; }
-                    if (option == 0) { r.relation += 8f; AllUnrest(data, 4f); res = "Özür diledin. Halkın bunu zayıflık saydı"; }
+                    if (option == 0) { r.relation += 8f; AllUnrest(data, 4f); res = "Özür diledin. Halkın bunu zayıflık saydı"; Reputation.Change(data, -3f, "Tehdit karşısında özür diledin"); }
                     else { r.relation -= 12f; AllUnrest(data, -4f); res = "Meydan okudun. " + RivalAI.KingFull(r.id) + " bunu unutmayacak"; }
                     break;
 
                 case LetterKind.Famine:
                     if (st == null || st.owner != "player") { res = ""; break; }
-                    if (option == 0) { st.unrest = Mathf.Max(0f, st.unrest - 20f); res = l.cityName + " halkı doydu"; }
+                    if (option == 0) { st.unrest = Mathf.Max(0f, st.unrest - 20f); res = l.cityName + " halkı doydu"; Reputation.Change(data, 2f, "Aç halkı doyurdun"); }
                     else if (option == 1) { st.tax = TaxLevel.Low; st.unrest = Mathf.Max(0f, st.unrest - 5f); res = l.cityName + " vergisi düşürüldü"; }
-                    else { st.unrest = Mathf.Min(100f, st.unrest + 15f); res = l.cityName + " halkı aç ve öfkeli (huzursuzluk +15)"; }
+                    else { st.unrest = Mathf.Min(100f, st.unrest + 15f); res = l.cityName + " halkı aç ve öfkeli (huzursuzluk +15)"; Reputation.Change(data, -3f, "Aç halkı görmezden geldin"); }
                     break;
 
                 case LetterKind.Corruption:
@@ -525,13 +533,13 @@ namespace ToyKingdom
 
                 case LetterKind.Plague:
                     if (st == null || st.owner != "player") { res = ""; break; }
-                    if (option == 0) res = "Hekimler salgını durdurdu";
+                    if (option == 0) { res = "Hekimler salgını durdurdu"; Reputation.Change(data, 2f, "Salgına hekim gönderdin"); }
                     else if (option == 1) { SetIncomeMod(st, 0f, 4f); res = l.cityName + " karantinada (4 dk gelir yok)"; }
-                    else { SetIncomeMod(st, 0.5f, 10f); st.unrest = Mathf.Min(100f, st.unrest + 10f); res = "Salgın " + l.cityName + " şehrini kasıp kavuruyor"; }
+                    else { SetIncomeMod(st, 0.5f, 10f); st.unrest = Mathf.Min(100f, st.unrest + 10f); res = "Salgın " + l.cityName + " şehrini kasıp kavuruyor"; Reputation.Change(data, -2f, "Salgını görmezden geldin"); }
                     break;
 
                 case LetterKind.Festival:
-                    if (option == 0) { AllUnrest(data, -10f); res = "Şenlik gönülleri kazandı (huzursuzluk -10)"; }
+                    if (option == 0) { AllUnrest(data, -10f); res = "Şenlik gönülleri kazandı (huzursuzluk -10)"; Reputation.Change(data, 3f, "Halka şenlik düzenledin"); }
                     else { AllUnrest(data, 3f); res = "Halk biraz küstü"; }
                     break;
 
@@ -580,7 +588,7 @@ namespace ToyKingdom
             if (data.gold < PeaceCost) return "Yeterli altın yok";
             data.gold -= PeaceCost;
             var def = RivalAI.Get(r.id);
-            float chance = 0.25f + r.relation / 120f + (PlayerStrength(data) > r.power ? 0.2f : 0f) + (def.trait == RivalAI.KingTrait.Proud ? -0.05f : 0f);
+            float chance = 0.25f + r.relation / 120f + (PlayerStrength(data) > r.power ? 0.2f : 0f) + (def.trait == RivalAI.KingTrait.Proud ? -0.05f : 0f) + Reputation.DiplomacyBonus();
             if (r.Attacking) chance -= 0.2f;
             if (UnityEngine.Random.value < chance)
             {
@@ -588,6 +596,7 @@ namespace ToyKingdom
                 if (r.Attacking) { r.power += r.attackPower * 0.5f; r.attackTarget = ""; r.attackFrom = ""; }
                 r.relation += 5f;
                 Reply(data, r.id, "Barış", "Elçini dinledim. On beş dakika boyunca kılıçlarımız kınında kalacak.");
+                Reputation.Change(data, 2f, "Barış imzaladın");
                 return def.name + " barışı kabul etti (15 dk)";
             }
             r.relation -= 5f;
@@ -608,6 +617,7 @@ namespace ToyKingdom
                 r.power = Mathf.Max(10f, r.power - pay * 0.1f);
                 r.relation -= 15f;
                 Reply(data, r.id, "Haraç", "Gücüne boyun eğiyorum... şimdilik. " + Gold(pay) + " gönderdim. Bu günü unutmayacağım.");
+                Reputation.Change(data, 3f, def.name + " sana haraç ödedi");
                 return def.name + " " + Gold(pay) + " haraç ödedi";
             }
             r.relation -= 25f;
@@ -626,6 +636,7 @@ namespace ToyKingdom
             if (broke)
             {
                 AllUnrest(data, 12f);
+                Reputation.Change(data, -12f, "Yeminini bozdun");
                 foreach (var o in data.rivals) if (o != r) o.relation -= 10f;
             }
             Reply(data, r.id, "Savaş", broke

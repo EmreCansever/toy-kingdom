@@ -13,6 +13,8 @@ namespace ToyKingdom
         TMP_Text goldText;
         TMP_Text kingdomText;
         TMP_Text incomeText;
+        TMP_Text repText;
+        Image repDot;
         TMP_Text toastText;
         GameObject toastBox;
         AttackPanel attack;
@@ -48,6 +50,19 @@ namespace ToyKingdom
             UIFactory.Place(incomeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -110f), new Vector2(620f, 40f));
             incomeText.outlineWidth = 0.22f;
             incomeText.outlineColor = new Color32(20, 24, 36, 220);
+
+            // sol üst: itibar (dokununca etkileri anlatır)
+            var rep = UIFactory.Chip(t, "Reputation", new Vector2(380f, 54f));
+            UIFactory.Place(rep.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -154f), new Vector2(380f, 54f));
+            repDot = UIFactory.Rounded(rep.transform, "Dot", Color.white, 9f);
+            UIFactory.Place(repDot.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(22f, 0f), new Vector2(18f, 18f));
+            repDot.raycastTarget = false;
+            repText = UIFactory.Text(rep.transform, "Value", "", 26f, Color.white, TextAlignmentOptions.Left, true);
+            UIFactory.Stretch(repText.rectTransform, 52f, 0f, 16f, 0f);
+            repText.textWrappingMode = TextWrappingModes.NoWrap;
+            var repBtn = rep.gameObject.AddComponent<Button>();
+            repBtn.transition = Selectable.Transition.None;
+            repBtn.onClick.AddListener(() => Hint("İtibar " + Mathf.RoundToInt(SaveSystem.Data.reputation) + ": " + Reputation.Effects()));
 
             // sol alt: krallık
             var kBox = UIFactory.Chip(t, "Kingdom", new Vector2(360f, 64f));
@@ -129,6 +144,12 @@ namespace ToyKingdom
                 incomeText.text = "<color=" + (net < 0 ? "#FF7A6B" : "#BFF2A6") + ">" + (net >= 0 ? "+" : "") + net + " / dk</color>  (gelir " + inc + ", gider " + up + ")";
             }
             if (goldText != null) goldText.color = SaveSystem.Data.gold < 0 ? UIFactory.Hex("FF7A6B") : Color.white;
+            if (repText != null)
+            {
+                float r = SaveSystem.Data.reputation;
+                repText.text = "İtibar  " + Reputation.Name(r) + "  " + Mathf.RoundToInt(r);
+                repDot.color = Reputation.Color(r);
+            }
             RefreshRivals();
             if (kingdomText != null && map != null) kingdomText.text = "Krallık  " + map.OwnedCount() + " / " + map.CityCount + " şehir";
         }

@@ -103,8 +103,9 @@ namespace ToyKingdom
                 {
                     name = Names[rnd.Next(Names.Length)],
                     trait = trait,
-                    power = powers[i],
-                    loyalty = trait == GovernorTrait.Loyal ? 80f + rnd.Next(15) : trait == GovernorTrait.Ambitious ? 45f + rnd.Next(15) : 55f + rnd.Next(25)
+                    power = Mathf.Min(5, powers[i] + Reputation.CandidatePowerBonus()),
+                    loyalty = Mathf.Clamp((trait == GovernorTrait.Loyal ? 80f + rnd.Next(15) : trait == GovernorTrait.Ambitious ? 45f + rnd.Next(15) : 55f + rnd.Next(25))
+                        + Reputation.CandidateLoyaltyBonus(), 20f, 100f)
                 });
             }
             return list;
@@ -170,6 +171,7 @@ namespace ToyKingdom
             if (s.policy == CityPolicy.Peace) r -= 0.7f;
             // yolların güvenliği: eşkıya baskını halkı korkutur, güvenli yollar refah getirir
             r += Trade.UnrestEffect(SaveSystem.Data, s.cityId);
+            r += Reputation.UnrestEffect();
             return r;
         }
 
@@ -183,6 +185,7 @@ namespace ToyKingdom
             if (g.trait == GovernorTrait.Ambitious) r -= 0.35f;
             if (g.trait == GovernorTrait.Cruel) r -= 0.1f;
             if (s.tax == TaxLevel.High) r -= 0.1f; // halkın öfkesi valiye de yansır
+            r += Reputation.LoyaltyEffect();
             return r;
         }
 
@@ -256,6 +259,8 @@ namespace ToyKingdom
                     StartRebellion(s, RebelState.Governor, c.difficulty);
                     rep.newRebels.Add(c.id);
                     if (Trade.CitySecurity(data, c.id) < 30f) s.rebelPower += 1;
+                    s.rebelPower += Reputation.RebelBonus();
+                    Reputation.Change(data, -5f, "Valin " + s.governor.name + " sana isyan etti");
                     rep.messages.Add(c.name + ": vali " + s.governor.name + " sana isyan etti!");
                 }
                 else if (popDanger)
@@ -264,6 +269,8 @@ namespace ToyKingdom
                     rep.newRebels.Add(c.id);
                     bool bandits = Trade.CitySecurity(data, c.id) < 30f;
                     if (bandits) s.rebelPower += 2; // yollardaki eşkıyalar asilere katılır
+                    s.rebelPower += Reputation.RebelBonus();
+                    Reputation.Change(data, -8f, c.name + " halkı ayaklandı");
                     rep.messages.Add(c.name + ": halk ayaklandı!" + (bandits ? " Eşkıyalar da asilere katıldı" : ""));
                 }
                 else
@@ -274,6 +281,20 @@ namespace ToyKingdom
                     if (s.hasGovernor && s.governor.loyalty >= 40f) s.warnedLoyalty = false;
                 }
             }
+            // vergi: ağır vergi itibarı yavaşça aşındırır, hafif vergi kazandırır
+            if (online)
+            {
+                float drift = 0f;
+                foreach (var c in cities)
+                {
+                    if (c.home || !data.IsConquered(c.id)) continue;
+                    var t = data.State(c.id).tax;
+                    drift += t == TaxLevel.High ? -0.05f : t == TaxLevel.Low ? 0.03f : 0f;
+                }
+                if (data.gold < 0) drift -= 0.5f; // maaş ödenemeyen hükümdar
+                if (drift != 0f) Reputation.Change(data, drift * minutes, null);
+            }
+
             // bakım giderleri: ordu ve vali maaşları
             float upkeep = Upkeep(data) * minutes + data.upkeepRemainder;
             int paid = Mathf.FloorToInt(upkeep);

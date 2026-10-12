@@ -33,6 +33,11 @@ Unity 6 (6000.3) ile geliştiriliyor. Hedef platform: yatay ekranlı telefonlar.
 - **Hazine ve şehir kontrolü:** Bölükler ve valiler maaş alır; hazine borca girerse halk huzursuzlanır, askerler kaçar.
   Şehirlere kararname (Ticaret / Askeri / Huzur) çıkar, halktan asker topla. Vezir kıtlık, salgın, yolsuzluk, kervan
   ve şenlik gibi kararlar ister.
+- **İtibar:** Hükümdarın itibarı zaferler, adil yönetim ve sözünde durmakla yükselir; isyanı son anda parayla
+  bastırmak, haraç ödemek, yemin bozmak ve şehir kaybetmek düşürür. Halkın huzurunu, valilerin sadakatini, aday
+  kalitesini, rakip kralların tavrını ve isyanların gücünü etkiler.
+- **Bildirimler ve günlük:** Kritik haberler kırmızı ve öne geçer, önemsizler altta kısa bir şeritte akar; her şey
+  Günlük panelinde saklanır.
 - **Ticaret ve yol güvenliği:** Kendi iki şehrini bağlayan her yolda kervanlar gidip gelir ve altın taşır. Yolun
   güvenliği düşerse eşkıyalar kervanları soyar, köyleri yağmalar, şehirler huzursuzlanır ve çıkan isyanlara katılır.
   Ordudan ayırdığın bölüklerle yollara devriye ata (atlı şövalye en iyisi); Sur ve Askeri kararname de güvenliği artırır.

@@ -17,6 +17,8 @@ namespace ToyKingdom
     {
         public int version = 5;
         public int gold = 600;
+        /// <summary>Hükümdarın itibarı (0-100).</summary>
+        public float reputation = 50f;
         public List<string> conqueredCities = new List<string>();
         /// <summary>Birlik türüne göre bölük sayısı.</summary>
         public List<ArmyEntry> army = new List<ArmyEntry>();
@@ -123,7 +125,7 @@ namespace ToyKingdom
         }
 
         /// <summary>Şehri ilk kez fetheder ya da isyanı bastırır.</summary>
-        public void Conquer(string cityId)
+        public void Conquer(string cityId, bool fame = true)
         {
             var s = State(cityId);
             string former = s.owner;
@@ -139,7 +141,8 @@ namespace ToyKingdom
             if (!conqueredCities.Contains(cityId))
             {
                 conqueredCities.Add(cityId);
-                s.unrest = 35f; // yeni fethedilen halk tedirgin
+                s.unrest = Mathf.Clamp(35f + Reputation.ConquestUnrest(), 15f, 60f); // yeni fethedilen halk tedirgin; kötü şöhret korkutur
+                if (fame) Reputation.Change(this, 2f, "Fetih: şehir krallığına katıldı");
             }
             else if (s.rebel != RebelState.None)
             {
@@ -147,6 +150,7 @@ namespace ToyKingdom
                 s.hasGovernor = false;
                 s.unrest = 30f;
                 s.candidateSeed++;
+                if (fame) Reputation.Change(this, 3f, "İsyan bastırıldı");
             }
             s.rebel = RebelState.None;
             s.rebelPower = 0;
