@@ -156,7 +156,7 @@ namespace ToyKingdom
         {
             var q = bm.SelectedSquad;
             if (q == null) return;
-            orderTitle.text = q.Data.displayName + " bölüğü  ·  " + q.Alive + "/" + q.StartSize + " asker  ·  moral " + Mathf.RoundToInt(q.Morale);
+            orderTitle.text = (Veterancy.Rank(q.Xp) > 0 ? Veterancy.Name(q.Xp) + " " : "") + q.Data.displayName + " bölüğü  ·  " + q.Alive + "/" + q.StartSize + " asker  ·  moral " + Mathf.RoundToInt(q.Morale);
             haltLabel.text = q.Halted ? "Devam" : "Dur";
         }
 
@@ -244,12 +244,14 @@ namespace ToyKingdom
             {
                 resultTitle.text = r.cityName + " fethedildi!";
                 resultDetail.text = "Yıldız: " + r.stars + "/3\n+" + r.goldEarned + " altın" +
-                                    (r.squadsLost > 0 ? "\nKaybedilen bölük: " + r.squadsLost : "");
+                                    (r.squadsLost > 0 ? "\nKaybedilen bölük: " + r.squadsLost : "") +
+                                    (r.squadsPromoted > 0 ? "\n<color=#B86E00>Rütbesi yükselen bölük: " + r.squadsPromoted + "</color>" : "");
             }
             else
             {
                 resultTitle.text = "Saldırı başarısız";
-                resultDetail.text = "Ordunu güçlendirip tekrar dene.\nYarısı hayatta kalan bölükler geri döndü.";
+                resultDetail.text = "Ordunu güçlendirip tekrar dene.\nYarısı hayatta kalan bölükler tecrübe kazanarak döndü." +
+                                    (r.squadsPromoted > 0 ? "\n<color=#B86E00>Rütbesi yükselen bölük: " + r.squadsPromoted + "</color>" : "");
             }
         }
     }

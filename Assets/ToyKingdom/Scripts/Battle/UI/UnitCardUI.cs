@@ -13,6 +13,8 @@ namespace ToyKingdom
         Image frame;
         Image icon;
         TMP_Text countText;
+        TMP_Text rankText;
+        GameObject rankRoot;
         CanvasGroup group;
         GameObject selected;
 
@@ -56,6 +58,14 @@ namespace ToyKingdom
             countBg.raycastTarget = false;
             card.countText = UIFactory.Text(countBg.transform, "Count", "x0", 21f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(card.countText.rectTransform);
+            // en tecrübeli bölüğün rütbe nişanı (sıradaki gönderilecek olan)
+            var rank = UIFactory.Rounded(inner.transform, "Rank", UIFactory.Hex("C98A1B"), 14f);
+            UIFactory.Place(rank.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(6f, -48f), new Vector2(46f, 30f));
+            rank.raycastTarget = false;
+            card.rankText = UIFactory.Text(rank.transform, "R", "", 19f, Color.white, TextAlignmentOptions.Center, true);
+            UIFactory.Stretch(card.rankText.rectTransform);
+            card.rankRoot = rank.gameObject;
+            card.rankRoot.SetActive(false);
 
             card.button = outer.gameObject.AddComponent<Button>();
             card.button.targetGraphic = inner;
@@ -80,6 +90,9 @@ namespace ToyKingdom
             if (Data == null || bm == null || bm.Command == null) return;
             int count = SaveSystem.Data.GetArmyCount(Data.unitId);
             countText.text = "x" + count;
+            string badge = count > 0 ? Veterancy.Badge(SaveSystem.Data.BestXp(Data.unitId)) : "";
+            if (rankRoot.activeSelf != (badge.Length > 0)) rankRoot.SetActive(badge.Length > 0);
+            rankText.text = badge;
             bool usable = count > 0 && bm.State == BattleState.Playing;
             button.interactable = usable;
             group.alpha = usable ? (bm.Command.CanAfford(Data.cost) ? 1f : 0.6f) : 0.35f;

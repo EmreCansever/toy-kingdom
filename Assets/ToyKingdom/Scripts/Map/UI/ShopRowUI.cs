@@ -67,7 +67,10 @@ namespace ToyKingdom
         {
             if (data == null) return;
             int gold = SaveSystem.Data.gold;
-            owned.text = "Elde: " + SaveSystem.Data.GetArmyCount(data.unitId) + "  ·  " + price + " altın";
+            var entry = SaveSystem.Data.army.Find(a => a.unitId == data.unitId);
+            int vets = 0;
+            if (entry != null) { entry.Normalize(); foreach (var x in entry.xp) if (Veterancy.Rank(x) > 0) vets++; }
+            owned.text = "Elde: " + SaveSystem.Data.GetArmyCount(data.unitId) + (vets > 0 ? " <color=#B86E00>(" + vets + " tecrübeli)</color>" : "") + "  ·  " + price + " altın";
             var d = SaveSystem.Data;
             int room = d.ArmyCapacity() - d.UsedCapacity();
             buy1.interactable = gold >= price && room >= 1;

@@ -282,9 +282,11 @@ namespace ToyKingdom
             if (!CanDeploy(out _) || path == null || path.Count < 2) return false;
             var data = SelectedUnit;
             Command.TrySpend(data.cost);
-            SaveSystem.Data.AddArmy(data.unitId, -1);
+            int xp = Mathf.Max(0, SaveSystem.Data.TakeVeteran(data.unitId));
 
-            var sq = new Squad(Team.Player, data, Field);
+            var sq = new Squad(Team.Player, data, Field) { Xp = xp, Strength = Veterancy.Mult(xp) };
+            sq.SetStartMorale(Veterancy.MoraleBonus(xp));
+            if (Veterancy.Rank(xp) > 0) Hint?.Invoke(Veterancy.Name(xp) + " " + data.displayName + " bölüğü sahada!");
             Sfx.Play("sfx_deploy", 0.7f);
             sq.AggroRange = 1.6f;
             sq.SpawnMembers(path[0], data.squadSize);
@@ -494,10 +496,17 @@ namespace ToyKingdom
             else { Sfx.StopMusic(); Sfx.Alert(); }
 
             // Yarısından fazlası hayatta kalan bölükler orduya geri döner
-            int returned = 0;
+            int returned = 0, promoted = 0;
             foreach (var s in PlayerSquads)
             {
-                if (s.Alive * 2 >= s.StartSize && s.Alive > 0) { SaveSystem.Data.AddArmy(s.Data.unitId, 1); returned++; }
+                if (s.Alive * 2 >= s.StartSize && s.Alive > 0)
+                {
+                    int before = Veterancy.Rank(s.Xp);
+                    int xpNow = s.Xp + Veterancy.Gain(victory, (float)s.Alive / Mathf.Max(1, s.StartSize));
+                    SaveSystem.Data.ReturnVeteran(s.Data.unitId, xpNow);
+                    if (Veterancy.Rank(xpNow) > before) promoted++;
+                    returned++;
+                }
                 else { lostSquads++; lostUnits.Add(s.Data.unitId); }
                 s.Cleanup();
             }
@@ -507,7 +516,8 @@ namespace ToyKingdom
                 cityId = Castle.cityId,
                 cityName = Castle.displayName,
                 victory = victory,
-                squadsLost = lostSquads
+                squadsLost = lostSquads,
+                squadsPromoted = promoted
             };
 
             if (victory)

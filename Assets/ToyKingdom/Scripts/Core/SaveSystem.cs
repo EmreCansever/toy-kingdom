@@ -10,6 +10,18 @@ namespace ToyKingdom
     {
         public string unitId;
         public int count;
+        /// <summary>Her bölüğün tecrübe puanı (count kadar). Eski kayıtlarda boş gelir, sıfırla doldurulur.</summary>
+        public List<int> xp = new List<int>();
+
+        public void Normalize()
+        {
+            if (xp == null) xp = new List<int>();
+            while (xp.Count < count) xp.Add(0);
+            while (xp.Count > count) xp.Remove(Min());
+        }
+
+        int Min() { int m = int.MaxValue; foreach (var x in xp) m = Mathf.Min(m, x); return m; }
+        public int Best() { Normalize(); int m = 0; foreach (var x in xp) m = Mathf.Max(m, x); return m; }
     }
 
     [Serializable]
@@ -214,6 +226,36 @@ namespace ToyKingdom
                 army.Add(entry);
             }
             entry.count = Mathf.Max(0, entry.count + amount);
+            entry.Normalize(); // eklenenler acemi, çıkarılanlar en az tecrübeliler
+        }
+
+        /// <summary>Savaşa en tecrübeli bölüğü çıkarır; tecrübesini döndürür (-1: bölük yok).</summary>
+        public int TakeVeteran(string unitId)
+        {
+            var e = army.Find(a => a.unitId == unitId);
+            if (e == null || e.count <= 0) return -1;
+            e.Normalize();
+            int best = e.Best();
+            e.xp.Remove(best);
+            e.count--;
+            return best;
+        }
+
+        /// <summary>Savaştan dönen bölüğü tecrübesiyle orduya katar.</summary>
+        public void ReturnVeteran(string unitId, int xp)
+        {
+            var e = army.Find(a => a.unitId == unitId);
+            if (e == null) { e = new ArmyEntry { unitId = unitId, count = 0 }; army.Add(e); }
+            e.Normalize();
+            e.count++;
+            e.xp.Add(Mathf.Max(0, xp));
+        }
+
+        /// <summary>Bu birlik türündeki en tecrübeli bölüğün puanı.</summary>
+        public int BestXp(string unitId)
+        {
+            var e = army.Find(a => a.unitId == unitId);
+            return e != null ? e.Best() : 0;
         }
     }
 

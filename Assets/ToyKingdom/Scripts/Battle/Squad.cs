@@ -41,6 +41,8 @@ namespace ToyKingdom
         public bool Engaged => Time.time - lastCombat < 1.5f;
         /// <summary>Askerlerin can ve hasar çarpanı (savunucuları kale zorluğuna göre ayarlamak için).</summary>
         public float Strength { get; set; } = 1f;
+        /// <summary>Oyuncu bölüğünün tecrübe puanı (savaş sonunda artar).</summary>
+        public int Xp { get; set; }
         /// <summary>0-100. Düşerse hasar azalır, 18'in altında bölük bozguna uğrar.</summary>
         public float Morale { get; private set; } = 100f;
         public bool Routed => Mode == SquadMode.Rout || Mode == SquadMode.Rallied;
@@ -348,6 +350,9 @@ namespace ToyKingdom
         }
 
         // ------------------------------------------------------------------ moral
+
+        /// <summary>Tecrübeli bölük savaşa yüksek moralle başlar.</summary>
+        public void SetStartMorale(float bonus) => Morale = Mathf.Clamp(Morale + bonus, 0f, 100f);
 
         public void ChangeMorale(float amount)
         {

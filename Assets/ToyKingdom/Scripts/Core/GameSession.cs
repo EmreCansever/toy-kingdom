@@ -8,6 +8,8 @@ namespace ToyKingdom
         public int stars;
         public int goldEarned;
         public int squadsLost;
+        /// <summary>Bu savaşta rütbesi yükselen bölük sayısı.</summary>
+        public int squadsPromoted;
     }
 
     /// <summary>Sahneler arasında taşınan geçici bilgiler.</summary>
