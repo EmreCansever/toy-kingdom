@@ -500,13 +500,18 @@ namespace ToyKingdom
             var inf = db != null ? db.Get("infantry") : null;
             var kn = db != null ? db.Get("knight") : null;
             CastleData c = city.castle;
+            int tier = 0; // tarafsız ve asi şehirler normal zorlukta
             if (city.IsRebel) c = KingdomSim.RebelCastle(city.castle, city.State, inf, kn);
             else
             {
                 var rival = city.RivalId != null ? SaveSystem.Data.Rival(city.RivalId) : null;
-                if (rival != null) c = RivalAI.RivalCastle(city.castle, rival, city.State, inf, kn);
+                if (rival != null)
+                {
+                    c = RivalAI.RivalCastle(city.castle, rival, city.State, inf, kn);
+                    tier = rival.capitalId == city.CityId ? 2 : 1;
+                }
             }
-            return Siege.Harden(c);
+            return Siege.Harden(c, tier);
         }
 
         /// <summary>Geçen her tam dakika için krallık simülasyonunu ilerletir (gelir, huzursuzluk, sadakat, isyan).</summary>

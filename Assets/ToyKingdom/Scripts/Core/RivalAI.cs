@@ -443,7 +443,7 @@ namespace ToyKingdom
             c.displayName = original.displayName + (capital ? " (" + def.shortName + " başkenti)" : "");
             c.garrison = new List<GarrisonEntry>();
             foreach (var g in original.garrison) if (g != null) c.garrison.Add(new GarrisonEntry { unit = g.unit, squads = g.squads });
-            c.defenderStrength = original.defenderStrength * (1f + Mathf.Min(r.power, 300f) / 600f);
+            c.defenderStrength = original.defenderStrength * (1f + Mathf.Min(r.power, 300f) / 1000f);
             if (extraUnit != null) c.garrison.Add(new GarrisonEntry { unit = extraUnit, squads = 1 });
             if (capital && eliteUnit != null) c.garrison.Add(new GarrisonEntry { unit = eliteUnit, squads = 1 });
             c.gateHealth = original.gateHealth * (1f + 0.25f * s.walls);

@@ -355,7 +355,7 @@ namespace ToyKingdom
                 c.displayName = original.displayName + " (asi vali)";
                 c.description = s.governor.name + " şehri ele geçirdi. Güçlü bir vali, güçlü bir isyan demek: " + s.rebelPower + " kat güç.";
                 c.defenderStrength = original.defenderStrength * (1f + 0.1f * s.rebelPower);
-                if (extraUnit != null) c.garrison.Add(new GarrisonEntry { unit = extraUnit, squads = Mathf.Max(1, (s.rebelPower + 1) / 2) });
+                if (extraUnit != null) c.garrison.Add(new GarrisonEntry { unit = extraUnit, squads = Mathf.Clamp((s.rebelPower + 1) / 2, 1, 2) });
                 if (eliteUnit != null && s.rebelPower >= 4) c.garrison.Add(new GarrisonEntry { unit = eliteUnit, squads = 1 });
                 c.wallArchers = original.wallArchers + s.rebelPower / 2;
             }
@@ -364,7 +364,7 @@ namespace ToyKingdom
                 c.displayName = original.displayName + " (ayaklanma)";
                 c.description = "Halk silahlandı. Asiler acemi ama kalabalık.";
                 c.defenderStrength = original.defenderStrength * (0.75f + 0.05f * s.rebelPower);
-                if (extraUnit != null) c.garrison.Add(new GarrisonEntry { unit = extraUnit, squads = s.rebelPower });
+                if (extraUnit != null) c.garrison.Add(new GarrisonEntry { unit = extraUnit, squads = Mathf.Clamp(s.rebelPower, 1, 3) });
                 c.reinforcement = null;
                 c.reinforcementCount = 0;
             }

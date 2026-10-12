@@ -65,18 +65,21 @@ namespace ToyKingdom
         [Tooltip("Fethedildikten sonra dakikada ürettiği altın")]
         public int passiveIncomePerMinute = 5;
 
+        /// <summary>Kuşatma kademesi (çalışma anında): 0 tarafsız/asi (normal), 1 rakip krallık şehri (zor), 2 rakip başkenti (en zor).</summary>
+        [System.NonSerialized] public int siegeTier;
+
         // ------------------------------------------------------------------ kuşatma derinliği (zorluktan türetilir)
 
         /// <summary>Kapıya vurulunca yakındaki nöbetçiler kapıyı savunmaya koşar.</summary>
         public bool RallyDefense => difficulty >= 2;
         /// <summary>Kapı önünde kümelenenlerin üstüne kızgın yağ dökülür.</summary>
-        public bool BoilingOil => difficulty >= 3;
+        public bool BoilingOil => difficulty + siegeTier >= 4;
         /// <summary>Kapı kırılınca avlu savaşı başlar: kapı önü tutulmalı.</summary>
         public bool Courtyard => difficulty >= 2;
         /// <summary>Takviyeler oyuncunun okçularına akın eder.</summary>
         public bool Sortie => difficulty >= 4 && reinforcement != null;
         /// <summary>Avlu savaşında son direniş için çıkan bölük sayısı.</summary>
-        public int FinalStandSquads => Mathf.Clamp(difficulty - 1, 0, 4);
+        public int FinalStandSquads => Mathf.Clamp(difficulty - 2 + siegeTier, 0, 3);
         /// <summary>Kapı önünün kaç saniye tutulması gerektiği.</summary>
         public float CaptureTime => 6f + 1.5f * difficulty;
     }

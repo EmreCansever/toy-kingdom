@@ -14,42 +14,74 @@ namespace ToyKingdom
         const string HardTag = "_H";
         public static bool IsHardened(CastleData c) => c != null && c.name.EndsWith(HardTag);
 
-        /// <summary>Zorluğa göre daha büyük ve daha sert bir kale kopyası.</summary>
-        public static CastleData Harden(CastleData original)
+        /// <summary>
+        /// Kademeye göre güçlendirilmiş kale kopyası. 0: tarafsız ve asi şehirler (normal, ilk fetihler rahat),
+        /// 1: rakip krallık şehirleri (zor), 2: rakip başkentleri (en zor ama aşılabilir).
+        /// </summary>
+        public static CastleData Harden(CastleData original, int tier = 0)
         {
             if (IsHardened(original)) return original;
+            tier = Mathf.Clamp(tier, 0, 2);
             var c = Object.Instantiate(original);
             c.name = original.name + HardTag;
+            c.siegeTier = tier;
             int d = Mathf.Clamp(original.difficulty, 1, 5);
-            int grow = d <= 2 ? 1 : 2;
-            c.width = Mathf.Clamp(original.width + grow, 5, 9);
-            c.depth = Mathf.Clamp(original.depth + grow, 5, 9);
-            c.midTowers = original.midTowers || d >= 2;
-            c.keep = original.keep || d >= 2;
-            c.gateHealth = original.gateHealth * 1.45f;
-            c.defenderStrength = Mathf.Max(original.defenderStrength, 0.7f + 0.15f * d);
-            c.wallArchers = original.wallArchers + 1 + d;
+
+            // boyut: başkentler ve zor kaleler büyür
+            int grow = tier == 0 ? (d >= 3 ? 1 : 0) : tier == 1 ? 1 : 2;
+            c.width = Mathf.Clamp(original.width + grow, 4, 9);
+            c.depth = Mathf.Clamp(original.depth + grow, 4, 9);
+            c.midTowers = original.midTowers || d + tier >= 3;
+            c.keep = original.keep || tier >= 1;
+
+            float[] gate = { 1.1f, 1.3f, 1.5f };
+            c.gateHealth = original.gateHealth * gate[tier];
+            float[] str = { 0.6f, 0.75f, 0.9f };
+            c.defenderStrength = Mathf.Max(original.defenderStrength, str[tier] + 0.08f * d);
+            c.wallArchers = original.wallArchers + tier + (tier == 0 ? 0 : d / 2);
 
             c.garrison = new List<GarrisonEntry>();
             foreach (var g in original.garrison) if (g != null) c.garrison.Add(new GarrisonEntry { unit = g.unit, squads = g.squads });
-            // her kalede en az bir bölük daha
-            if (c.garrison.Count > 0 && c.garrison[0].unit != null) c.garrison.Add(new GarrisonEntry { unit = c.garrison[0].unit, squads = d >= 3 ? 2 : 1 });
-            if (original.reinforcement != null) c.reinforcementCount = original.reinforcementCount + (d >= 3 ? 1 : 0);
+            // rakip şehirlerine bir, başkentlere iki bölük daha
+            if (tier >= 1 && c.garrison.Count > 0 && c.garrison[0].unit != null) c.garrison.Add(new GarrisonEntry { unit = c.garrison[0].unit, squads = tier });
+            if (original.reinforcement != null) c.reinforcementCount = original.reinforcementCount + (tier == 2 ? 1 : 0);
 
             if (original.towerData != null)
             {
+                float[] dmg = { 1.05f, 1.2f, 1.3f }, hp = { 1.1f, 1.25f, 1.4f };
                 var t = Object.Instantiate(original.towerData);
-                t.damage = original.towerData.damage * 1.35f;
-                t.fireInterval = original.towerData.fireInterval * 0.85f;
-                t.maxHealth = original.towerData.maxHealth * 1.4f;
-                t.range = original.towerData.range + 0.4f;
+                t.damage = original.towerData.damage * dmg[tier];
+                t.fireInterval = original.towerData.fireInterval * (tier == 0 ? 1f : 0.9f);
+                t.maxHealth = original.towerData.maxHealth * hp[tier];
+                t.range = original.towerData.range + 0.2f * tier;
                 c.towerData = t;
             }
             return c;
         }
 
-        public static int MineCount(CastleData c) => c.difficulty >= 2 ? 3 + 2 * c.difficulty : 0;
-        public static int CannonCount(CastleData c) => c.difficulty >= 2 ? Mathf.Min(4, c.difficulty - 1) : 0;
+        /// <summary>Gizli mayınlar: tarafsız kalelerde yalnızca zorlarında birkaç tane, rakiplerde daha çok.</summary>
+        public static int MineCount(CastleData c)
+        {
+            int d = c.difficulty;
+            switch (c.siegeTier)
+            {
+                case 0: return d >= 3 ? d - 1 : 0;
+                case 1: return 2 + d;
+                default: return 4 + d;
+            }
+        }
+
+        /// <summary>Kule topları: tarafsızlarda yok, rakip şehirlerinde en fazla iki, başkentlerde en fazla üç.</summary>
+        public static int CannonCount(CastleData c)
+        {
+            int d = c.difficulty;
+            switch (c.siegeTier)
+            {
+                case 0: return 0;
+                case 1: return Mathf.Clamp(d - 2, 1, 2);
+                default: return Mathf.Clamp(d - 1, 2, 3);
+            }
+        }
 
         // ------------------------------------------------------------------ yerleştirme
 
