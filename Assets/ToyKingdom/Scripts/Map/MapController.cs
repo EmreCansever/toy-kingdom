@@ -124,7 +124,7 @@ namespace ToyKingdom
         });
 
         /// <summary>Kaydı silip haritayı baştan kurar.</summary>
-        void NewGame()
+        public void NewGame()
         {
             SaveSystem.ResetSave();
             GameSession.LastResult = null;
@@ -336,9 +336,16 @@ namespace ToyKingdom
             return false;
         }
 
+        long lastFrameTicks;
+
         void Update()
         {
-            incomeTimer += Time.deltaTime;
+            // bir pencere açıkken ya da duraklatınca krallıkta zaman durur
+            long nowTicks = DateTime.UtcNow.Ticks;
+            bool paused = ui.IsModalOpen || ui.Paused;
+            if (paused && lastFrameTicks > 0) Clock.Shift(SaveSystem.Data, nowTicks - lastFrameTicks);
+            lastFrameTicks = nowTicks;
+            if (!paused) incomeTimer += Time.deltaTime;
             if (incomeTimer >= 5f)
             {
                 incomeTimer = 0f;

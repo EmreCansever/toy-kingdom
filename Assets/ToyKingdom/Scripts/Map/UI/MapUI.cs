@@ -28,12 +28,17 @@ namespace ToyKingdom
         DiplomacyPanel diplomacy;
         TradePanel tradePanel;
         EndPanel endPanel;
+        SettingsPanel settings;
+        GameObject pausedChip;
+        TMP_Text pauseLabel;
+        /// <summary>Oyuncu duraklat düğmesine bastı.</summary>
+        public bool Paused { get; private set; }
         TMP_Text letterBadge;
         GameObject letterBadgeRoot;
         Coroutine toastRoutine;
 
         public bool IsModalOpen => (attack != null && attack.IsOpen) || (shop != null && shop.IsOpen) || (cityPanel != null && cityPanel.IsOpen) ||
-                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || (logPanel != null && logPanel.IsOpen) || (endPanel != null && endPanel.IsOpen);
+                                   (letters != null && letters.IsOpen) || (diplomacy != null && diplomacy.IsOpen) || (tradePanel != null && tradePanel.IsOpen) || (logPanel != null && logPanel.IsOpen) || (endPanel != null && endPanel.IsOpen) || (settings != null && settings.IsOpen);
 
         public void Build(MapController controller)
         {
@@ -143,6 +148,29 @@ namespace ToyKingdom
 
             endPanel = EndPanel.Create(t, () => endNewGame?.Invoke(), () => endContinue?.Invoke());
 
+            // ayarlar ve duraklatma
+            var setBtn = UIFactory.Button(t, "SettingsButton", "Ayarlar", UIFactory.Hex("6B7280"), 32f);
+            UIFactory.Place((RectTransform)setBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-60f, -652f), new Vector2(240f, 84f));
+            settings = SettingsPanel.Create(t, () => map.NewGame(), RefreshQuest);
+            setBtn.onClick.AddListener(settings.Open);
+
+            var pauseBtn = UIFactory.Button(t, "PauseButton", "II", UIFactory.Hex("4A5568"), 36f);
+            UIFactory.Place((RectTransform)pauseBtn.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(338f, -20f), new Vector2(96f, 84f));
+            pauseLabel = pauseBtn.GetComponentInChildren<TMP_Text>();
+            pauseBtn.onClick.AddListener(() =>
+            {
+                Paused = !Paused;
+                pauseLabel.text = Paused ? ">" : "II";
+                pausedChip.SetActive(Paused);
+            });
+            var pc = UIFactory.Chip(t, "Paused", new Vector2(520f, 72f));
+            UIFactory.Place(pc.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 300f), new Vector2(520f, 72f));
+            pc.raycastTarget = false;
+            var pt = UIFactory.Text(pc.transform, "T", "OYUN DURAKLATILDI", 34f, UIFactory.Hex("FFD36E"), TextAlignmentOptions.Center, true);
+            UIFactory.Stretch(pt.rectTransform);
+            pausedChip = pc.gameObject;
+            pausedChip.SetActive(false);
+
             feed = UIFactory.Rect("Feed", t);
             UIFactory.Place(feed, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(1200f, 180f));
             toastBox.transform.SetAsLastSibling();
@@ -183,6 +211,7 @@ namespace ToyKingdom
             if (questCard == null) return;
             var d = SaveSystem.Data;
             var s = Tutorial.Current(d);
+            if (SettingsPanel.Get(SettingsPanel.QuestKey, false)) { questCard.gameObject.SetActive(false); pulseTarget = null; return; }
             if (s == null)
             {
                 // öğretici bitti: büyük hedef
