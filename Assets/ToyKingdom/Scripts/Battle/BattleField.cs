@@ -60,10 +60,66 @@ namespace ToyKingdom
                     : castle.biome == Biome.Winter ? new Color(0.82f, 0.88f, 0.93f) : new Color(0.55f, 0.74f, 0.42f);
 
             postRandom = new System.Random(castle.cityId.GetHashCode() ^ 0x2f1);
+            BuildTerrain(castle, gu, gv);
             BuildGround(gu, gv, castle.secondGate);
             BuildCastle(castle, gu, gv);
             BuildDeployZone();
         }
+
+        // ------------------------------------------------------------------ arazi
+
+        readonly HashSet<Vector2Int> water = new HashSet<Vector2Int>();
+        readonly HashSet<Vector2Int> slope = new HashSet<Vector2Int>();
+        int mainGateV;
+
+        /// <summary>Hendek: kale çevresinde su halkası. Nehir: meydanı ikiye bölen su. Tepe: kalenin çevresi yokuş.</summary>
+        void BuildTerrain(CastleData c, int gu, int gv)
+        {
+            water.Clear(); slope.Clear();
+            mainGateV = gv;
+            switch (c.terrain)
+            {
+                case CastleData.TerrainMoat:
+                    // surların hemen dibi yüksek duvarların arkasında kalır; hendek bir sıra öteden, görünür biçimde dolanır
+                    for (int u = cu0 - 2; u <= cu1 + 2; u++)
+                        for (int v = cv0 - 2; v <= cv1 + 2; v++)
+                            if (u == cu0 - 2 || u == cu1 + 2 || v == cv0 - 2 || v == cv1 + 2) water.Add(new Vector2Int(u, v));
+                    break;
+                case CastleData.TerrainRiver:
+                    int ru = cu0 - 7;
+                    for (int v = -30; v <= 35; v++) { water.Add(new Vector2Int(ru, v)); water.Add(new Vector2Int(ru - 1, v)); }
+                    break;
+                case CastleData.TerrainHill:
+                    for (int u = cu0 - 4; u <= cu1 + 4; u++)
+                        for (int v = cv0 - 4; v <= cv1 + 4; v++)
+                            if (u < cu0 || u > cu1 || v < cv0 || v > cv1) slope.Add(new Vector2Int(u, v));
+                    break;
+            }
+        }
+
+        Vector2Int CellAt(Vector3 world)
+        {
+            Vector2 g = Iso.ToGrid(world);
+            return new Vector2Int(Mathf.RoundToInt(g.x), Mathf.RoundToInt(g.y));
+        }
+
+        /// <summary>Köprü mü? (yolun suyu geçtiği hücreler yürünebilir)</summary>
+        bool IsBridge(Vector2Int c) => c.y == mainGateV ? c.x < cu0 : (Castle.secondGate && c.x == (cu0 + Castle.width / 2) && c.y < cv0);
+
+        /// <summary>Bu noktada yürüme hızı çarpanı: suda yavaş (köprü hariç), yokuşta biraz yavaş.</summary>
+        public float SpeedAt(Vector3 world)
+        {
+            if (water.Count == 0 && slope.Count == 0) return 1f;
+            var c = CellAt(world);
+            if (water.Contains(c) && !IsBridge(c)) return 0.42f;
+            if (slope.Contains(c)) return 0.72f;
+            return 1f;
+        }
+
+        public bool InWater(Vector3 world) { var c = CellAt(world); return water.Contains(c) && !IsBridge(c); }
+
+        /// <summary>Tepedeki kalenin kuleleri daha uzağı görür.</summary>
+        public float TowerRangeBonus => Castle != null && Castle.terrain == CastleData.TerrainHill ? 0.9f : 0f;
 
         // ------------------------------------------------------------------ zemin
 
@@ -96,11 +152,34 @@ namespace ToyKingdom
                         if (m == 0) m = 5;
                         s = bio.Road(m);
                     }
+                    bool wet = water.Contains(cell);
+                    int wm = 0;
+                    if (wet)
+                    {
+                        if (water.Contains(new Vector2Int(u + 1, v))) wm |= 1;
+                        if (water.Contains(new Vector2Int(u, v - 1))) wm |= 2;
+                        if (water.Contains(new Vector2Int(u - 1, v))) wm |= 4;
+                        if (water.Contains(new Vector2Int(u, v + 1))) wm |= 8;
+                        if (isRoad) s = v == gv ? (bio.bridgeRoadNESW != null ? bio.bridgeRoadNESW : s) : (bio.bridgeRoadNWSE != null ? bio.bridgeRoadNWSE : s);
+                        else s = art.Biome(Biome.Desert).ground; // açık su: açık renkli kum karosunu suya boyarız (ince dere parçaları kalabalıkta görünmüyordu)
+                    }
                     var sr = PlaceSprite(s, basePos, Iso.GroundOrder(u, v), "G");
+                    if (wet && !isRoad)
+                    {
+                        bool edge = wm != 15 && (wm & 5) != 5 && (wm & 10) != 10; // köşe hücreleri biraz açık
+                        sr.color = edge ? new Color(0.48f, 0.72f, 1f) : new Color(0.4f, 0.64f, 0.98f);
+                    }
+                    if (!wet && slope.Contains(cell))
+                    {
+                        // yokuş: kaleye yaklaştıkça koyulaşan, toprak tonlu zemin
+                        int ring = Mathf.Max(Mathf.Max(cu0 - u, u - cu1), Mathf.Max(cv0 - v, v - cv1));
+                        float k = 1f - (ring - 1) / 4f;
+                        sr.color = Color.Lerp(Color.white, new Color(0.83f, 0.74f, 0.55f), 0.25f + 0.45f * k);
+                    }
                     if (SpriteMaterial == null) SpriteMaterial = sr.sharedMaterial;
 
                     bool inCastle = u >= cu0 && u <= cu1 && v >= cv0 && v <= cv1;
-                    if (isRoad || inCastle) continue;
+                    if (isRoad || inCastle || wet) continue;
 
                     Vector3 surf = Iso.Surface(u, v);
                     bool inside = Playable.Contains(new Vector2(surf.x, surf.y));

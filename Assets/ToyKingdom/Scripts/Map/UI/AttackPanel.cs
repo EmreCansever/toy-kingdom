@@ -131,6 +131,9 @@ namespace ToyKingdom
                     tags.Add(RivalAI.Get(rivalId).name + (rs != null && rs.capitalId == city.CityId ? " başkenti" : "") + (rs != null ? " (güç " + Mathf.RoundToInt(rs.power) + ")" : ""));
                     if (rs != null && rs.AtPeace) tags.Add("BARIŞ VAR: saldırırsan anlaşmayı bozarsın");
                 }
+                if (c.terrain == CastleData.TerrainMoat) tags.Add("Hendek: suda yavaşlarsın, köprüyü kullan");
+                if (c.terrain == CastleData.TerrainRiver) tags.Add("Nehir: köprüden geç ya da sudan yavaşça yürü");
+                if (c.terrain == CastleData.TerrainHill) tags.Add("Tepe: yokuşta yavaşsın, kuleler uzağı görür");
                 if (Siege.CannonCount(c) > 0) tags.Add(Siege.CannonCount(c) + " top");
                 if (Siege.MineCount(c) > 0) tags.Add("Gizli mayınlar");
                 if (c.RallyDefense) tags.Add("Hızlı savunma");

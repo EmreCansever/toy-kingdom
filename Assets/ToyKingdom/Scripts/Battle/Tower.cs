@@ -119,7 +119,7 @@ namespace ToyKingdom
             cooldown -= Time.deltaTime;
             if (cooldown > 0f) return;
 
-            Soldier target = Soldier.FindNearest(Team.Player, TopGround, data.range, true);
+            Soldier target = Soldier.FindNearest(Team.Player, TopGround, data.range + bm.Field.TowerRangeBonus, true);
             if (target == null) { cooldown = 0.2f; return; }
 
             for (int i = 0; i < Mathf.Max(1, data.arrowsPerShot); i++)

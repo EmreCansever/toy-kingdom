@@ -26,6 +26,7 @@ namespace ToyKingdom
             c.name = original.name + HardTag;
             c.siegeTier = tier;
             int d = Mathf.Clamp(original.difficulty, 1, 5);
+            c.terrain = PickTerrain(original, tier);
 
             // boyut: başkentler ve zor kaleler büyür
             int grow = tier == 0 ? (d >= 3 ? 1 : 0) : tier == 1 ? 1 : 2;
@@ -57,6 +58,21 @@ namespace ToyKingdom
                 c.towerData = t;
             }
             return c;
+        }
+
+        /// <summary>
+        /// Kalenin arazisi: ilk (en kolay) kaleler düz, başkentler hendekli; diğerleri şehre göre sabit:
+        /// hendek, nehir kenarı, tepe ya da düz.
+        /// </summary>
+        static int PickTerrain(CastleData c, int tier)
+        {
+            if (tier == 2) return CastleData.TerrainMoat;
+            if (tier == 0 && c.difficulty <= 1) return CastleData.TerrainPlain;
+            int h = 7;
+            foreach (char ch in c.cityId ?? "") h = h * 31 + ch;
+            int pick = Mathf.Abs(h) % 4;
+            if (c.biome == Biome.Desert && pick == CastleData.TerrainRiver) pick = CastleData.TerrainHill; // çölde nehir az
+            return pick;
         }
 
         /// <summary>Gizli mayınlar: tarafsız kalelerde yalnızca zorlarında birkaç tane, rakiplerde daha çok.</summary>

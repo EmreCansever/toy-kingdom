@@ -67,6 +67,12 @@ namespace ToyKingdom
 
         /// <summary>Kuşatma kademesi (çalışma anında): 0 tarafsız/asi (normal), 1 rakip krallık şehri (zor), 2 rakip başkenti (en zor).</summary>
         [System.NonSerialized] public int siegeTier;
+        /// <summary>Kale arazisi (çalışma anında): 0 düz, 1 hendekli, 2 nehir kenarı, 3 tepe.</summary>
+        [System.NonSerialized] public int terrain;
+
+        public const int TerrainPlain = 0, TerrainMoat = 1, TerrainRiver = 2, TerrainHill = 3;
+
+        public string TerrainName => terrain == TerrainMoat ? "Hendekli kale" : terrain == TerrainRiver ? "Nehir kenarı" : terrain == TerrainHill ? "Tepe kalesi" : "";
 
         // ------------------------------------------------------------------ kuşatma derinliği (zorluktan türetilir)
 

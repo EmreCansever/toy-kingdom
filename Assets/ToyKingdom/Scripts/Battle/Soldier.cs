@@ -129,8 +129,10 @@ namespace ToyKingdom
 
         void SyncTransform()
         {
-            transform.position = ground + Vector3.up * elevation;
-            if (ysort != null) ysort.heightOffset = elevation;
+            // suda yürüyen asker biraz batık görünür
+            float sink = elevation <= 0f && BattleManager.Instance != null && Field.InWater(ground) ? 0.08f : 0f;
+            transform.position = ground + Vector3.up * (elevation - sink);
+            if (ysort != null) ysort.heightOffset = elevation - sink;
         }
 
         // ------------------------------------------------------------------ sorgular
@@ -480,7 +482,7 @@ namespace ToyKingdom
             Vector3 move = Vector3.zero;
             if (dist > stopDistance)
             {
-                float speed = Data.moveSpeed * (chase ? 1f : Squad.SpeedFactor(this));
+                float speed = Data.moveSpeed * (chase ? 1f : Squad.SpeedFactor(this)) * Field.SpeedAt(ground);
                 move = to / dist * Mathf.Min(speed * Time.deltaTime, dist - stopDistance * 0.5f);
             }
 
