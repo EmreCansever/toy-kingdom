@@ -527,6 +527,8 @@ namespace ToyKingdom
                 result.goldEarned = Mathf.RoundToInt(Castle.goldReward * (0.5f + 0.25f * (result.stars - 1)) * 0.6f);
                 SaveSystem.Data.gold += result.goldEarned;
                 SaveSystem.Data.Conquer(Castle.cityId);
+                var won = SaveSystem.Data.State(Castle.cityId);
+                won.stars = Mathf.Max(won.stars, result.stars);
                 // düşman askerleri kaçar
                 foreach (var sq in EnemySquads)
                     foreach (var m in sq.Members.ToArray())

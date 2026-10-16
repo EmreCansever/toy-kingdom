@@ -224,6 +224,14 @@ namespace ToyKingdom
         /// <summary>Bir şehre en fazla kaç takviye bölüğü bırakılabilir: 2, her Sur seviyesi +1.</summary>
         public static int GarrisonCap(CityState c) => 2 + (c != null ? c.walls : 0);
 
+        /// <summary>Fetihlerde kazanılan yıldızların toplamı (her şehrin en iyisi).</summary>
+        public int TotalStars()
+        {
+            int n = 0;
+            foreach (var c in cities) n += Mathf.Clamp(c.stars, 0, 3);
+            return n;
+        }
+
         public int TotalArmy()
         {
             int total = 0;

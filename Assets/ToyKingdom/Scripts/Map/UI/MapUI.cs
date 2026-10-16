@@ -11,6 +11,7 @@ namespace ToyKingdom
     {
         MapController map;
         TMP_Text goldText;
+        TMP_Text starText;
         TMP_Text kingdomText;
         TMP_Text incomeText;
         TMP_Text repText;
@@ -74,6 +75,20 @@ namespace ToyKingdom
             var repBtn = rep.gameObject.AddComponent<Button>();
             repBtn.transition = Selectable.Transition.None;
             repBtn.onClick.AddListener(() => Hint("İtibar " + Mathf.RoundToInt(SaveSystem.Data.reputation) + ": " + Reputation.Effects()));
+
+            // itibarın yanında: fetihlerde kazanılan yıldızlar
+            var starBox = UIFactory.Chip(t, "Stars", new Vector2(150f, 54f));
+            UIFactory.Place(starBox.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(414f, -154f), new Vector2(150f, 54f));
+            var starIcon = UIFactory.Panel(starBox.transform, "Icon", UIFactory.Hex("FFD36E"), GameArt.Instance != null ? GameArt.Instance.star : null);
+            UIFactory.Place(starIcon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(32f, 1f), new Vector2(38f, 38f));
+            starIcon.raycastTarget = false;
+            starIcon.preserveAspect = true;
+            starText = UIFactory.Text(starBox.transform, "Value", "0", 28f, Color.white, TextAlignmentOptions.Left, true);
+            UIFactory.Stretch(starText.rectTransform, 60f, 0f, 12f, 0f);
+            starText.textWrappingMode = TextWrappingModes.NoWrap;
+            var starBtn = starBox.gameObject.AddComponent<Button>();
+            starBtn.transition = Selectable.Transition.None;
+            starBtn.onClick.AddListener(() => Hint("Fetih yıldızları: " + SaveSystem.Data.TotalStars() + ". Kaleyi hızlı al (+1) ve hiç bölük kaybetme (+1); her şehirde en iyi sonucun sayılır."));
 
             // sol: vezirin görevi (dokununca küçülür/büyür)
             questCard = UIFactory.Chip(t, "Quest", new Vector2(560f, 160f), 22f);
@@ -187,6 +202,7 @@ namespace ToyKingdom
         public void RefreshTop()
         {
             if (goldText != null) goldText.text = SaveSystem.Data.gold.ToString("N0");
+            if (starText != null) starText.text = SaveSystem.Data.TotalStars().ToString();
             if (incomeText != null && map != null)
             {
                 int inc = map.IncomePerMinute();

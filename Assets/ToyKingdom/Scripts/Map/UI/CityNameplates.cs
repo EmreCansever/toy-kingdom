@@ -54,6 +54,7 @@ namespace ToyKingdom
             p.name = UIFactory.Text(bg.transform, "Name", city.DisplayName, 36f, Color.white, TextAlignmentOptions.Left, true);
             UIFactory.Place(p.name.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(54f, -4f), new Vector2(460f, 52f));
             p.name.textWrappingMode = TextWrappingModes.NoWrap;
+            if (UIFactory.LabelShadow != null) p.name.fontSharedMaterial = UIFactory.LabelShadow;
 
             p.status = UIFactory.Text(bg.transform, "Status", "", 25f, new Color(1f, 1f, 1f, 0.82f), TextAlignmentOptions.Left);
             UIFactory.Place(p.status.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 9f), new Vector2(460f, 36f));
@@ -65,7 +66,7 @@ namespace ToyKingdom
             for (int i = 0; i < 5; i++)
             {
                 var pip = UIFactory.Rounded(p.pips, "Pip" + i, Color.white, 7f);
-                UIFactory.Place(pip.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(i * 22f, 0f), new Vector2(15f, 15f));
+                UIFactory.Place(pip.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(i * 22f, 0f), new Vector2(17f, 17f));
                 pip.raycastTarget = false;
             }
 
@@ -102,20 +103,25 @@ namespace ToyKingdom
             p.dot.color = col;
             p.name.text = c.DisplayName;
             p.status.text = text;
-            p.status.color = c.Status == CityStatus.Rebel || c.Status == CityStatus.Warning || c.Status == CityStatus.Threat || c.Status == CityStatus.Rival ? col : new Color(1f, 1f, 1f, 0.78f);
+            // renkli durum yazısı biraz beyaza çekilir: koyu zeminde göz yormaz, kum ve karda da okunur
+            Color soft = Color.Lerp(col, Color.white, 0.3f);
+            p.status.color = c.Status == CityStatus.Rebel || c.Status == CityStatus.Warning || c.Status == CityStatus.Threat || c.Status == CityStatus.Rival ? soft : new Color(1f, 1f, 1f, 0.9f);
 
             bool enemy = c.Status == CityStatus.Attackable || c.Status == CityStatus.Far || c.Status == CityStatus.Rebel || c.Status == CityStatus.Rival;
             p.pips.gameObject.SetActive(enemy && c.Difficulty > 0);
             for (int i = 0; i < p.pips.childCount; i++)
             {
                 var img = p.pips.GetChild(i).GetComponent<Image>();
-                img.color = i < c.Difficulty ? col : new Color(1f, 1f, 1f, 0.18f);
+                // uzak şehirlerin gri noktası koyu zeminde kayboluyordu: dolu noktalar açık, boşlar belirgin
+                Color on = c.Status == CityStatus.Far ? UIFactory.Hex("E3E7EE") : soft;
+                img.color = i < c.Difficulty ? on : new Color(1f, 1f, 1f, 0.26f);
             }
 
             float w = Mathf.Max(p.name.GetPreferredValues(c.DisplayName).x + 80f,
                 p.status.GetPreferredValues(text).x + 50f + (p.pips.gameObject.activeSelf ? 128f : 0f));
             p.rt.sizeDelta = new Vector2(Mathf.Clamp(w, 210f, 640f), 96f);
-            p.bg.color = c.Status == CityStatus.Far ? new Color(0.09f, 0.11f, 0.17f, 0.62f) : UIFactory.Glass;
+            // plaka hemen hemen opak: açık renkli çöl ve kar zemininde de yazılar okunur
+            p.bg.color = c.Status == CityStatus.Far ? new Color(0.19f, 0.21f, 0.27f, 1f) : new Color(0.08f, 0.1f, 0.16f, 1f);
         }
 
         void LateUpdate()
@@ -125,6 +131,7 @@ namespace ToyKingdom
             // uzaklaştıkça küçül, yakınlaştıkça biraz büyü
             float scale = Mathf.Clamp(3.6f / cam.orthographicSize, 0.8f, 1.15f);
             Vector2 half = canvasRt.rect.size * 0.5f;
+            shown.Clear();
             foreach (var p in plates)
             {
                 if (p.city == null) continue;
@@ -137,6 +144,40 @@ namespace ToyKingdom
                 p.rt.anchorMin = p.rt.anchorMax = new Vector2(0.5f, 0.5f);
                 p.rt.anchoredPosition = local;
                 p.rt.localScale = Vector3.one * scale;
+                shown.Add(p);
+            }
+            Declutter(scale);
+        }
+
+        readonly List<Plate> shown = new List<Plate>();
+
+        /// <summary>Birbirine yakın şehirlerin plakaları üst üste binmesin: üstteki plaka yukarı itilir.</summary>
+        void Declutter(float scale)
+        {
+            shown.Sort((a, b) => a.rt.anchoredPosition.y.CompareTo(b.rt.anchoredPosition.y));
+            const float gap = 6f;
+            for (int i = 1; i < shown.Count; i++)
+            {
+                var a = shown[i];
+                for (int pass = 0; pass < 3; pass++)
+                {
+                    bool moved = false;
+                    for (int j = 0; j < i; j++)
+                    {
+                        var b = shown[j];
+                        Vector2 pa = a.rt.anchoredPosition, pb = b.rt.anchoredPosition;
+                        float wa = a.rt.sizeDelta.x * scale, wb = b.rt.sizeDelta.x * scale;
+                        float ha = a.rt.sizeDelta.y * scale, hb = b.rt.sizeDelta.y * scale;
+                        bool overlapX = Mathf.Abs(pa.x - pb.x) < (wa + wb) * 0.5f;
+                        bool overlapY = pa.y < pb.y + hb + gap && pb.y < pa.y + ha;
+                        if (overlapX && overlapY)
+                        {
+                            a.rt.anchoredPosition = new Vector2(pa.x, pb.y + hb + gap);
+                            moved = true;
+                        }
+                    }
+                    if (!moved) break;
+                }
             }
         }
     }

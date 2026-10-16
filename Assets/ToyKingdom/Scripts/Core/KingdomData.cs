@@ -77,6 +77,8 @@ namespace ToyKingdom
         public string owner = "";
         /// <summary>Şehre takviye olarak bırakılan bölük sayısı (rakip saldırılarına karşı savunma).</summary>
         public int garrison;
+        /// <summary>Bu şehri fethederken alınan en iyi yıldız (0-3).</summary>
+        public int stars;
         public CityPolicy policy = CityPolicy.None;
         /// <summary>Bir sonraki asker toplama zamanı (UTC ticks).</summary>
         public long levyReadyTicks;
