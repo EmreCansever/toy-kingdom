@@ -42,6 +42,7 @@ namespace ToyKingdom
             var offlineReport = Simulate(false);
             RefreshAll();
             CityNameplates.Create(cities);
+            coach = Coach.Create();
             ui.BuildRivals();
 
             MapCity start = Find(SaveSystem.Data.heroCityId);
@@ -361,6 +362,71 @@ namespace ToyKingdom
             return dist.TryGetValue(target, out int d) ? d : -1;
         }
 
+        Coach coach;
+
+        static Vector3 CityPoint(MapCity c) => Vector3.Lerp(c.doorPoint, c.LabelAnchor, 0.35f);
+
+        /// <summary>Öğretici adımına göre dokunulacak yeri gösterir (görev kartı gizlenmişse göstermez).</summary>
+        void UpdateCoach()
+        {
+            if (coach == null) return;
+            var d = SaveSystem.Data;
+            var step = Tutorial.Current(d);
+            if (step == null || ui.Paused || SettingsPanel.Get(SettingsPanel.QuestKey, false) || hero.IsMoving) { coach.Hide(); return; }
+            var panel = ui.CityPanelView;
+            bool modal = ui.IsModalOpen;
+            switch (step.title)
+            {
+                case "İlk fetih":
+                {
+                    if (ui.AttackOpen)
+                    {
+                        if (ui.AttackButton != null) coach.PointRect(ui.AttackButton, "Saldır'a bas: savaş başlasın");
+                        else coach.Hide();
+                        return;
+                    }
+                    if (modal) { coach.Hide(); return; }
+                    MapCity best = null;
+                    foreach (var c in cities)
+                        if (CanAttack(c) && !c.IsRebel && (best == null || c.Difficulty < best.Difficulty)) best = c;
+                    if (best != null) coach.PointWorld(CityPoint(best), "Bu şehre dokun: kahramanın oraya yürür");
+                    else coach.Hide();
+                    return;
+                }
+                case "Bir vali ata":
+                    if (panel != null) { if (panel.HireButton != null) coach.PointRect(panel.HireButton, "Bir aday seç ve vali yap"); else coach.Hide(); return; }
+                    PointOwned(modal, c => !d.State(c.CityId).hasGovernor, "Fethettiğin şehre dokun");
+                    return;
+                case "Valinin gönlünü kazan":
+                    if (panel != null) { if (panel.GiftButton != null) coach.PointRect(panel.GiftButton, "Hediye gönder: sadakat artar"); else coach.Hide(); return; }
+                    PointOwned(modal, c => d.State(c.CityId).hasGovernor, "Valili şehrine dokun");
+                    return;
+                case "Halkı yatıştır":
+                    if (panel != null) { if (panel.FeastButtonRect != null) coach.PointRect(panel.FeastButtonRect, "Ziyafet ver ya da vergiyi düşür"); else coach.Hide(); return; }
+                    PointOwned(modal, c => true, "Şehrine dokun: halkın huzurunu gör");
+                    return;
+                case "Ordunu büyüt": PointButton(modal, "ArmyButton", "Ordu'ya dokun ve bir bölük al"); return;
+                case "Yola devriye koy": PointButton(modal, "TradeButton", "Ticaret'e dokun, bir yol seç ve + ile devriye koy"); return;
+                case "Vezirin mektubunu cevapla": PointButton(modal, "LettersButton", "Mektuplar'ı aç ve vezire cevap ver"); return;
+                case "Komşu krallarla tanış": PointButton(modal, "DiplomacyButton", "Diplomasi'den bir krala hediye gönder"); return;
+                default: coach.Hide(); return;
+            }
+        }
+
+        void PointOwned(bool modal, Func<MapCity, bool> want, string msg)
+        {
+            if (modal) { coach.Hide(); return; }
+            foreach (var c in cities)
+                if (c.IsConquered && !c.isHomeCity && want(c)) { coach.PointWorld(CityPoint(c), msg); return; }
+            coach.Hide();
+        }
+
+        void PointButton(bool modal, string name, string msg)
+        {
+            var rt = modal ? null : ui.FindUI(name);
+            if (rt != null) coach.PointRect(rt, msg); else coach.Hide();
+        }
+
         long lastFrameTicks;
 
         void Update()
@@ -414,6 +480,7 @@ namespace ToyKingdom
                     if (!c.isHomeCity && c.IsConquered && c.State.revoltTimer >= 0f) c.RefreshVisual(false);
             }
 
+            UpdateCoach();
             rig.inputEnabled = !ui.IsModalOpen;
             if (!rig.TryConsumeTap(out Vector3 world)) return;
             if (hero.IsMoving) return;

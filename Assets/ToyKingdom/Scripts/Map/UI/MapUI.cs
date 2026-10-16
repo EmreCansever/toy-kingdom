@@ -271,6 +271,12 @@ namespace ToyKingdom
 
         public void ShowCity(MapCity city) => cityPanel.Show(city);
 
+        // öğretici işaretçisi için
+        public bool AttackOpen => attack != null && attack.IsOpen;
+        public RectTransform AttackButton => attack != null ? attack.AttackButtonRect : null;
+        public CityPanel CityPanelView => cityPanel != null && cityPanel.IsOpen ? cityPanel : null;
+        public RectTransform FindUI(string name) => canvasT != null ? canvasT.Find(name) as RectTransform : null;
+
         public void ShowTrade(string roadKey) => tradePanel.Open(roadKey);
 
         public void ShowLetter(Letter l)

@@ -23,6 +23,7 @@ namespace ToyKingdom
         Action onAttack;
 
         public bool IsOpen => root != null && root.activeSelf;
+        public RectTransform AttackButtonRect => attackButton != null && attackButton.interactable ? (RectTransform)attackButton.transform : null;
 
         const float W = 920f, H = 760f;
 
