@@ -17,6 +17,11 @@ namespace ToyKingdom
         Action<string> toast;
 
         public bool IsOpen => root != null && root.activeSelf;
+        public MapCity City => city;
+        /// <summary>Öğreticinin işaret ettiği düğmeler (panel açıkken; yoksa null).</summary>
+        public RectTransform HireButton { get; private set; }
+        public RectTransform GiftButton { get; private set; }
+        public RectTransform FeastButtonRect { get; private set; }
 
         static readonly Color Bad = UIFactory.Red;
         static readonly Color Good = UIFactory.Green;
@@ -75,6 +80,7 @@ namespace ToyKingdom
         void Rebuild()
         {
             for (int i = content.childCount - 1; i >= 0; i--) Destroy(content.GetChild(i).gameObject);
+            HireButton = GiftButton = FeastButtonRect = null;
             var data = SaveSystem.Data;
             var s = data.State(city.CityId);
             bool home = city.isHomeCity;
@@ -132,6 +138,7 @@ namespace ToyKingdom
                     int cost = KingdomSim.HireCost(g);
                     var btn = Btn(row.transform, "Ata\n" + cost + " altın", UIFactory.Blue, new Vector2(-14f, 0f), new Vector2(190f, 115f), 28f, true);
                     btn.interactable = SaveSystem.Data.gold >= cost;
+                    if (HireButton == null && btn.interactable) HireButton = (RectTransform)btn.transform;
                     var chosen = g;
                     btn.onClick.AddListener(() =>
                     {
@@ -159,9 +166,11 @@ namespace ToyKingdom
             int giftCost = KingdomSim.GiftCost(gov);
             var gift = Btn(col, "Hediye gönder  (" + giftCost + ")\nSadakat +15", UIFactory.Green, new Vector2(16f, -280f), new Vector2(660f, 100f), 28f);
             gift.interactable = SaveSystem.Data.gold >= giftCost && gov.loyalty < 100f;
+            GiftButton = (RectTransform)gift.transform;
             gift.onClick.AddListener(() =>
             {
                 if (!Pay(giftCost)) return;
+                SaveSystem.Data.SetFlag(Tutorial.FlagGift);
                 gov.loyalty = Mathf.Min(100f, gov.loyalty + 15f);
                 if (s.revoltTimer >= 0f) Reputation.Change(SaveSystem.Data, -4f, "İsyana hazırlanan valiye rüşvet verdin");
                 Done(gov.name + " hediyeni memnuniyetle kabul etti");
@@ -259,10 +268,12 @@ namespace ToyKingdom
             string label = ready ? "Ziyafet ver  (" + cost + ")" : "Ziyafet  " + Mathf.CeilToInt((s.feastReadyTicks - now) / (float)TimeSpan.TicksPerMinute) + " dk";
             var b = Btn(row, label, s.revoltTimer >= 0f ? UIFactory.Red : UIFactory.Green, new Vector2(-12f, 0f), new Vector2(270f, 60f), 24f, true);
             b.interactable = ready && s.unrest > 1f;
+            FeastButtonRect = (RectTransform)b.transform;
             b.onClick.AddListener(() =>
             {
                 var data = SaveSystem.Data;
                 if (data.gold < cost) { toast?.Invoke("Yeterli altın yok"); return; }
+                data.SetFlag(Tutorial.FlagCalm);
                 data.gold -= cost;
                 if (s.revoltTimer >= 0f) Reputation.Change(data, -4f, "Ayaklanmayı son anda ziyafetle satın aldın");
                 s.unrest = Mathf.Max(0f, s.unrest - KingdomSim.FeastRelief);

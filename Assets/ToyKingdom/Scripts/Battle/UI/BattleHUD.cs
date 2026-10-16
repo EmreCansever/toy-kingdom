@@ -213,6 +213,7 @@ namespace ToyKingdom
         {
             if (bm == null) return;
             UpdateRing();
+            UpdateCoach();
             if (bm.Command != null)
             {
                 commandText.text = Mathf.FloorToInt(bm.Command.Current) + "/" + bm.Command.Max;
@@ -274,6 +275,38 @@ namespace ToyKingdom
             }
         }
     
+        Coach coach;
+        float firstDeployAt = -1f;
+
+        /// <summary>İlk fetihte savaşın nasıl oynandığını adım adım gösterir.</summary>
+        void UpdateCoach()
+        {
+            var d = SaveSystem.Data;
+            bool firstWar = d.tutorialStep == 0 && d.conqueredCities.Count == 0 && !SettingsPanel.Get(SettingsPanel.QuestKey, false);
+            if (!firstWar || bm.State != BattleState.Playing || retreatAsk != null) { if (coach != null) coach.Hide(); return; }
+            if (coach == null) coach = Coach.Create("BattleCoach");
+
+            var gate = bm.Field != null && bm.Field.Gates.Count > 0 ? bm.Field.Gates[0] : null;
+            if (bm.PlayerSquads.Count == 0 && firstDeployAt < 0f)
+            {
+                if (bm.SelectedUnit == null)
+                {
+                    var card = cards.Count > 0 ? (RectTransform)cards[0].transform : null;
+                    if (card != null) coach.PointRect(card, "Bir bölük kartına dokun");
+                    return;
+                }
+                if (gate == null) { coach.Hide(); return; }
+                Vector3 g = gate.transform.position;
+                Vector3 start = bm.Field.NearestDeployPoint(g);
+                coach.PointPath(start, Vector3.Lerp(start, g, 0.85f), "Parlak alandan başlayıp parmağınla kapıya doğru rota çiz");
+                return;
+            }
+            if (firstDeployAt < 0f) firstDeployAt = Time.time;
+            if (Time.time - firstDeployAt < 6f && gate != null)
+                coach.PointWorld(gate.transform.position, "Bölükler kapıyı kıracak. Komuta puanı doldukça yeni bölük gönder");
+            else coach.Hide();
+        }
+
         GameObject retreatAsk;
         float timeBeforeAsk = 1f;
 

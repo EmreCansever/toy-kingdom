@@ -20,7 +20,11 @@ namespace ToyKingdom
         }
 
         // olay bayrakları (kayıtta): oyuncunun yaptığı ama durumdan anlaşılmayan şeyler
-        public const string FlagBought = "bought", FlagAnswered = "answered", FlagDiplomacy = "diplomacy", FlagIntro = "intro";
+        public const string FlagBought = "bought", FlagAnswered = "answered", FlagDiplomacy = "diplomacy", FlagIntro = "intro",
+            FlagGift = "gift", FlagCalm = "calm";
+
+        /// <summary>Görev listesinin sürümü: eski kayıtlar yeni eklenen görevlere göre kaydırılır.</summary>
+        const int Version = 2;
 
         static int Owned(SaveData d)
         {
@@ -38,11 +42,17 @@ namespace ToyKingdom
         public static readonly Step[] Steps =
         {
             new Step { title = "İlk fetih", reward = 150,
-                how = "Başkentine yolla bağlı bir şehre dokun, kahramanın oraya yürüsün. Saldır'a bas, bölük kartı seç ve parmağınla kaleye rota çiz.",
+                how = "Parlayan halkayı takip et: yolla bağlı şehre dokun, kahraman oraya yürüsün. Saldır'a bas; savaşta bir bölük kartı seç ve parmağınla kapıya rota çiz.",
                 done = d => Owned(d) >= 1 },
             new Step { title = "Bir vali ata", reward = 100,
-                how = "Fethettiğin şehre dokun ve adaylardan birini vali yap. Valisiz şehir hızla huzursuzlanır.",
+                how = "Fethettiğin şehre dokun ve adaylardan birini vali yap. Valisiz şehir hızla huzursuzlanır; güçlü vali halkı yatıştırır ama hırslı olur.",
                 done = d => Any(d, c => c.hasGovernor) },
+            new Step { title = "Valinin gönlünü kazan", reward = 80,
+                how = "Valinin sadakati zamanla düşer; sıfıra inerse isyan eder. Valili şehrine dokun ve hediye gönder. Valiyi azletmek diğer valileri de ürkütür.",
+                done = d => d.HasFlag(FlagGift) },
+            new Step { title = "Halkı yatıştır", reward = 80,
+                how = "Huzursuzluk 100'e varırsa halk ayaklanır. Şehrine dokun: ziyafet ver, vergiyi düşür ya da Huzur kararnamesi çıkar.",
+                done = d => d.HasFlag(FlagCalm) || Any(d, c => c.cityId != "home" && (c.tax == TaxLevel.Low || c.policy == CityPolicy.Peace)) },
             new Step { title = "Ordunu büyüt", reward = 80, highlight = "ArmyButton",
                 how = "Sağ üstteki Ordu düğmesinden bir bölük satın al. Her bölük maaş alır, ordunu hazinene göre büyüt.",
                 done = d => d.HasFlag(FlagBought) },
@@ -53,7 +63,7 @@ namespace ToyKingdom
                 how = "Şehir panelinde Ticaret, Askeri ya da Huzur kararnamesinden birini seç. Her biri bir şey verir, bir şey alır.",
                 done = d => Any(d, c => c.policy != CityPolicy.None) },
             new Step { title = "Yola devriye koy", reward = 100, highlight = "TradeButton",
-                how = "Ticaret düğmesine bas, bir yol seç ve + ile bir bölüğü devriyeye ver. Güvenli yolda kervanlar soyulmaz.",
+                how = "Şehirlerin arasında kervanlar gider gelir; yol güvensizse eşkıya keser. Ticaret'e bas, bir yol seç ve + ile bir bölüğü devriyeye ver. Güvenli yol isyanı da azaltır.",
                 done = d => d.roads.Exists(r => r.active && r.PatrolCount() > 0) },
             new Step { title = "Vezirin mektubunu cevapla", reward = 80, highlight = "LettersButton",
                 how = "Mektuplar'dan cevap bekleyen bir mektubu aç ve bir seçenek seç. Cevapsız kalan mektup itibarını düşürür.",
@@ -71,6 +81,12 @@ namespace ToyKingdom
         /// <summary>Geçerli görev tamamlandıysa ödülü verir, sıradakine geçer ve haberi döndürür (her çağrıda en fazla bir görev).</summary>
         public static string Check(SaveData d)
         {
+            if (d.tutorialVersion < Version)
+            {
+                // ikinci sürümde 3. ve 4. sıraya iki görev eklendi: eski kayıt ilerideyse kaydır
+                if (d.tutorialStep >= 2) d.tutorialStep += 2;
+                d.tutorialVersion = Version;
+            }
             if (!d.HasFlag(FlagIntro))
             {
                 d.SetFlag(FlagIntro);
