@@ -562,6 +562,9 @@ namespace ToyKingdom
                 return new KingdomSim.TickReport();
             }
 
+            // oyun kapalıyken dünya durur: sadece çok az pasif gelir gelir (savaş dönüşü gibi kısa aralar hariç)
+            if (!online && minutes > BattleGapMinutes) return Away(data, now);
+
             long cap = (long)(maxOfflineHours * 60f);
             int run = (int)Math.Min(minutes, cap);
             var infos = Infos();
@@ -575,6 +578,46 @@ namespace ToyKingdom
             data.lastIncomeTicks = minutes > cap ? now : data.lastIncomeTicks + minutes * TimeSpan.TicksPerMinute;
             SaveSystem.Save();
             return rep;
+        }
+
+        const int BattleGapMinutes = 6;
+        const float AwayIncomeShare = 0.05f;
+        const int AwayCapMinutes = 240;
+
+        /// <summary>Uzun aradan dönüş: geçen süre için gelirin yalnızca %5'i (en fazla 4 saatlik), dünya kaldığı yerden devam eder.</summary>
+        KingdomSim.TickReport Away(SaveData data, long now)
+        {
+            long delta = now - data.lastIncomeTicks;
+            int mins = (int)Math.Min(delta / TimeSpan.TicksPerMinute, AwayCapMinutes);
+            int gain = Mathf.Max(0, Mathf.RoundToInt(IncomePerMinute() * AwayIncomeShare * mins));
+            data.gold += gain;
+            Clock.Shift(data, delta); // mektuplar, saldırılar, kervanlar, bekleme süreleri: hepsi durdu
+            data.lastIncomeTicks = now;
+            lastFrameTicks = now;
+            SaveSystem.Save();
+            var rep = new KingdomSim.TickReport();
+            rep.gold = gain;
+            return rep;
+        }
+
+        long backgroundTicks;
+
+        /// <summary>Telefonda uygulama arka plana atılınca da dünya durur.</summary>
+        void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                backgroundTicks = DateTime.UtcNow.Ticks;
+                SaveSystem.Save();
+                return;
+            }
+            if (backgroundTicks <= 0) return;
+            long gap = DateTime.UtcNow.Ticks - backgroundTicks;
+            backgroundTicks = 0;
+            if (gap < BattleGapMinutes * TimeSpan.TicksPerMinute) return;
+            var rep = Simulate(false);
+            if (rep.gold > 0) ui.Toast("Yokken krallığın " + rep.gold + " altın kazandı", MapUI.Level.Info);
+            RefreshAll();
         }
 
         public void RefreshAll()
@@ -599,11 +642,6 @@ namespace ToyKingdom
         }
 
         public int CityCount => cities != null ? cities.Length : 0;
-
-        void OnApplicationPause(bool paused)
-        {
-            if (paused) SaveSystem.Save();
-        }
 
         void OnApplicationQuit() => SaveSystem.Save();
     }

@@ -181,12 +181,19 @@ namespace ToyKingdom
                 });
             }
 
-            var fire = Btn(col, "Azlet\nHuzursuzluk +10", UIFactory.Red, new Vector2(16f, -510f), new Vector2(660f, 100f), 26f);
+            bool traitor = s.revoltTimer >= 0f;
+            float othersHit = traitor ? 4f : 8f;
+            var fire = Btn(col, "Azlet\nHuzursuzluk +15 · diğer valiler -" + othersHit + " sadakat", UIFactory.Red, new Vector2(16f, -510f), new Vector2(660f, 100f), 24f);
             fire.onClick.AddListener(() =>
             {
+                var data = SaveSystem.Data;
                 s.hasGovernor = false;
                 s.candidateSeed++;
-                s.unrest = Mathf.Min(100f, s.unrest + 10f);
+                s.unrest = Mathf.Min(100f, s.unrest + 15f);
+                // valiler birbirini duyar: sebepsiz azil hepsini ürkütür, yeni adaylar da çekingen gelir
+                foreach (var o in data.cities)
+                    if (o != s && o.hasGovernor && data.Holds(o)) o.governor.loyalty = Mathf.Max(0f, o.governor.loyalty - othersHit);
+                data.dismissStain += traitor ? 0.5f : 1f;
                 Reputation.Change(SaveSystem.Data, s.revoltTimer >= 0f ? 1f : -2f, s.revoltTimer >= 0f ? "Hain valiyi zamanında azlettin" : "Valini sebepsiz azlettin");
                 Done(gov.name + " görevden alındı");
             });

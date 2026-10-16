@@ -21,6 +21,9 @@ namespace ToyKingdom
 
         public bool CanAfford(int cost) => Current >= cost;
 
+        /// <summary>Savaş sandığından komuta puanı (en fazla doluluk sınırına kadar).</summary>
+        public void Add(float n) => Current = Mathf.Min(Max, Current + n);
+
         public bool TrySpend(int cost)
         {
             if (!CanAfford(cost)) return false;

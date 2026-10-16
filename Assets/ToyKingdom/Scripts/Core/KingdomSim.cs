@@ -23,7 +23,15 @@ namespace ToyKingdom
         public const float FeastCooldownMinutes = 6f;
 
         /// <summary>Bir bölüğün dükkân fiyatı.</summary>
-        public static int UnitPrice(UnitData u) => u == null ? 0 : Mathf.RoundToInt(u.goldPrice * 2.2f / 10f) * 10;
+        public static int UnitPrice(UnitData u) => u == null ? 0 : Mathf.RoundToInt(u.goldPrice * 2.2f * ArmyPriceMult() / 10f) * 10;
+
+        /// <summary>Ordu büyüdükçe asker bulmak zorlaşır: ilk 6 bölükten sonra her bölük fiyatı %5 artırır.</summary>
+        public static float ArmyPriceMult()
+        {
+            var d = SaveSystem.Data;
+            int used = d != null ? d.UsedCapacity() + d.GarrisonTotal() : 0;
+            return 1f + 0.05f * Mathf.Max(0, used - 6);
+        }
 
         // ------------------------------------------------------------------ tanımlar
 
@@ -105,10 +113,17 @@ namespace ToyKingdom
                     trait = trait,
                     power = Mathf.Min(5, powers[i] + Reputation.CandidatePowerBonus()),
                     loyalty = Mathf.Clamp((trait == GovernorTrait.Loyal ? 80f + rnd.Next(15) : trait == GovernorTrait.Ambitious ? 45f + rnd.Next(15) : 55f + rnd.Next(25))
-                        + Reputation.CandidateLoyaltyBonus(), 20f, 100f)
+                        + Reputation.CandidateLoyaltyBonus() - DismissLoyaltyPenalty(), 15f, 100f)
                 });
             }
             return list;
+        }
+
+        /// <summary>Valilerini sık azleden hükümdara gelen adaylar baştan çekingendir.</summary>
+        public static float DismissLoyaltyPenalty()
+        {
+            var d = SaveSystem.Data;
+            return d == null ? 0f : Mathf.Min(30f, 8f * d.dismissStain);
         }
 
         public static int HireCost(Governor g) => 100 * g.power;
@@ -158,7 +173,7 @@ namespace ToyKingdom
         /// <summary>Huzursuzluğun dakikalık değişimi (artı = kötüleşiyor).</summary>
         public static float UnrestRate(CityState s)
         {
-            float r = s.tax == TaxLevel.Low ? -1.2f : s.tax == TaxLevel.High ? 1.6f : 0.35f;
+            float r = s.tax == TaxLevel.Low ? -0.9f : s.tax == TaxLevel.High ? 1.6f : 0.4f;
             if (!s.hasGovernor) r += 0.6f;
             else
             {
@@ -166,14 +181,22 @@ namespace ToyKingdom
                 if (s.governor.trait == GovernorTrait.Just) r -= 0.4f;
                 if (s.governor.trait == GovernorTrait.Cruel) r -= 0.7f;
             }
-            r -= 0.4f * s.temple + 0.25f * s.barracks + 0.1f * s.walls;
+            r -= 0.3f * s.temple + 0.2f * s.barracks + 0.1f * s.walls;
             if (s.policy == CityPolicy.Trade) r += 0.25f;
-            if (s.policy == CityPolicy.Peace) r -= 0.7f;
+            if (s.policy == CityPolicy.Peace) r -= 0.5f;
+            // geniş krallık yönetmesi zor: ikinci şehirden sonra her şehir tüm şehirlere biraz huzursuzluk ekler
+            var d = SaveSystem.Data;
+            if (d != null) r += 0.06f * Mathf.Max(0, d.conqueredCities.Count - 2);
             // yolların güvenliği: eşkıya baskını halkı korkutur, güvenli yollar refah getirir
             r += Trade.UnrestEffect(SaveSystem.Data, s.cityId);
             r += Reputation.UnrestEffect();
+            // huzur kolay kalıcı olmaz: huzursuzluk düştükçe daha da düşürmek zorlaşır
+            if (r < 0f) r *= Mathf.Lerp(0.3f, 1f, Mathf.Clamp01(s.unrest / 40f));
             return r;
         }
+
+        /// <summary>Huzursuzluğun inemeyeceği taban: krallık büyüdükçe hiçbir şehir tam huzurlu olmaz.</summary>
+        public static float UnrestFloor(SaveData d) => d == null ? 0f : Mathf.Min(30f, 4f + 3f * d.conqueredCities.Count);
 
         /// <summary>Vali sadakatinin dakikalık değişimi. Güçlü valiler daha hırslıdır.</summary>
         public static float LoyaltyRate(CityState s)
@@ -216,7 +239,18 @@ namespace ToyKingdom
                 rep.gold += Income(s, c.baseIncome, c.home) * minutes;
                 if (c.home || s.rebel != RebelState.None) continue;
 
-                s.unrest = Mathf.Clamp(s.unrest + UnrestRate(s) * minutes, 0f, 100f);
+                float rate = UnrestRate(s);
+                float floor = UnrestFloor(data);
+                float next = s.unrest + rate * minutes;
+                if (rate < 0f) next = Mathf.Max(next, Mathf.Min(s.unrest, floor)); // tabanın altına iyileşmez
+                s.unrest = Mathf.Clamp(next, 0f, 100f);
+                // kışkırtıcılar: huzurlu görünen şehirde bile ara sıra halk galeyana gelir
+                if (online && s.unrest < 60f && UnityEngine.Random.value < 0.02f * minutes)
+                {
+                    float spike = UnityEngine.Random.Range(6f, 13f);
+                    s.unrest = Mathf.Min(100f, s.unrest + spike);
+                    rep.messages.Add(c.name + ": kışkırtıcılar halkı galeyana getiriyor (huzursuzluk +" + Mathf.RoundToInt(spike) + ")");
+                }
                 if (s.hasGovernor) s.governor.loyalty = Mathf.Clamp(s.governor.loyalty + LoyaltyRate(s) * minutes, 0f, 100f);
 
                 if (!online)
@@ -281,6 +315,9 @@ namespace ToyKingdom
                     if (s.hasGovernor && s.governor.loyalty >= 40f) s.warnedLoyalty = false;
                 }
             }
+            // azil lekesi zamanla unutulur (yaklaşık 50 dakikada bir azil)
+            if (online && data.dismissStain > 0f) data.dismissStain = Mathf.Max(0f, data.dismissStain - 0.02f * minutes);
+
             // vergi: ağır vergi itibarı yavaşça aşındırır, hafif vergi kazandırır
             if (online)
             {

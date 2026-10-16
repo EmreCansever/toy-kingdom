@@ -13,6 +13,8 @@ namespace ToyKingdom
         Image gateFill;
         TMP_Text gateText;
         TMP_Text commandText;
+        Button buyCmd;
+        TMP_Text buyCmdText;
         Image commandFill;
         TMP_Text hintText;
         float hintTimer;
@@ -104,6 +106,16 @@ namespace ToyKingdom
             commandText = UIFactory.Text(commandFill.transform.parent, "Value", "0/10", 28f, Color.white, TextAlignmentOptions.Center, true);
             UIFactory.Stretch(commandText.rectTransform);
             if (UIFactory.LabelShadow != null) commandText.fontSharedMaterial = UIFactory.LabelShadow;
+
+            // komuta puanının solunda: altınla komuta puanı (savaş sandığı)
+            buyCmd = UIFactory.Button(t, "BuyCommand", "", UIFactory.Gold, 24f);
+            UIFactory.Place((RectTransform)buyCmd.transform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-376f, 16f), new Vector2(210f, 116f));
+            buyCmdText = buyCmd.GetComponentInChildren<TMP_Text>();
+            buyCmd.onClick.AddListener(() =>
+            {
+                if (bm.BuyCommand(out string why)) ShowHint("+" + BattleManager.CommandBuyAmount + " komuta puanı", 1.5f);
+                else if (why != null) ShowHint(why, 1.5f);
+            });
 
             // seçili bölüğe emirler (sağ altta, komuta puanının üstünde)
             var bar = UIFactory.Chip(t, "Orders", new Vector2(700f, 116f), 26f);
@@ -205,6 +217,12 @@ namespace ToyKingdom
             {
                 commandText.text = Mathf.FloorToInt(bm.Command.Current) + "/" + bm.Command.Max;
                 UIFactory.SetBar(commandFill, bm.Command.Current / bm.Command.Max);
+                if (buyCmd != null)
+                {
+                    int cost = bm.CommandBuyCost;
+                    buyCmdText.text = "+" + BattleManager.CommandBuyAmount + " komuta\n<size=80%>" + cost + " altın</size>";
+                    buyCmd.interactable = bm.State == BattleState.Playing && SaveSystem.Data.gold >= cost && bm.Command.Current < bm.Command.Max - 0.5f;
+                }
             }
             int s = Mathf.CeilToInt(bm.TimeLeft);
             timerText.text = (s / 60) + ":" + (s % 60).ToString("00");

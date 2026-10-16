@@ -19,6 +19,26 @@ namespace ToyKingdom
         public CastleData Castle { get; private set; }
         public BattleField Field { get; private set; }
         public CommandPoints Command { get; private set; }
+
+        /// <summary>Bu savaşta altınla kaç kez komuta puanı alındı (her alış pahalanır).</summary>
+        public int CommandBuys { get; private set; }
+        public const int CommandBuyAmount = 5;
+        public int CommandBuyCost => 50 + 30 * CommandBuys;
+
+        /// <summary>Savaş sandığı: altınla anında komuta puanı.</summary>
+        public bool BuyCommand(out string reason)
+        {
+            reason = null;
+            if (State != BattleState.Playing) return false;
+            var d = SaveSystem.Data;
+            if (Command.Current >= Command.Max - 0.5f) { reason = "Komuta puanı zaten dolu"; return false; }
+            if (d.gold < CommandBuyCost) { reason = "Yeterli altın yok"; return false; }
+            d.gold -= CommandBuyCost;
+            CommandBuys++;
+            Command.Add(CommandBuyAmount);
+            Sfx.Coins();
+            return true;
+        }
         public float TimeLeft { get; private set; }
         public BattleState State { get; private set; } = BattleState.Playing;
         public UnitData SelectedUnit { get; private set; }
@@ -118,7 +138,8 @@ namespace ToyKingdom
             }
             foreach (var t in Field.Towers) t.Destroyed += OnTowerDestroyed;
 
-            Command = new CommandPoints(Castle.startingCommandPoints, Castle.maxCommandPoints, Castle.commandRegenPerSecond);
+            // komuta puanı eskisinden %60 hızlı dolar ve 2 puan fazla başlar: zor kalelerde ilk dalgalar gecikmesin
+            Command = new CommandPoints(Castle.startingCommandPoints + 2, Castle.maxCommandPoints, Castle.commandRegenPerSecond * 1.6f);
             TimeLeft = TimeLimit;
             reinforcementTimer = Castle.reinforcementInterval;
             reinforcementsLeft = Castle.reinforcementCount;

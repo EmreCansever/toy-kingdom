@@ -60,8 +60,8 @@ namespace ToyKingdom
         /// <summary>Saldırı ordusunun yolda geçirdiği süre (gerçek dakika). Oyuncuya hazırlanma fırsatı.</summary>
         public const float MarchMinutes = 3f;
         /// <summary>Oyuncu en az bu kadar şehir sahibi olmadan ve bu kadar dakika oynamadan saldırı gelmez.</summary>
-        const int AttackMinCities = 4;
-        const float AttackMinPlayMinutes = 30f;
+        const int AttackMinCities = 3;
+        const float AttackMinPlayMinutes = 20f;
         const float MaxPower = 300f;
         public const float GarrisonDefense = 14f;
         /// <summary>Başkentin savunmasında kullanılan zorluk.</summary>
@@ -161,7 +161,7 @@ namespace ToyKingdom
                     int growMinutes = online ? minutes : Mathf.Min(minutes, 30);
                     // büyüyen ordun komşu kralları tedirgin eder: silahlanırlar ve sana soğurlar
                     float threat = Threat(data, r);
-                    r.power = Mathf.Min(MaxPower, r.power + growMinutes * (1f + 0.08f * income) * (1f + 0.6f * threat));
+                    r.power = Mathf.Min(MaxPower, r.power + growMinutes * (1.4f + 0.11f * income) * (1f + 0.6f * threat));
 
                     // ilişkiler zamanla gergin dengeye (-10) döner
                     float baseline = Reputation.RelationBaseline() - 20f * threat; // itibarlı hükümdara ılımlı, güçlü orduya soğuk
@@ -197,7 +197,7 @@ namespace ToyKingdom
                     r.expandTimer -= minutes;
                     if (r.expandTimer <= 0f)
                     {
-                        r.expandTimer = 7f + UnityEngine.Random.Range(0f, 3f);
+                        r.expandTimer = 5f + UnityEngine.Random.Range(0f, 2.5f);
                         TryExpand(data, cities, r, def, rep);
                     }
 
@@ -286,7 +286,7 @@ namespace ToyKingdom
 
             var tn = Find(cities, target);
             string tname = tn != null ? tn.Value.name : "şehrin";
-            r.attackTimer = 12f + UnityEngine.Random.Range(0f, 6f);
+            r.attackTimer = 10f + UnityEngine.Random.Range(0f, 5f);
 
             if (def.trait == KingTrait.Greedy && UnityEngine.Random.value > def.treachery)
             {

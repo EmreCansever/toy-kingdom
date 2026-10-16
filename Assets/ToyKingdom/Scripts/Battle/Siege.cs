@@ -35,9 +35,9 @@ namespace ToyKingdom
             c.midTowers = original.midTowers || d + tier >= 3;
             c.keep = original.keep || tier >= 1;
 
-            float[] gate = { 1.1f, 1.3f, 1.5f };
+            float[] gate = { 1.15f, 1.35f, 1.55f };
             c.gateHealth = original.gateHealth * gate[tier];
-            float[] str = { 0.6f, 0.75f, 0.9f };
+            float[] str = { 0.66f, 0.82f, 0.97f };
             c.defenderStrength = Mathf.Max(original.defenderStrength, str[tier] + 0.08f * d);
             c.wallArchers = original.wallArchers + tier + (tier == 0 ? 0 : d / 2);
 
@@ -49,7 +49,7 @@ namespace ToyKingdom
 
             if (original.towerData != null)
             {
-                float[] dmg = { 1.05f, 1.2f, 1.3f }, hp = { 1.1f, 1.25f, 1.4f };
+                float[] dmg = { 1.1f, 1.26f, 1.36f }, hp = { 1.15f, 1.3f, 1.45f };
                 var t = Object.Instantiate(original.towerData);
                 t.damage = original.towerData.damage * dmg[tier];
                 t.fireInterval = original.towerData.fireInterval * (tier == 0 ? 1f : 0.9f);

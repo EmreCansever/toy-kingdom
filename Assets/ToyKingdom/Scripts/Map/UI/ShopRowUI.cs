@@ -67,6 +67,7 @@ namespace ToyKingdom
         {
             if (data == null) return;
             int gold = SaveSystem.Data.gold;
+            price = KingdomSim.UnitPrice(data); // ordu büyüdükçe değişir
             var entry = SaveSystem.Data.army.Find(a => a.unitId == data.unitId);
             int vets = 0;
             if (entry != null) { entry.Normalize(); foreach (var x in entry.xp) if (Veterancy.Rank(x) > 0) vets++; }

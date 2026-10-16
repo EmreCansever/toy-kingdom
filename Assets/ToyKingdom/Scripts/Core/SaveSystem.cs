@@ -45,6 +45,8 @@ namespace ToyKingdom
         public void SetFlag(string f) { if (!flags.Contains(f)) flags.Add(f); }
         /// <summary>Hükümdarın itibarı (0-100).</summary>
         public float reputation = 50f;
+        /// <summary>Vali azletme lekesi: her azil artırır, zamanla söner. Diğer valilerin ve yeni adayların sadakatini düşürür.</summary>
+        public float dismissStain;
         public List<string> conqueredCities = new List<string>();
         /// <summary>Birlik türüne göre bölük sayısı.</summary>
         public List<ArmyEntry> army = new List<ArmyEntry>();
