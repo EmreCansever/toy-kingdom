@@ -48,6 +48,11 @@ namespace ToyKingdom
         public float reputation = 50f;
         /// <summary>Vali azletme lekesi: her azil artırır, zamanla söner. Diğer valilerin ve yeni adayların sadakatini düşürür.</summary>
         public float dismissStain;
+        /// <summary>İki rakip kral arasındaki ilişki (-100..100) ve anlaşma (RivalWars.None/War/Alliance).</summary>
+        public float kingsRelation = -5f;
+        public int kingsPact;
+        public float kingsWarTimer = 5f;
+        public float kingsEventTimer = 8f;
         public List<string> conqueredCities = new List<string>();
         /// <summary>Birlik türüne göre bölük sayısı.</summary>
         public List<ArmyEntry> army = new List<ArmyEntry>();

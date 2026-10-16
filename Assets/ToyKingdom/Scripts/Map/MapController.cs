@@ -230,6 +230,7 @@ namespace ToyKingdom
                 case "gift": res = Court.SendGift(data, r); data.SetFlag(Tutorial.FlagDiplomacy); break;
                 case "peace": res = Court.ProposePeace(data, r); data.SetFlag(Tutorial.FlagDiplomacy); break;
                 case "tribute": res = Court.DemandTribute(data, r); break;
+                case "incite": res = RivalWars.Incite(data, r); break;
                 default: res = Court.DeclareWar(data, r); break;
             }
             ui.Toast(res);
@@ -584,6 +585,8 @@ namespace ToyKingdom
             GameSession.SelectedRivalId = city.RivalId;
             var rival = city.RivalId != null ? SaveSystem.Data.Rival(city.RivalId) : null;
             if (rival != null && rival.AtPeace) ui.Toast(Court.DeclareWar(SaveSystem.Data, rival));
+            string allyMsg = RivalWars.OnPlayerAttacked(SaveSystem.Data, rival);
+            if (allyMsg != null) SaveSystem.Data.AddLog(allyMsg, 1);
             SaveSystem.Save();
             SceneManager.LoadScene(battleSceneName);
         }

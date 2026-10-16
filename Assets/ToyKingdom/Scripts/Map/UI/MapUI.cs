@@ -345,7 +345,8 @@ namespace ToyKingdom
                     continue;
                 }
                 int count = RivalAI.OwnedBy(data, r.id).Count;
-                rivalTexts[i].text = def.name + "   " + count + " şehir  ·  güç " + Mathf.RoundToInt(r.power) + (r.Attacking ? "  ·  <color=#FF7A6B>saldırıda</color>" : "");
+                rivalTexts[i].text = def.name + "   " + count + " şehir  ·  güç " + Mathf.RoundToInt(r.power) + (r.Attacking ? "  ·  <color=#FF7A6B>saldırıda</color>" : "") +
+                    (RivalWars.AtWar(data) ? "  ·  <color=#FFD36E>savaşta</color>" : RivalWars.Allied(data) ? "  ·  <color=#FF7A6B>müttefik</color>" : "");
             }
         }
 

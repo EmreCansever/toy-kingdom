@@ -209,6 +209,7 @@ namespace ToyKingdom
                     }
                 }
             }
+            RivalWars.Tick(data, cities, minutes, online, rep);
             ResolveArrivals(data, cities, rep);
         }
 
@@ -250,8 +251,11 @@ namespace ToyKingdom
             // tek başına kalan başkent kuşatılabilir: son kale düşerse taç da düşer
             bool capitalSiege = playerCities == 0 && data.playMinutes >= AttackMinPlayMinutes;
             if (!capitalSiege && (playerCities + 1 < AttackMinCities || data.playMinutes < AttackMinPlayMinutes)) return;
-            // aynı anda yalnızca bir rakip saldırır
-            foreach (var o in data.rivals) if (o != r && o.Attacking) return;
+            // aynı anda yalnızca bir rakip saldırır (müttefikler birlikte saldırabilir)
+            if (!RivalWars.Allied(data))
+                foreach (var o in data.rivals) if (o != r && o.Attacking) return;
+            // birbiriyle savaşan krallar sana pek bakamaz
+            if (RivalWars.AtWar(data) && UnityEngine.Random.value < 0.6f) { r.attackTimer = 6f; return; }
 
             // en zayıf komşu oyuncu şehri (başkent hariç)
             string target = null, from = null;

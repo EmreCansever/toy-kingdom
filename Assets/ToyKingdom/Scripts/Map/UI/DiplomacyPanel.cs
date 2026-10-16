@@ -29,7 +29,8 @@ namespace ToyKingdom
             UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 2f), new Vector2(170f, 68f));
             close.onClick.AddListener(() => p.root.SetActive(false));
             p.strength = UIFactory.Text(header, "Strength", "", 26f, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Right);
-            UIFactory.Place(p.strength.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-220f, 0f), new Vector2(700f, 60f));
+            UIFactory.Place(p.strength.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-220f, 0f), new Vector2(1000f, 60f));
+            p.strength.enableAutoSizing = true; p.strength.fontSizeMin = 18f; p.strength.fontSizeMax = 26f;
             p.content = UIFactory.Rect("Content", box.transform);
             UIFactory.Stretch(p.content, 30f, 30f, 30f, 120f);
             p.root.SetActive(false);
@@ -55,7 +56,8 @@ namespace ToyKingdom
         {
             for (int i = content.childCount - 1; i >= 0; i--) Destroy(content.GetChild(i).gameObject);
             var data = SaveSystem.Data;
-            strength.text = "Senin ordu gücün: <b>" + Court.PlayerStrength(data) + "</b>";
+            string kings = RivalWars.Status(data);
+            strength.text = (kings.Length > 0 ? kings + "   ·   " : "") + "Senin ordu gücün: <b>" + Court.PlayerStrength(data) + "</b>";
             for (int i = 0; i < data.rivals.Count; i++) Card(data.rivals[i], i);
         }
 
@@ -116,14 +118,16 @@ namespace ToyKingdom
             AddAction("Haraç iste", "Ondan güçlüysen altın öder; reddederse öfkelenip saldırır.", UIFactory.Gold, "tribute", r, 2, !r.AtPeace);
             AddAction(r.AtPeace ? "Barışı boz" : "Savaş ilan et", r.AtPeace ? "Yeminbozan olursun: tüm şehirlerinde huzursuzluk +12, herkesle ilişki düşer." : "İlişki -15.",
                 UIFactory.Red, "war", r, 3, true);
+            if (RivalWars.Other(data, r) != null)
+                AddAction("Kışkırt  (" + RivalWars.InciteCost + ")", "Onu komşu krala düşürür (aralarındaki ilişki -25). %25 ihtimalle elçin yakalanır.", UIFactory.Hex("6B4A8F"), "incite", r, 4, data.gold >= RivalWars.InciteCost);
 
             void AddAction(string label, string hint, Color col, string id, RivalState rs, int row, bool enabled)
             {
-                float y = -404f - row * 94f;
+                float y = -396f - row * 78f;
                 var b = UIFactory.Button(t, id, label, col, 26f);
-                UIFactory.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, y), new Vector2(330f, 82f));
+                UIFactory.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, y), new Vector2(330f, 70f));
                 b.interactable = enabled;
-                var h = Txt(t, hint, 20f, UIFactory.Brown, false, new Vector2(372f, y - 4f), new Vector2(360f, 78f));
+                var h = Txt(t, hint, 20f, UIFactory.Brown, false, new Vector2(372f, y - 2f), new Vector2(360f, 70f));
                 h.enableAutoSizing = true; h.fontSizeMin = 14f; h.fontSizeMax = 20f;
                 b.onClick.AddListener(() => { act?.Invoke(id, rs); Rebuild(); });
             }
