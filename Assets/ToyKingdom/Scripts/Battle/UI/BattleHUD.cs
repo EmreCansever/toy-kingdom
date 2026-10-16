@@ -297,7 +297,10 @@ namespace ToyKingdom
                 }
                 if (gate == null) { coach.Hide(); return; }
                 Vector3 g = gate.transform.position;
-                Vector3 start = bm.Field.NearestDeployPoint(g);
+                // batı şeridinde, kapıya giden yolun üstünde bir başlangıç (güney şeridi kartların altında kalıyor)
+                var f = bm.Field;
+                float sx = f.Playable.xMin + BattleField.DeployBand * 0.7f;
+                Vector3 start = f.Constrain(new Vector3(sx, Mathf.Clamp(g.y - 0.6f, f.Playable.yMin + BattleField.DeployBand + 0.5f, f.Playable.yMax - BattleField.DeployBand - 0.5f), 0f));
                 coach.PointPath(start, Vector3.Lerp(start, g, 0.85f), "Parlak alandan başlayıp parmağınla kapıya doğru rota çiz");
                 return;
             }
