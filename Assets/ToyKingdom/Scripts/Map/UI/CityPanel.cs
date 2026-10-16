@@ -199,7 +199,7 @@ namespace ToyKingdom
             var row = UIFactory.Rounded(content, "Defense", atk != null ? UIFactory.Hex("FFE1DC") : UIFactory.ParchmentDark, 18f);
             UIFactory.Place(row.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(14f, -748f), new Vector2(1470f, 82f));
             float defense = RivalAI.Defense(s, city.Difficulty);
-            string text = "Savunma gücü <b>" + Mathf.RoundToInt(defense) + "</b>   ·   Takviye: " + s.garrison + " bölük";
+            string text = "Savunma gücü <b>" + Mathf.RoundToInt(defense) + "</b>   ·   Takviye: " + s.garrison + " / " + SaveData.GarrisonCap(s) + " bölük";
             if (atk != null)
             {
                 long left = System.Math.Max(0L, atk.attackArriveTicks - System.DateTime.UtcNow.Ticks) / System.TimeSpan.TicksPerSecond;
@@ -230,11 +230,13 @@ namespace ToyKingdom
 
             var btn = Btn(row.transform, "Takviye gönder  (+" + Mathf.RoundToInt(RivalAI.GarrisonDefense) + ")", UIFactory.Purple,
                 new Vector2(-12f, 0f), new Vector2(300f, 66f), 22f, true);
-            btn.interactable = unit != null;
+            bool full = s.garrison >= SaveData.GarrisonCap(s);
+            btn.interactable = unit != null && !full;
             btn.onClick.AddListener(() =>
             {
                 string u = BestGarrisonUnit(SaveSystem.Data);
                 if (u == null) { toast?.Invoke("Ordunda bölük yok"); return; }
+                if (s.garrison >= SaveData.GarrisonCap(s)) { toast?.Invoke("Surlar dolu. Daha fazla takviye için Sur'u yükselt"); return; }
                 SaveSystem.Data.AddArmy(u, -1);
                 s.garrison++;
                 Done("Bir bölük " + city.DisplayName + " surlarına yerleşti");

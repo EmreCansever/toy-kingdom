@@ -69,7 +69,7 @@ namespace ToyKingdom
         public static int PlayerStrength(SaveData data)
         {
             int g = 0;
-            foreach (var c in data.cities) if (c.owner == "player") g += c.garrison;
+            foreach (var c in data.cities) if (data.Holds(c)) g += c.garrison;
             int p = 0;
             foreach (var r in data.roads) p += r.PatrolCount();
             return 12 * data.TotalArmy() + 8 * g + 6 * p;
@@ -78,7 +78,7 @@ namespace ToyKingdom
         static void AllUnrest(SaveData data, float amount)
         {
             foreach (var c in data.cities)
-                if (c.owner == "player" && c.cityId != "home" && c.rebel == RebelState.None)
+                if (data.Holds(c) && c.cityId != "home" && c.rebel == RebelState.None)
                     c.unrest = Mathf.Clamp(c.unrest + amount, 0f, 100f);
         }
 
@@ -186,6 +186,20 @@ namespace ToyKingdom
         }
 
         // ------------------------------------------------------------------ saray olayları
+
+        /// <summary>Öğretici "mektubu cevapla" adımına gelince cevap bekleyen bir vezir mektubu yoksa bir tane yazar.</summary>
+        public static bool EnsureTutorialLetter(SaveData data)
+        {
+            foreach (var x in data.letters) if (x.from == "court" && x.NeedsAnswer) return false;
+            var l = New(data, LetterKind.Caravan, "court", "Tüccar kervanı",
+                LetterStyle.Compose("court", "Doğudan gelen bir tüccar heyeti huzurunuza çıkmak için kapıda bekliyor. İpek, baharat ve tuz yüklü bir kervan hazırlamışlar; sermaye arıyorlar.\n\n" +
+                "100 altın yatırırsak kısa zamanda iki katını getireceklerine sakallarının üstüne yemin ediyorlar. Bu ilk alışverişte yol güvenli; size yalnızca karar vermek düşer."), 10f);
+            Opt(l, "Yatırım yap  (100 altın)", "8 dakika sonra 200 altın döner.", 100);
+            Opt(l, "Geç", "Bir şey olmaz.");
+            l.defaultOption = 1;
+            l.extra = "tutorial";
+            return true;
+        }
 
         static void CourtEvent(SaveData data, IList<CityInfo> cities)
         {
@@ -301,9 +315,11 @@ namespace ToyKingdom
             {
                 if (now < data.caravanTicks[i]) continue;
                 int amount = data.caravanAmounts[i];
+                bool sure = amount < 0; // öğretici kervanı: her zaman döner
+                amount = Math.Abs(amount);
                 data.caravanTicks.RemoveAt(i);
                 data.caravanAmounts.RemoveAt(i);
-                if (UnityEngine.Random.value < 0.7f)
+                if (sure || UnityEngine.Random.value < 0.7f)
                 {
                     data.gold += amount;
                     Reply(data, "court", "Kervan döndü", "Müjdeler olsun! Doğuya giden kervan sağ salim döndü. Develer ipek ve baharat yerine altın keseleriyle geldi: hazineye " + Gold(amount) + " girdi.");
@@ -514,7 +530,7 @@ namespace ToyKingdom
                     break;
 
                 case LetterKind.Famine:
-                    if (st == null || st.owner != "player") { res = ""; break; }
+                    if (st == null || !data.Holds(st)) { res = ""; break; }
                     if (option == 0) { st.unrest = Mathf.Max(0f, st.unrest - 20f); res = l.cityName + " halkı doydu"; Reputation.Change(data, 2f, "Aç halkı doyurdun"); }
                     else if (option == 1) { st.tax = TaxLevel.Low; st.unrest = Mathf.Max(0f, st.unrest - 5f); res = l.cityName + " vergisi düşürüldü"; }
                     else { st.unrest = Mathf.Min(100f, st.unrest + 15f); res = l.cityName + " halkı aç ve öfkeli (huzursuzluk +15)"; Reputation.Change(data, -3f, "Aç halkı görmezden geldin"); }
@@ -551,14 +567,14 @@ namespace ToyKingdom
                     if (option == 0)
                     {
                         data.caravanTicks.Add(DateTime.UtcNow.Ticks + 8 * TimeSpan.TicksPerMinute);
-                        data.caravanAmounts.Add(400);
+                        data.caravanAmounts.Add(l.extra == "tutorial" ? -200 : 400);
                         res = "Kervan yola çıktı, 8 dakika sonra haber gelecek";
                     }
                     else res = "Kervana yatırım yapılmadı";
                     break;
 
                 case LetterKind.Plague:
-                    if (st == null || st.owner != "player") { res = ""; break; }
+                    if (st == null || !data.Holds(st)) { res = ""; break; }
                     if (option == 0) { res = "Hekimler salgını durdurdu"; Reputation.Change(data, 2f, "Salgına hekim gönderdin"); }
                     else if (option == 1) { SetIncomeMod(st, 0f, 4f); res = l.cityName + " karantinada (4 dk gelir yok)"; }
                     else { SetIncomeMod(st, 0.5f, 10f); st.unrest = Mathf.Min(100f, st.unrest + 10f); res = "Salgın " + l.cityName + " şehrini kasıp kavuruyor"; Reputation.Change(data, -2f, "Salgını görmezden geldin"); }

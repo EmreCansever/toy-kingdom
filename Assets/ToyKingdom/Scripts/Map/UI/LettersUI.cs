@@ -121,7 +121,8 @@ namespace ToyKingdom
             popupRoot.SetActive(true);
             if (popupBody != null) Destroy(popupBody.gameObject);
 
-            float h = l.NeedsAnswer ? 560f + 108f * l.options.Count + 110f : 820f;
+            bool hasResult = !l.NeedsAnswer && !string.IsNullOrEmpty(l.result);
+            float h = l.NeedsAnswer ? 560f + 108f * l.options.Count + 110f : hasResult ? 980f : 820f;
             h = Mathf.Min(Mathf.Max(h, 700f), 1040f);
             var frame = UIFactory.Frame(popupRoot.transform, "Paper", new Vector2(1180f, h));
             UIFactory.Place(frame.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1180f, h));
@@ -164,7 +165,7 @@ namespace ToyKingdom
             var waxT = UIFactory.Text(waxIn.transform, "L", LetterStyle.SealLetter(l.from), 54f, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center, true);
             UIFactory.Stretch(waxT.rectTransform);
 
-            float bodyH = l.NeedsAnswer ? 340f : 470f;
+            float bodyH = l.NeedsAnswer ? 340f : hasResult ? 400f : 470f;
             var body = UIFactory.Text(b, "Body", l.body, 27f, UIFactory.Hex("3B2A1A"), TextAlignmentOptions.TopLeft);
             UIFactory.Place(body.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(50f, -200f), new Vector2(l.NeedsAnswer ? 1080f : 940f, bodyH));
             body.enableAutoSizing = true; body.fontSizeMin = 17f; body.fontSizeMax = 27f;
@@ -199,9 +200,13 @@ namespace ToyKingdom
                 if (!string.IsNullOrEmpty(l.result))
                 {
                     string chosen = l.chosen >= 0 && l.chosen < l.options.Count ? "Cevabın: " + l.options[l.chosen].label + "\n" : "";
-                    var res = UIFactory.Text(b, "Result", chosen + "<b>" + l.result + "</b>", 28f, UIFactory.BrownDark, TextAlignmentOptions.TopLeft);
-                    UIFactory.Place(res.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(50f, 140f), new Vector2(900f, 120f));
-                    res.enableAutoSizing = true; res.fontSizeMin = 18f; res.fontSizeMax = 28f;
+                    // sonuç mektubun altında kendi kutusunda: mektup metninin üstüne binmez
+                    var box = UIFactory.Rounded(b, "ResultBox", UIFactory.Hex("EADBB8"), 14f);
+                    UIFactory.Place(box.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(50f, -620f), new Vector2(920f, 190f));
+                    box.raycastTarget = false;
+                    var res = UIFactory.Text(box.transform, "Result", chosen + "<b>" + l.result + "</b>", 28f, UIFactory.BrownDark, TextAlignmentOptions.TopLeft);
+                    UIFactory.Stretch(res.rectTransform, 18f);
+                    res.enableAutoSizing = true; res.fontSizeMin = 16f; res.fontSizeMax = 28f;
                 }
                 var ok = UIFactory.Button(b, "Ok", "Tamam", UIFactory.Blue, 32f);
                 UIFactory.Place((RectTransform)ok.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-150f, 40f), new Vector2(260f, 90f));

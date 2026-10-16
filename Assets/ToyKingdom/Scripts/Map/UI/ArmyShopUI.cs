@@ -32,7 +32,8 @@ namespace ToyKingdom
             sub.enableAutoSizing = true; sub.fontSizeMin = 16f; sub.fontSizeMax = 26f;
 
             shop.capacity = UIFactory.Text(header, "Capacity", "", 30f, Color.white, TextAlignmentOptions.Right, true);
-            UIFactory.Place(shop.capacity.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-210f, 0f), new Vector2(240f, 60f));
+            UIFactory.Place(shop.capacity.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-210f, 0f), new Vector2(420f, 70f));
+            shop.capacity.enableAutoSizing = true; shop.capacity.fontSizeMin = 18f; shop.capacity.fontSizeMax = 30f;
 
             var close = UIFactory.Button(header, "Close", "Kapat", UIFactory.Hex("F4EBDD"), 30f);
             UIFactory.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 2f), new Vector2(170f, 68f));
@@ -66,7 +67,12 @@ namespace ToyKingdom
         void RefreshAll()
         {
             var d = SaveSystem.Data;
-            if (capacity != null) capacity.text = "Ordu  " + d.UsedCapacity() + " / " + d.ArmyCapacity();
+            if (capacity != null)
+            {
+                int away = d.UsedCapacity() - d.TotalArmy(); // yol devriyeleri de kapasiteden yer tutar
+                capacity.text = "Ordu  " + d.UsedCapacity() + " / " + d.ArmyCapacity() +
+                    (away > 0 ? "\n<size=70%>" + away + " bölük yol devriyesinde</size>" : "");
+            }
             foreach (var r in rows) r.Refresh();
         }
 

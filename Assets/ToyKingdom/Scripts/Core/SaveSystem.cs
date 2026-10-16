@@ -133,6 +133,9 @@ namespace ToyKingdom
 
         public bool Owns(string cityId) => conqueredCities.Contains(cityId);
 
+        /// <summary>Şehir oyuncunun mu (başkent dahil, isyanda olsa da)? Eski kayıtlarda owner alanı boş kalabildiği için listeye bakar.</summary>
+        public bool Holds(CityState c) => c != null && (c.cityId == "home" || conqueredCities.Contains(c.cityId));
+
         public bool IsRebel(string cityId)
         {
             var s = cities.Find(c => c.cityId == cityId);
@@ -201,14 +204,25 @@ namespace ToyKingdom
             return cap;
         }
 
-        /// <summary>Kapasiteden düşen bölükler: ordudakiler + şehirlere takviye bırakılanlar + yol devriyeleri.</summary>
+        /// <summary>Kapasiteden düşen bölükler: ordudakiler + yol devriyeleri. Şehre takviye bırakılan bölük
+        /// ordudan ayrılır ve kapasiteyi boşaltır; onun yerine her şehrin kendi takviye sınırı vardır.</summary>
         public int UsedCapacity()
         {
             int n = TotalArmy();
-            foreach (var c in cities) if (c.owner == "player") n += c.garrison;
             foreach (var r in roads) n += r.PatrolCount();
             return n;
         }
+
+        /// <summary>Şehirlerdeki takviye bölüklerinin toplamı (maaş alırlar ama ordu kapasitesinden yer tutmazlar).</summary>
+        public int GarrisonTotal()
+        {
+            int n = 0;
+            foreach (var c in cities) if (Holds(c)) n += c.garrison;
+            return n;
+        }
+
+        /// <summary>Bir şehre en fazla kaç takviye bölüğü bırakılabilir: 2, her Sur seviyesi +1.</summary>
+        public static int GarrisonCap(CityState c) => 2 + (c != null ? c.walls : 0);
 
         public int TotalArmy()
         {

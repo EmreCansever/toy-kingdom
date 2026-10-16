@@ -48,6 +48,7 @@ namespace ToyKingdom
 
         void OnDestroy()
         {
+            if (retreatAsk != null) Time.timeScale = timeBeforeAsk;
             if (bm == null) return;
             bm.SelectedUnitChanged -= OnSelected;
             bm.BattleEnded -= ShowResult;
@@ -79,7 +80,7 @@ namespace ToyKingdom
             // sol üst: geri çekil
             var retreat = UIFactory.Button(t, "Retreat", "Geri çekil", UIFactory.Hex("8C8577"), 28f);
             UIFactory.Place((RectTransform)retreat.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -16f), new Vector2(220f, 80f));
-            retreat.onClick.AddListener(bm.Retreat);
+            retreat.onClick.AddListener(() => AskRetreat(t));
 
             // alt: kartlar
             var row = UIFactory.Rect("Cards", t);
@@ -254,5 +255,38 @@ namespace ToyKingdom
                                     (r.squadsPromoted > 0 ? "\n<color=#B86E00>Rütbesi yükselen bölük: " + r.squadsPromoted + "</color>" : "");
             }
         }
-    }
+    
+        GameObject retreatAsk;
+        float timeBeforeAsk = 1f;
+
+        /// <summary>Yanlışlıkla dokunup savaşı bitirmemek için onay: savaş bu sırada durur.</summary>
+        void AskRetreat(Transform t)
+        {
+            if (bm.State != BattleState.Playing || retreatAsk != null) return;
+            timeBeforeAsk = Time.timeScale > 0f ? Time.timeScale : 1f;
+            Time.timeScale = 0f;
+            var dim = UIFactory.Panel(t, "RetreatAsk", UIFactory.Dim);
+            UIFactory.Stretch(dim.rectTransform);
+            retreatAsk = dim.gameObject;
+            var box = UIFactory.Frame(dim.transform, "Box", new Vector2(760f, 380f));
+            UIFactory.Place(box.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 380f));
+            var title = UIFactory.Text(box.transform, "Title", "Savaştan çekilmek mi?", 40f, UIFactory.BrownDark, TextAlignmentOptions.Center, true);
+            UIFactory.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(680f, 60f));
+            var body = UIFactory.Text(box.transform, "Body", "Kale alınmaz. Sağ kalan bölükler orduna geri döner.", 26f, UIFactory.Brown, TextAlignmentOptions.Center);
+            UIFactory.Place(body.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(660f, 90f));
+            var stay = UIFactory.Button(box.transform, "Stay", "Savaşa devam", UIFactory.Blue, 28f);
+            UIFactory.Place((RectTransform)stay.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-170f, 40f), new Vector2(300f, 90f));
+            stay.onClick.AddListener(CloseRetreatAsk);
+            var go = UIFactory.Button(box.transform, "Go", "Çekil", UIFactory.Red, 28f);
+            UIFactory.Place((RectTransform)go.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(170f, 40f), new Vector2(300f, 90f));
+            go.onClick.AddListener(() => { CloseRetreatAsk(); bm.Retreat(); });
+        }
+
+        void CloseRetreatAsk()
+        {
+            if (retreatAsk != null) Destroy(retreatAsk);
+            retreatAsk = null;
+            Time.timeScale = timeBeforeAsk;
+        }
+}
 }

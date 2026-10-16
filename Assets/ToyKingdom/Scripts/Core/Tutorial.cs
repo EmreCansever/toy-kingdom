@@ -31,7 +31,7 @@ namespace ToyKingdom
 
         static bool Any(SaveData d, Func<CityState, bool> f)
         {
-            foreach (var c in d.cities) if ((c.owner == "player" || c.cityId == "home") && f(c)) return true;
+            foreach (var c in d.cities) if (d.Holds(c) && f(c)) return true;
             return false;
         }
 
@@ -80,6 +80,8 @@ namespace ToyKingdom
                     "Lakin unutmayın: aç kalan halk ayaklanır, hırslanan vali ihanet eder, güneyin sultanı ile kuzeyin kraliçesi ise zayıf düştüğünüz günü kollar.");
             }
             var s = Current(d);
+            // mektup adımında cevaplanacak bir mektup hep olsun
+            if (s != null && s.title == "Vezirin mektubunu cevapla" && !s.done(d)) Court.EnsureTutorialLetter(d);
             if (s == null || !s.done(d)) return null;
             d.gold += s.reward;
             d.tutorialStep++;

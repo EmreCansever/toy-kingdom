@@ -25,6 +25,8 @@ namespace ToyKingdom
         [Tooltip("Kahramanın şehre vardığında durduğu nokta (kapı önü)")]
         public Vector3 doorPoint;
         public List<RoadLink> links = new List<RoadLink>();
+        /// <summary>Krallığın en yakın şehrinden yol üzerinden kaç şehir ötede (harita doldurur; -1 yol yok).</summary>
+        [System.NonSerialized] public int roadHops = -1;
 
         [Header("Görsel")]
         public List<SpriteRenderer> towers = new List<SpriteRenderer>();
@@ -178,7 +180,7 @@ namespace ToyKingdom
             }
             else
             {
-                StatusText = "Uzak";
+                StatusText = roadHops > 1 ? "Uzak  ·  önce aradaki " + (roadHops - 1) + " şehri al" : "Uzak  ·  yol bağlı değil";
                 Status = CityStatus.Far;
             }
             Difficulty = castle != null ? castle.difficulty : 0;

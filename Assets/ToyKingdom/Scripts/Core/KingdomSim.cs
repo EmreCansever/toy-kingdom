@@ -149,9 +149,9 @@ namespace ToyKingdom
         /// <summary>Dakikalık bakım gideri: her bölük (ordu ve takviye) 1 altın, her vali gücü kadar maaş alır.</summary>
         public static float Upkeep(SaveData data)
         {
-            float u = 1f * data.UsedCapacity();
+            float u = 1f * (data.UsedCapacity() + data.GarrisonTotal());
             foreach (var c in data.cities)
-                if (c.owner == "player" && c.hasGovernor && c.rebel == RebelState.None) u += 1f * c.governor.power;
+                if (data.Holds(c) && c.hasGovernor && c.rebel == RebelState.None) u += 1f * c.governor.power;
             return u;
         }
 

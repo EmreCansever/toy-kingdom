@@ -340,6 +340,27 @@ namespace ToyKingdom
             return false;
         }
 
+        /// <summary>Bu şehir, krallığın en yakın şehrinden yol üzerinden kaç şehir ötede (1 = komşu, saldırılabilir). Yol yoksa -1.</summary>
+        public int RoadHops(MapCity target)
+        {
+            var dist = new Dictionary<MapCity, int>();
+            var q = new Queue<MapCity>();
+            foreach (var c in cities) if (c.IsConquered) { dist[c] = 0; q.Enqueue(c); }
+            while (q.Count > 0)
+            {
+                var c = q.Dequeue();
+                if (c == target) return dist[c];
+                // fethedilmemiş şehirlerin ötesine de bakılır ama her biri bir adım sayılır
+                foreach (var l in c.links)
+                {
+                    if (l.to == null || dist.ContainsKey(l.to)) continue;
+                    dist[l.to] = dist[c] + 1;
+                    q.Enqueue(l.to);
+                }
+            }
+            return dist.TryGetValue(target, out int d) ? d : -1;
+        }
+
         long lastFrameTicks;
 
         void Update()
@@ -417,6 +438,12 @@ namespace ToyKingdom
                 return;
             }
             if (hero.CurrentCity == city)
+            {
+                ShowCity(city);
+                return;
+            }
+            // saldırılamayan şehre yürümenin anlamı yok: sadece bilgisini göster
+            if (!CanAttack(city))
             {
                 ShowCity(city);
                 return;
@@ -553,7 +580,7 @@ namespace ToyKingdom
         public void RefreshAll()
         {
             if (ui != null) HandleReputation();
-            foreach (var c in cities) c.RefreshVisual(CanAttack(c));
+            foreach (var c in cities) { c.roadHops = c.IsConquered ? 0 : RoadHops(c); c.RefreshVisual(CanAttack(c)); }
             if (ui != null) ui.RefreshTop();
         }
 
