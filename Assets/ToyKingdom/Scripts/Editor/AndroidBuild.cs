@@ -77,6 +77,13 @@ namespace ToyKingdom.EditorTools
                         if (m.type == LogType.Error || m.type == LogType.Exception)
                             log.AppendLine("[" + step.name + "] " + m.content);
             }
+            // IL2CPP'nin bıraktığı büyük hata ayıklama yedekleri kuruluma gerekmez (yüzlerce MB): temizlenir
+            foreach (var dir in Directory.GetDirectories(OutDir))
+            {
+                string n = Path.GetFileName(dir);
+                if (n.Contains("BackUpThisFolder") || n.Contains("BurstDebugInformation"))
+                    try { Directory.Delete(dir, true); } catch (System.Exception e) { log.AppendLine("Silinemedi: " + n + " (" + e.Message + ")"); }
+            }
             log.AppendLine("Bitti: " + System.DateTime.Now);
             File.WriteAllText(Path.Combine(OutDir, "build_log.txt"), log.ToString());
             Debug.Log("[AndroidBuild]\n" + log);
