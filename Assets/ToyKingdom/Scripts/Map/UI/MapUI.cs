@@ -275,6 +275,8 @@ namespace ToyKingdom
         public bool AttackOpen => attack != null && attack.IsOpen;
         public RectTransform AttackButton => attack != null ? attack.AttackButtonRect : null;
         public CityPanel CityPanelView => cityPanel != null && cityPanel.IsOpen ? cityPanel : null;
+        public void OpenSettings() { if (settings != null) settings.Open(); }
+        public bool SettingsOpen => settings != null && settings.IsOpen;
         public RectTransform FindUI(string name) => canvasT != null ? canvasT.Find(name) as RectTransform : null;
 
         public void ShowTrade(string roadKey) => tradePanel.Open(roadKey);

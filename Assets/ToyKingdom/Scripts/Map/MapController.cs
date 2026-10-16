@@ -43,6 +43,7 @@ namespace ToyKingdom
             RefreshAll();
             CityNameplates.Create(cities);
             coach = Coach.Create();
+            if (!GameSession.TitleShown) TitleScreen.Show(this, ui, cities);
             ui.BuildRivals();
 
             MapCity start = Find(SaveSystem.Data.heroCityId);
@@ -433,7 +434,7 @@ namespace ToyKingdom
         {
             // bir pencere açıkken ya da duraklatınca krallıkta zaman durur
             long nowTicks = DateTime.UtcNow.Ticks;
-            bool paused = ui.IsModalOpen || ui.Paused;
+            bool paused = ui.IsModalOpen || ui.Paused || TitleScreen.IsOpen;
             if (paused && lastFrameTicks > 0) Clock.Shift(SaveSystem.Data, nowTicks - lastFrameTicks);
             lastFrameTicks = nowTicks;
             if (!paused) incomeTimer += Time.deltaTime;
@@ -480,6 +481,7 @@ namespace ToyKingdom
                     if (!c.isHomeCity && c.IsConquered && c.State.revoltTimer >= 0f) c.RefreshVisual(false);
             }
 
+            if (TitleScreen.IsOpen) { coach?.Hide(); rig.inputEnabled = false; rig.TryConsumeTap(out _); return; }
             UpdateCoach();
             rig.inputEnabled = !ui.IsModalOpen;
             if (!rig.TryConsumeTap(out Vector3 world)) return;

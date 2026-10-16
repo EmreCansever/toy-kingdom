@@ -19,5 +19,7 @@ namespace ToyKingdom
         public static BattleResult LastResult;
         /// <summary>Saldırılan şehri elinde tutan rakip (yoksa boş): kaybedilen savaşta esir fidyesi için.</summary>
         public static string SelectedRivalId;
+        /// <summary>Açılış ekranı bu oturumda gösterildi mi (savaştan dönüşte tekrar çıkmaz).</summary>
+        public static bool TitleShown;
     }
 }
